@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.defensemanagement.mapper.DefenseGroupMapper">
+
+    <resultMap id="DefenseGroupResultMap" type="com.example.defensemanagement.entity.DefenseGroup">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="display_order" property="displayOrder"/>
+        <result column="score" property="score"/>
+        <association property="comment" javaType="com.example.defensemanagement.entity.Comment">
+            <id column="comment_id" property="id"/>
+            <result column="comment_content" property="content"/>
+            <result column="comment_group_id" property="groupId"/>
+        </association>
+        <collection property="members" ofType="com.example.defensemanagement.entity.GroupMember">
+            <id column="member_id" property="id"/>
+            <result column="member_name" property="name"/>
+            <result column="member_group_id" property="groupId"/>
+        </collection>
+    </resultMap>
+
+    <select id="findAllByOrderByDisplayOrderAsc" resultMap="DefenseGroupResultMap">
+        SELECT 
+            dg.id, dg.name, dg.display_order, dg.score,
+            gm.id as member_id, gm.name as member_name, gm.group_id as member_group_id,
+            c.id as comment_id, c.content as comment_content, c.group_id as comment_group_id
+        FROM defense_group dg
+        LEFT JOIN group_member gm ON dg.id = gm.group_id
+        LEFT JOIN comment c ON dg.id = c.group_id
+        ORDER BY dg.display_order ASC
+    </select>
+
+    <select id="findById" resultMap="DefenseGroupResultMap">
+        SELECT 
+            dg.id, dg.name, dg.display_order, dg.score,
+            gm.id as member_id, gm.name as member_name, gm.group_id as member_group_id,
+            c.id as comment_id, c.content as comment_content, c.group_id as comment_group_id
+        FROM defense_group dg
+        LEFT JOIN group_member gm ON dg.id = gm.group_id
+        LEFT JOIN comment c ON dg.id = c.group_id
+        WHERE dg.id = #{id}
+    </select>
+
+    <insert id="insert" parameterType="com.example.defensemanagement.entity.DefenseGroup" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO defense_group (name, display_order, score)
+        VALUES (#{name}, #{displayOrder}, #{score})
+    </insert>
+
+    <update id="update" parameterType="com.example.defensemanagement.entity.DefenseGroup">
+        UPDATE defense_group 
+        SET name = #{name}, display_order = #{displayOrder}, score = #{score}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM defense_group WHERE id = #{id}
+    </delete>
+
+    <update id="updateScore">
+        UPDATE defense_group SET score = #{score} WHERE id = #{id}
+    </update>
+
+    <update id="updateDisplayOrder">
+        UPDATE defense_group SET display_order = #{displayOrder} WHERE id = #{id}
+    </update>
+
+</mapper>

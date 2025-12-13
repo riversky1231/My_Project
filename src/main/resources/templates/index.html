@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>答辩管理仪表盘</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #6366f1;
+            --background-color: #f8f9fe;
+            --card-bg-color: #ffffff;
+            --text-color: #495057;
+            --heading-color: #343a40;
+            --border-color: #e9ecef;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        body {
+            background-color: var(--background-color);
+            font-family: 'Poppins', sans-serif;
+            color: var(--text-color);
+            display: flex;
+        }
+        .sidebar {
+            width: 260px;
+            background: var(--card-bg-color);
+            padding: 1.5rem;
+            height: 100vh;
+            position: fixed;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+        }
+        .sidebar .logo {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-bottom: 2rem;
+        }
+        .sidebar .nav-link {
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        .sidebar .nav-link i {
+            margin-right: 0.75rem;
+            font-size: 1.2rem;
+        }
+        .sidebar .nav-link.active, .sidebar .nav-link:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+        .main-content {
+            margin-left: 260px;
+            width: calc(100% - 260px);
+            padding: 2rem;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            font-weight: 600;
+            color: var(--heading-color);
+        }
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .summary-card {
+            background: var(--card-bg-color);
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+        }
+        .summary-card .icon {
+            font-size: 2rem;
+            padding: 1rem;
+            border-radius: 50%;
+            margin-right: 1rem;
+            color: white;
+        }
+        .summary-card .value {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--heading-color);
+        }
+        .summary-card .label {
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+        .module {
+            background: var(--card-bg-color);
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+        .module-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .module-header h4 {
+            font-weight: 600;
+            color: var(--heading-color);
+        }
+        .group-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            cursor: grab;
+            transition: all 0.2s ease;
+        }
+        .group-item:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px var(--secondary-color-opacity, rgba(99, 102, 241, 0.2));
+        }
+        .group-item .drag-handle {
+            color: #adb5bd;
+            margin-right: 1rem;
+        }
+        .group-item .group-info {
+            flex-grow: 1;
+        }
+        .group-item .group-info h6 {
+            font-weight: 600;
+            margin: 0;
+        }
+        .group-item .score-input {
+            text-align: center;
+        }
+        .input-group-sm .btn {
+            padding: 0.25rem 0.5rem;
+        }
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+        #group-list, .right-column {
+            max-height: calc(100vh - 14rem); /* Set max height relative to viewport */
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+        /* Custom Scrollbar */
+        #group-list::-webkit-scrollbar, .right-column::-webkit-scrollbar {
+            width: 6px;
+        }
+        #group-list::-webkit-scrollbar-track, .right-column::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #group-list::-webkit-scrollbar-thumb, .right-column::-webkit-scrollbar-thumb {
+            background: #e0e0e0;
+            border-radius: 3px;
+        }
+        #group-list::-webkit-scrollbar-thumb:hover, .right-column::-webkit-scrollbar-thumb:hover {
+            background: #c7c7c7;
+        }
+        .chart-container {
+            position: relative;
+            height: 280px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="logo">答辩管理</div>
+    <nav id="sidebar-nav" class="nav flex-column">
+        <a class="nav-link active" href="javascript:void(0);" onclick="showView('dashboard-view', this)"><i class="bi bi-speedometer2"></i> 仪表盘</a>
+        <a class="nav-link" href="javascript:void(0);" onclick="showView('group-management-view', this)"><i class="bi bi-people"></i> 小组管理</a>
+        <a class="nav-link" href="javascript:void(0);" onclick="showView('archive-view', this)"><i class="bi bi-archive"></i> 历史归档</a>
+        <a class="nav-link" href="#"><i class="bi bi-gear"></i> 系统设置</a>
+    </nav>
+</div>
+
+<div class="main-content">
+    <!-- Dashboard View -->
+    <div id="dashboard-view" class="view-container">
+        <header class="header">
+            <h1>仪表盘</h1>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addGroupModal"><i class="bi bi-plus-circle"></i> 添加新小组</button>
+        </header>
+
+        <div class="summary-cards">
+             <div class="summary-card">
+                <div class="icon" style="background: #4f46e5;"><i class="bi bi-collection"></i></div>
+                <div>
+                    <div class="value" id="total-groups">0</div>
+                    <div class="label">小组总数</div>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="icon" style="background: #0ea5e9;"><i class="bi bi-clipboard-data"></i></div>
+                <div>
+                    <div class="value" id="avg-score">0</div>
+                    <div class="label">平均得分</div>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="icon" style="background: #10b981;"><i class="bi bi-trophy"></i></div>
+                <div>
+                    <div class="value" id="max-score">0</div>
+                    <div class="label">最高分</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <div class="module">
+                <div class="module-header"><h4><i class="bi bi-list-ol"></i> 答辩队列</h4></div>
+                <div id="group-list">
+                    <div th:each="group : ${groups}" class="group-item" th:data-id="${group.id}" th:data-name="${group.name}" th:data-score="${group.score}">
+                        <i class="bi bi-grip-vertical drag-handle"></i>
+                        <div class="group-info">
+                            <h6 th:text="${group.name}"></h6>
+                            <small class="text-muted" th:text="${group.comment != null ? '评语: ' + group.comment.content : '评语: 暂无评语'}"></small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="input-group input-group-sm" style="width: 130px;">
+                                <input type="number" class="form-control score-input" th:value="${group.score}" min="0" max="100">
+                                <button class="btn btn-outline-secondary" type="button" onclick="updateScore(this)"><i class="bi bi-check-lg"></i></button>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#membersModal" th:data-group-id="${group.id}"><i class="bi bi-people"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="right-column">
+                <div class="module">
+                    <div class="module-header"><h4><i class="bi bi-graph-up"></i> 小组评分</h4></div>
+                    <div class="chart-container"><canvas id="scoreChart"></canvas></div>
+                </div>
+                <div class="module">
+                    <div class="module-header"><h4><i class="bi bi-chat-left-text"></i> 添加评语</h4></div>
+                    <form th:action="@{/comment}" method="post">
+                        <div class="mb-2"><select class="form-select" name="groupId"><option th:each="group : ${groups}" th:value="${group.id}" th:text="${group.name}"></option></select></div>
+                        <div class="mb-2"><input type="text" class="form-control" name="comment" placeholder="输入评语内容..."></div>
+                        <button class="btn btn-primary w-100" type="submit">提交评语</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Group Management View -->
+    <div id="group-management-view" class="view-container" style="display: none;">
+        <header class="header">
+            <h1>小组管理</h1>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addMemberModal"><i class="bi bi-plus-circle"></i> 添加新成员</button>
+        </header>
+        <div class="module">
+            <div class="accordion" id="groupsAccordion">
+                <div th:each="group, iterStat : ${groups}" class="accordion-item">
+                    <h2 class="accordion-header" th:id="'heading' + ${iterStat.index}">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" th:data-bs-target="'#collapse' + ${iterStat.index}" aria-expanded="true" th:aria-controls="'collapse' + ${iterStat.index}">
+                            <strong th:text="${group.name}"></strong>
+                        </button>
+                    </h2>
+                    <div th:id="'collapse' + ${iterStat.index}" class="accordion-collapse collapse" th:classappend="${iterStat.index == 0 ? 'show' : ''}" th:aria-labelledby="'heading' + ${iterStat.index}" data-bs-parent="#groupsAccordion">
+                        <div class="accordion-body">
+                            <ul class="list-group">
+                                <li th:each="member : ${group.members}" class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span th:text="${member.name}"></span>
+                                    <button class="btn btn-sm btn-outline-danger" th:onclick="'deleteMember(' + ${member.id} + ')'">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Archive View -->
+    <div id="archive-view" class="view-container" style="display: none;">
+        <header class="header">
+            <h1>历史归档</h1>
+            <button class="btn btn-success" onclick="archiveCurrentSession()"><i class="bi bi-archive"></i> 归档当前答辩</button>
+        </header>
+        <div class="module">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>归档时间</th>
+                            <th>答辩名称</th>
+                            <th>小组数量</th>
+                            <th>平均分</th>
+                            <th>最高分</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="archive-list">
+                        <!-- 归档数据将通过JS动态加载 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 成员模态框 -->
+<div class="modal fade" id="membersModal" tabindex="-1" aria-labelledby="membersModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="membersModalLabel">小组成员</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul id="member-list" class="list-group"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加成员模态框 -->
+<div class="modal fade" id="addMemberModal" tabindex="-1" aria-labelledby="addMemberModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addMemberModalLabel">添加新成员</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addMemberForm">
+                    <div class="mb-3">
+                        <label for="memberGroupSelect" class="form-label">选择小组</label>
+                        <select class="form-select" id="memberGroupSelect" required>
+                            <option th:each="group : ${groups}" th:value="${group.id}" th:text="${group.name}"></option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="memberName" class="form-label">成员姓名</label>
+                        <input type="text" class="form-control" id="memberName" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="addMember()">添加</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加小组模态框 -->
+<div class="modal fade" id="addGroupModal" tabindex="-1" aria-labelledby="addGroupModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addGroupModalLabel">添加新小组</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addGroupForm">
+                    <div class="mb-3">
+                        <label for="groupName" class="form-label">小组名称</label>
+                        <input type="text" class="form-control" id="groupName" required placeholder="请输入小组名称">
+                    </div>
+                    <div class="mb-3">
+                        <label for="groupScore" class="form-label">初始得分</label>
+                        <input type="number" class="form-control" id="groupScore" min="0" max="100" value="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="groupMembers" class="form-label">小组成员</label>
+                        <textarea class="form-control" id="groupMembers" rows="3" placeholder="请输入成员姓名，每行一个"></textarea>
+                        <div class="form-text">每行输入一个成员姓名</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="addGroup()">添加</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 归档详情模态框 -->
+<div class="modal fade" id="archiveDetailModal" tabindex="-1" aria-labelledby="archiveDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="archiveDetailModalLabel">归档详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="archiveDetailContent">
+                <!-- 归档详情内容 -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let scoreChart;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Drag and Drop
+        new Sortable(document.getElementById('group-list'), {
+            handle: '.drag-handle',
+            animation: 150,
+            onEnd: function (evt) {
+                const groupIds = Array.from(evt.to.children).map(item => item.dataset.id);
+                fetch('/updateOrder', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(groupIds)
+                });
+            }
+        });
+
+        // Member Modal
+        const membersModal = document.getElementById('membersModal');
+        membersModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const groupId = button.dataset.groupId;
+            const memberList = document.getElementById('member-list');
+            memberList.innerHTML = '<li>Loading...</li>';
+            fetch(`/group/${groupId}/members`)
+                .then(response => response.json())
+                .then(data => {
+                    memberList.innerHTML = '';
+                    data.forEach(name => {
+                        const li = document.createElement('li');
+                        li.className = 'list-group-item';
+                        li.textContent = name;
+                        memberList.appendChild(li);
+                    });
+                });
+        });
+
+        // Optimized Initial Load
+        const initialData = getGroupData();
+        updateSummaryCards(initialData);
+        renderChart(initialData);
+    });
+
+    function getGroupData() {
+        const groups = document.querySelectorAll('.group-item');
+        return Array.from(groups).map(g => ({
+            id: g.dataset.id,
+            name: g.dataset.name,
+            score: parseInt(g.dataset.score, 10) || 0
+        }));
+    }
+
+    function updateSummaryCards(data) {
+        if (!data || data.length === 0) {
+            document.getElementById('total-groups').textContent = 0;
+            document.getElementById('avg-score').textContent = 'N/A';
+            document.getElementById('max-score').textContent = 'N/A';
+            return;
+        }
+
+        const scores = data.map(g => g.score);
+        const totalGroups = data.length;
+        const totalScore = scores.reduce((sum, score) => sum + score, 0);
+        const avgScore = (totalScore / totalGroups).toFixed(1);
+        const maxScore = Math.max(...scores);
+
+        document.getElementById('total-groups').textContent = totalGroups;
+        document.getElementById('avg-score').textContent = avgScore;
+        document.getElementById('max-score').textContent = maxScore;
+    }
+
+    function renderChart(data) {
+        const labels = data.map(g => g.name);
+        const scores = data.map(g => g.score);
+        
+        const ctx = document.getElementById('scoreChart').getContext('2d');
+        if (scoreChart) {
+            scoreChart.destroy();
+        }
+        scoreChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '小组得分',
+                    data: scores,
+                    borderColor: 'rgba(79, 70, 229, 1)',
+                    backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: 'rgba(79, 70, 229, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverRadius: 7,
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(79, 70, 229, 1)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, max: 100 } },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+
+    function updateScore(buttonElement) {
+        const groupItem = buttonElement.closest('.group-item');
+        const inputElement = groupItem.querySelector('.score-input');
+        const groupId = groupItem.dataset.id;
+        const score = inputElement.value;
+
+        buttonElement.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+        buttonElement.disabled = true;
+
+        fetch(`/group/${groupId}/score?score=${score}`, {
+            method: 'POST'
+        }).then(response => {
+            if (response.ok) {
+                groupItem.dataset.score = score;
+                const updatedData = getGroupData();
+                updateSummaryCards(updatedData);
+                renderChart(updatedData);
+            } else {
+                alert('分数更新失败!');
+            }
+        }).finally(() => {
+            buttonElement.innerHTML = '<i class="bi bi-check-lg"></i>';
+            buttonElement.disabled = false;
+        });
+    }
+
+    function showView(viewId, clickedLink) {
+        // Hide all views
+        document.querySelectorAll('.view-container').forEach(view => {
+            view.style.display = 'none';
+        });
+
+        // Show the selected view
+        document.getElementById(viewId).style.display = 'block';
+
+        // Update active link in sidebar
+        document.querySelectorAll('#sidebar-nav .nav-link').forEach(link => {
+            link.classList.remove('active');
+        });
+        clickedLink.classList.add('active');
+
+        // Load specific view data
+        if (viewId === 'archive-view') {
+            loadArchiveData();
+        }
+    }
+
+    function addMember() {
+        const groupId = document.getElementById('memberGroupSelect').value;
+        const memberName = document.getElementById('memberName').value;
+        
+        if (!memberName.trim()) {
+            alert('请输入成员姓名');
+            return;
+        }
+
+        fetch('/member/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ groupId: groupId, name: memberName })
+        }).then(response => {
+            if (response.ok) {
+                location.reload(); // 刷新页面
+            } else {
+                alert('添加成员失败');
+            }
+        });
+    }
+
+    function deleteMember(memberId) {
+        if (confirm('确定要删除这个成员吗？')) {
+            fetch(`/member/${memberId}`, {
+                method: 'DELETE'
+            }).then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('删除失败');
+                }
+            });
+        }
+    }
+
+    function archiveCurrentSession() {
+        if (confirm('确定要归档当前答辩吗？归档后将无法修改。')) {
+            fetch('/archive/current', {
+                method: 'POST'
+            }).then(response => {
+                if (response.ok) {
+                    alert('归档成功');
+                    loadArchiveData();
+                } else {
+                    alert('归档失败');
+                }
+            });
+        }
+    }
+
+    function loadArchiveData() {
+        fetch('/archive/list')
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('archive-list');
+                tbody.innerHTML = '';
+                data.forEach(archive => {
+                    const row = `
+                        <tr>
+                            <td>${archive.archiveTime}</td>
+                            <td>${archive.sessionName}</td>
+                            <td>${archive.groupCount}</td>
+                            <td>${archive.avgScore}</td>
+                            <td>${archive.maxScore}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewArchiveDetail(${archive.id})">查看详情</button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteArchive(${archive.id})">删除</button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            });
+    }
+
+    function viewArchiveDetail(archiveId) {
+        fetch(`/archive/${archiveId}/detail`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('archiveDetailContent').innerHTML = `
+                    <h6>答辩信息</h6>
+                    <p><strong>归档时间：</strong>${data.archiveTime}</p>
+                    <p><strong>答辩名称：</strong>${data.sessionName}</p>
+                    <h6>小组详情</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead><tr><th>小组名称</th><th>得分</th><th>成员</th><th>评语</th></tr></thead>
+                            <tbody>
+                                ${data.groups.map(group => `
+                                    <tr>
+                                        <td>${group.name}</td>
+                                        <td>${group.score}</td>
+                                        <td>${group.members.join(', ')}</td>
+                                        <td>${group.comment || '无'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                new bootstrap.Modal(document.getElementById('archiveDetailModal')).show();
+            });
+    }
+
+    function deleteArchive(archiveId) {
+        if (confirm('确定要删除这个归档吗？删除后无法恢复。')) {
+            fetch(`/archive/${archiveId}`, {
+                method: 'DELETE'
+            }).then(response => {
+                if (response.ok) {
+                    loadArchiveData();
+                } else {
+                    alert('删除失败');
+                }
+            });
+        }
+    }
+
+    function addGroup() {
+        const groupName = document.getElementById('groupName').value;
+        const groupScore = document.getElementById('groupScore').value;
+        const groupMembers = document.getElementById('groupMembers').value;
+        
+        if (!groupName.trim()) {
+            alert('请输入小组名称');
+            return;
+        }
+
+        const memberList = groupMembers.trim() ? groupMembers.split('\n').filter(name => name.trim()) : [];
+
+        fetch('/group/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                name: groupName, 
+                score: parseInt(groupScore),
+                members: memberList
+            })
+        }).then(response => {
+            if (response.ok) {
+                location.reload(); // 刷新页面
+            } else {
+                alert('添加小组失败');
+            }
+        });
+    }
+</script>
+
+</body>
+</html>

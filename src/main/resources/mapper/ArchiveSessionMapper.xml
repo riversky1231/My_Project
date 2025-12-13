@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.defensemanagement.mapper.ArchiveSessionMapper">
+
+    <select id="findAll" resultType="com.example.defensemanagement.entity.ArchiveSession">
+        SELECT id, session_name as sessionName, archive_time as archiveTime, 
+               group_count as groupCount, avg_score as avgScore, max_score as maxScore
+        FROM archive_session 
+        ORDER BY archive_time DESC
+    </select>
+
+    <select id="findById" resultType="com.example.defensemanagement.entity.ArchiveSession">
+        SELECT id, session_name as sessionName, archive_time as archiveTime, 
+               group_count as groupCount, avg_score as avgScore, max_score as maxScore, archive_data as archiveData
+        FROM archive_session 
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insert" parameterType="com.example.defensemanagement.entity.ArchiveSession" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO archive_session (session_name, archive_time, group_count, avg_score, max_score, archive_data)
+        VALUES (#{sessionName}, #{archiveTime}, #{groupCount}, #{avgScore}, #{maxScore}, #{archiveData})
+    </insert>
+
+    <delete id="delete">
+        DELETE FROM archive_session WHERE id = #{id}
+    </delete>
+
+</mapper>
