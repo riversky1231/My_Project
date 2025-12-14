@@ -80,7 +80,7 @@ public class AdminController {
     public List<com.example.defensemanagement.entity.Role> getRoleList(HttpSession session) {
         User currentUser = (User) session.getAttribute("currentUser");
         if (currentUser == null) return null;
-        return userService.getAllRoles();
+        return userService.getManagableRoles(currentUser);
     }
 
     @Autowired
@@ -97,13 +97,13 @@ public class AdminController {
             return "error:未登录";
         }
 
-        // Fetch the full target user object to check its role and department
-        User targetUser = userService.findById(user.getId() != null ? user.getId() : 0L);
-        if (user.getId() == null) { // For new user creation, only super admin is allowed
-             if (!(currentUserObj instanceof User) || !"SUPER_ADMIN".equals(((User)currentUserObj).getRole().getName())) {
-                 return "error:只有超级管理员才能创建用户";
-             }
+        // Check permission for user creation/update
+        if (user.getId() == null) { // For new user creation
+            if (!permissionService.canCreateUser(currentUserObj, user)) {
+                return "error:权限不足，无法创建该角色的用户";
+            }
         } else { // For updates, check permission
+            User targetUser = userService.findById(user.getId());
             if (!permissionService.canEditUser(currentUserObj, targetUser)) {
                 return "error:权限不足";
             }

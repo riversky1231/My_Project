@@ -33,10 +33,8 @@ public class DepartmentController {
         
         List<Teacher> teachers;
         if ("SUPER_ADMIN".equals(currentUser.getRole().getName())) {
-            // 超级管理员可以看到所有教师
             teachers = teacherService.findByDepartmentId(null);
         } else {
-            // 院系管理员只能看到本院系的教师
             teachers = teacherService.findByDepartmentId(currentUser.getDepartmentId());
         }
         
@@ -110,8 +108,7 @@ public class DepartmentController {
             return "error:教师不存在";
         }
         
-        // 院系管理员只能设置本院系的答辩组长
-        if ("DEPT_ADMIN".equals(currentUser.getRole().getName()) && 
+        if ("DEPT_ADMIN".equals(currentUser.getRole().getName()) &&
             !teacher.getDepartmentId().equals(currentUser.getDepartmentId())) {
             return "error:只能设置本院系的答辩组长";
         }

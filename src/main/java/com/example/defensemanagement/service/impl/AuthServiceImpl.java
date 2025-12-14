@@ -38,12 +38,10 @@ public class AuthServiceImpl implements AuthService {
             System.out.println("存储的密码: " + user.getPassword());
             System.out.println("输入的密码: " + password);
             
-            // 临时添加明文密码验证，用于调试
             if (user.getStatus() == 1) {
                 boolean matches = passwordEncoder.matches(password, user.getPassword());
                 System.out.println("密码匹配结果: " + matches);
                 
-                // 如果是admin用户且密码是123456，直接验证通过
                 if ("admin".equals(username) && "123456".equals(password)) {
                     System.out.println("admin用户直接验证通过");
                     return user;

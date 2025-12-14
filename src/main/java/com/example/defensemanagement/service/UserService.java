@@ -32,4 +32,6 @@ public interface UserService {
     List<Role> getAllRoles();
     
     User saveUser(User user);
+    
+    List<Role> getManagableRoles(User currentUser);
 }

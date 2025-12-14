@@ -113,22 +113,53 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User saveUser(User user) {
-        if (user.getId() == null) { // Create new user
+        if (user.getId() == null) {
             if (userMapper.findByUsername(user.getUsername()) != null) {
                 throw new RuntimeException("用户名已存在");
             }
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             userMapper.insert(user);
-        } else { // Update existing user
+        } else {
             if (StringUtils.hasText(user.getPassword())) {
                 user.setPassword(passwordEncoder.encode(user.getPassword()));
             } else {
-                // Keep old password if not provided
                 User oldUser = userMapper.findById(user.getId());
                 user.setPassword(oldUser.getPassword());
             }
             userMapper.update(user);
         }
         return user;
+    }
+
+    @Override
+    public List<Role> getManagableRoles(User currentUser) {
+        List<Role> allRoles = roleMapper.findAll();
+        String currentUserRoleName = currentUser.getRole().getName();
+
+        System.out.println("DEBUG: Current user role: " + currentUserRoleName);
+        System.out.println("DEBUG: All roles from DB: " + allRoles.stream().map(Role::getName).collect(java.util.stream.Collectors.joining(", ")));
+
+        List<Role> manageableRoles;
+        switch (currentUserRoleName) {
+            case "SUPER_ADMIN":
+                manageableRoles = allRoles;
+                break;
+            case "DEPT_ADMIN":
+                manageableRoles = allRoles.stream()
+                        .filter(role -> role.getName().equals("TEACHER") || role.getName().equals("DEFENSE_LEADER"))
+                        .collect(java.util.stream.Collectors.toList());
+                break;
+            case "TEACHER":
+                manageableRoles = allRoles.stream()
+                        .filter(role -> role.getName().equals("DEFENSE_LEADER"))
+                        .collect(java.util.stream.Collectors.toList());
+                break;
+            default:
+                manageableRoles = new java.util.ArrayList<>();
+                break;
+        }
+        
+        System.out.println("DEBUG: Roles to be returned: " + manageableRoles.stream().map(Role::getName).collect(java.util.stream.Collectors.joining(", ")));
+        return manageableRoles;
     }
 }

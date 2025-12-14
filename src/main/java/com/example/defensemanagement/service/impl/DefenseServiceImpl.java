@@ -84,10 +84,8 @@ public class DefenseServiceImpl implements DefenseService {
     @Override
     @Transactional
     public void deleteGroup(Long groupId) {
-        // 删除相关的成员和评语
         groupMemberMapper.deleteByGroupId(groupId);
         commentMapper.deleteByGroupId(groupId);
-        // 删除小组
         defenseGroupMapper.delete(groupId);
     }
 
@@ -124,7 +122,6 @@ public class DefenseServiceImpl implements DefenseService {
                 archive.setMaxScore(maxScore);
             }
             
-            // 将当前数据序列化为JSON
             archive.setArchiveData(objectMapper.writeValueAsString(groups));
             
             archiveSessionMapper.insert(archive);
@@ -149,8 +146,7 @@ public class DefenseServiceImpl implements DefenseService {
             detail.setSessionName(session.getSessionName());
             detail.setArchiveTime(session.getArchiveTime());
             
-            // 反序列化归档数据
-            List<DefenseGroup> groups = objectMapper.readValue(session.getArchiveData(), 
+            List<DefenseGroup> groups = objectMapper.readValue(session.getArchiveData(),
                 objectMapper.getTypeFactory().constructCollectionType(List.class, DefenseGroup.class));
             
             List<ArchiveDetail.ArchiveGroup> archiveGroups = groups.stream().map(group -> {
@@ -179,23 +175,19 @@ public class DefenseServiceImpl implements DefenseService {
     @Transactional
     public void addGroupWithMembers(Object request) {
         try {
-            // 使用反射或者强制转换来处理请求对象
             String requestJson = objectMapper.writeValueAsString(request);
             AddGroupRequest addGroupRequest = objectMapper.readValue(requestJson, AddGroupRequest.class);
             
-            // 创建小组
             DefenseGroup group = new DefenseGroup();
             group.setName(addGroupRequest.getName());
             group.setScore(addGroupRequest.getScore());
             
-            // 获取当前最大的显示顺序
             List<DefenseGroup> existingGroups = defenseGroupMapper.findAllByOrderByDisplayOrderAsc();
             int nextOrder = existingGroups.isEmpty() ? 0 : existingGroups.size();
             group.setDisplayOrder(nextOrder);
             
             defenseGroupMapper.insert(group);
             
-            // 添加成员
             if (addGroupRequest.getMembers() != null && !addGroupRequest.getMembers().isEmpty()) {
                 for (String memberName : addGroupRequest.getMembers()) {
                     if (memberName.trim().length() > 0) {
@@ -211,7 +203,6 @@ public class DefenseServiceImpl implements DefenseService {
         }
     }
 
-    // 内部类用于处理添加小组请求
     public static class AddGroupRequest {
         private String name;
         private int score;

@@ -12,4 +12,12 @@ public interface PermissionService {
      * @return true if permission is granted, false otherwise.
      */
     boolean canEditUser(Object currentUser, User targetUser);
+
+    /**
+     * Checks if the current user can create a new user with the specified role.
+     * @param currentUser The user performing the action. Can be User or Teacher.
+     * @param newUser The user being created.
+     * @return true if permission is granted, false otherwise.
+     */
+    boolean canCreateUser(Object currentUser, User newUser);
 }

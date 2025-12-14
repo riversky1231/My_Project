@@ -56,4 +56,44 @@ public class PermissionServiceImpl implements PermissionService {
 
         return false;
     }
+
+    @Override
+    public boolean canCreateUser(Object currentUser, User newUser) {
+        if (currentUser == null || newUser == null) {
+            return false;
+        }
+
+        if (currentUser instanceof User) {
+            User adminUser = (User) currentUser;
+            String adminRole = adminUser.getRole().getName();
+
+            // 1. Super Admin can create anyone
+            if ("SUPER_ADMIN".equals(adminRole)) {
+                return true;
+            }
+
+            // 2. Department Admin can create Teachers and Defense Leaders
+            if ("DEPT_ADMIN".equals(adminRole)) {
+                // Get the role ID to determine the role name
+                Long roleId = newUser.getRoleId();
+                if (roleId != null) {
+                    // Role ID 3 = DEFENSE_LEADER, Role ID 4 = TEACHER (based on data.sql)
+                    if (roleId == 3L || roleId == 4L) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        if (currentUser instanceof Teacher) {
+            Teacher teacherUser = (Teacher) currentUser;
+            // 3. Teacher can create Defense Leaders
+            Long roleId = newUser.getRoleId();
+            if (roleId != null && roleId == 3L) { // DEFENSE_LEADER
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
