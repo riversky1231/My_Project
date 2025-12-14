@@ -54,37 +54,63 @@ public class AdminController {
         }
     }
 
-    @GetMapping("/users")
-    public String userManagement(Model model, HttpSession session) {
-        User currentUser = (User) session.getAttribute("currentUser");
-        if (currentUser == null || !authService.hasPermission(currentUser, "CREATE_DEPT_ADMIN")) {
-            return "redirect:/";
+    @GetMapping("/users/list")
+    @ResponseBody
+    public List<User> getUserList(HttpSession session) {
+        Object userObject = session.getAttribute("currentUser");
+        if (userObject == null) {
+             userObject = session.getAttribute("currentTeacher");
         }
-        
-        List<User> deptAdmins = userService.getUsersByRole("DEPT_ADMIN");
-        List<Department> departments = userService.getAllDepartments();
-        
-        model.addAttribute("deptAdmins", deptAdmins);
-        model.addAttribute("departments", departments);
-        return "admin/users";
+        if (userObject == null) {
+            return null; 
+        }
+        return userService.getAllUsers();
     }
 
-    @PostMapping("/user/createDeptAdmin")
+    @GetMapping("/departments/list")
     @ResponseBody
-    public String createDepartmentAdmin(@RequestParam String username,
-                                       @RequestParam String password,
-                                       @RequestParam String realName,
-                                       @RequestParam String email,
-                                       @RequestParam Long departmentId,
-                                       HttpSession session) {
-        
+    public List<Department> getDepartmentList(HttpSession session) {
         User currentUser = (User) session.getAttribute("currentUser");
-        if (currentUser == null || !authService.hasPermission(currentUser, "CREATE_DEPT_ADMIN")) {
-            return "error:权限不足";
+        if (currentUser == null) return null;
+        return userService.getAllDepartments();
+    }
+
+    @GetMapping("/roles/list")
+    @ResponseBody
+    public List<com.example.defensemanagement.entity.Role> getRoleList(HttpSession session) {
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser == null) return null;
+        return userService.getAllRoles();
+    }
+
+    @Autowired
+    private com.example.defensemanagement.service.PermissionService permissionService;
+
+    @PostMapping("/users/save")
+    @ResponseBody
+    public String saveUser(@RequestBody User user, HttpSession session) {
+        Object currentUserObj = session.getAttribute("currentUser");
+        if (currentUserObj == null) {
+            currentUserObj = session.getAttribute("currentTeacher");
+        }
+        if (currentUserObj == null) {
+            return "error:未登录";
+        }
+
+        // Fetch the full target user object to check its role and department
+        User targetUser = userService.findById(user.getId() != null ? user.getId() : 0L);
+        if (user.getId() == null) { // For new user creation, only super admin is allowed
+             if (!(currentUserObj instanceof User) || !"SUPER_ADMIN".equals(((User)currentUserObj).getRole().getName())) {
+                 return "error:只有超级管理员才能创建用户";
+             }
+        } else { // For updates, check permission
+            if (!permissionService.canEditUser(currentUserObj, targetUser)) {
+                return "error:权限不足";
+            }
         }
         
         try {
-            userService.createDepartmentAdmin(username, password, realName, email, departmentId);
+            userService.saveUser(user);
             return "success";
         } catch (Exception e) {
             return "error:" + e.getMessage();

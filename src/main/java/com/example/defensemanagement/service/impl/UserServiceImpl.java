@@ -10,6 +10,7 @@ import com.example.defensemanagement.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -39,17 +40,13 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public User createDepartmentAdmin(String username, String password, String realName, String email, Long departmentId) {
-        // 检查用户名是否已存在
         if (userMapper.findByUsername(username) != null) {
             throw new RuntimeException("用户名已存在");
         }
-        
-        // 获取院系管理员角色
         Role deptAdminRole = roleMapper.findByName("DEPT_ADMIN");
         if (deptAdminRole == null) {
             throw new RuntimeException("院系管理员角色不存在");
         }
-        
         User user = new User();
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(password));
@@ -58,7 +55,6 @@ public class UserServiceImpl implements UserService {
         user.setStatus(1);
         user.setRoleId(deptAdminRole.getId());
         user.setDepartmentId(departmentId);
-        
         userMapper.insert(user);
         return user;
     }
@@ -84,16 +80,13 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public Department createDepartment(String name, String code, String description) {
-        // 检查院系代码是否已存在
         if (departmentMapper.findByCode(code) != null) {
             throw new RuntimeException("院系代码已存在");
         }
-        
         Department department = new Department();
         department.setName(name);
         department.setCode(code);
         department.setDescription(description);
-        
         departmentMapper.insert(department);
         return department;
     }
@@ -106,5 +99,36 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean updateDepartment(Department department) {
         return departmentMapper.update(department) > 0;
+    }
+
+    @Override
+    public List<User> getAllUsers() {
+        return userMapper.findAll();
+    }
+
+    @Override
+    public List<Role> getAllRoles() {
+        return roleMapper.findAll();
+    }
+
+    @Override
+    public User saveUser(User user) {
+        if (user.getId() == null) { // Create new user
+            if (userMapper.findByUsername(user.getUsername()) != null) {
+                throw new RuntimeException("用户名已存在");
+            }
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+            userMapper.insert(user);
+        } else { // Update existing user
+            if (StringUtils.hasText(user.getPassword())) {
+                user.setPassword(passwordEncoder.encode(user.getPassword()));
+            } else {
+                // Keep old password if not provided
+                User oldUser = userMapper.findById(user.getId());
+                user.setPassword(oldUser.getPassword());
+            }
+            userMapper.update(user);
+        }
+        return user;
     }
 }

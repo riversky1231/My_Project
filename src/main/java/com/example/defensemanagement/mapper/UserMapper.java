@@ -18,17 +18,15 @@ public interface UserMapper {
     })
     User findById(Long id);
     
-    @Insert("INSERT INTO user (username, password, real_name, email, phone, role_id, department_id) " +
-            "VALUES (#{username}, #{password}, #{realName}, #{email}, #{phone}, #{roleId}, #{departmentId})")
+    @Insert("INSERT INTO user (username, password, real_name, email, phone, status, role_id, department_id) " +
+            "VALUES (#{username}, #{password}, #{realName}, #{email}, #{phone}, #{status}, #{roleId}, #{departmentId})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(User user);
     
     @Update("UPDATE user SET password = #{password}, updated_time = CURRENT_TIMESTAMP WHERE id = #{id}")
     int updatePassword(@Param("id") Long id, @Param("password") String password);
     
-    @Update("UPDATE user SET real_name = #{realName}, email = #{email}, phone = #{phone}, " +
-            "role_id = #{roleId}, department_id = #{departmentId}, updated_time = CURRENT_TIMESTAMP " +
-            "WHERE id = #{id}")
+    @UpdateProvider(type = UserSqlBuilder.class, method = "buildUpdateUser")
     int update(User user);
     
     @Update("UPDATE user SET status = #{status}, updated_time = CURRENT_TIMESTAMP WHERE id = #{id}")
@@ -47,4 +45,40 @@ public interface UserMapper {
         @Result(property = "department.name", column = "department_name")
     })
     List<User> findByRoleId(Long roleId);
+
+    List<User> findAll();
+}
+
+class UserSqlBuilder {
+    public String buildUpdateUser(final User user) {
+        return new org.apache.ibatis.jdbc.SQL() {{
+            UPDATE("user");
+            if (user.getUsername() != null) {
+                SET("username = #{username}");
+            }
+            if (user.getPassword() != null) {
+                SET("password = #{password}");
+            }
+            if (user.getRealName() != null) {
+                SET("real_name = #{realName}");
+            }
+            if (user.getEmail() != null) {
+                SET("email = #{email}");
+            }
+            if (user.getPhone() != null) {
+                SET("phone = #{phone}");
+            }
+            if (user.getStatus() != null) {
+                SET("status = #{status}");
+            }
+            if (user.getRoleId() != null) {
+                SET("role_id = #{roleId}");
+            }
+            if (user.getDepartmentId() != null) {
+                SET("department_id = #{departmentId}");
+            }
+            SET("updated_time = CURRENT_TIMESTAMP");
+            WHERE("id = #{id}");
+        }}.toString();
+    }
 }

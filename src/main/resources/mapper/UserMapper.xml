@@ -35,4 +35,13 @@
         WHERE u.username = #{username}
     </select>
 
+    <select id="findAll" resultMap="UserResultMap">
+        SELECT u.*, r.name as role_name, r.description as role_description,
+               d.name as department_name, d.code as department_code
+        FROM user u
+        LEFT JOIN role r ON u.role_id = r.id
+        LEFT JOIN department d ON u.department_id = d.id
+        ORDER BY u.id DESC
+    </select>
+
 </mapper>
