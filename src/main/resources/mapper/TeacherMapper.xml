@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.defensemanagement.mapper.TeacherMapper">
+
+    <resultMap id="TeacherResultMap" type="com.example.defensemanagement.entity.Teacher">
+        <id property="id" column="id"/>
+        <result property="teacherNo" column="teacher_no"/>
+        <result property="name" column="name"/>
+        <result property="departmentId" column="department_id"/>
+        <result property="title" column="title"/>
+        <result property="email" column="email"/>
+        <result property="phone" column="phone"/>
+        <result property="password" column="password"/>
+        <result property="status" column="status"/>
+        
+        <association property="department" javaType="com.example.defensemanagement.entity.Department">
+            <id property="id" column="department_id"/>
+            <result property="name" column="department_name"/>
+            <result property="code" column="department_code"/>
+        </association>
+    </resultMap>
+
+    <select id="findByTeacherNo" resultMap="TeacherResultMap">
+        SELECT t.*, d.name as department_name, d.code as department_code
+        FROM teacher t
+        LEFT JOIN department d ON t.department_id = d.id
+        WHERE t.teacher_no = #{teacherNo}
+    </select>
+
+</mapper>

@@ -35,6 +35,12 @@
             flex-direction: column;
             border-right: 1px solid var(--border-color);
         }
+        .user-info {
+            font-size: 0.9rem;
+        }
+        .user-info .fw-bold {
+            color: var(--heading-color);
+        }
         .sidebar .logo {
             font-weight: 700;
             font-size: 1.5rem;
@@ -191,6 +197,25 @@
         <a class="nav-link" href="javascript:void(0);" onclick="showView('archive-view', this)"><i class="bi bi-archive"></i> 历史归档</a>
         <a class="nav-link" href="#"><i class="bi bi-gear"></i> 系统设置</a>
     </nav>
+    
+    <!-- 用户信息显示区域 -->
+    <div class="user-info mt-auto pt-3 border-top">
+        <div th:if="${currentUser}" class="text-center">
+            <small class="text-muted">当前用户</small>
+            <div class="fw-bold" th:text="${currentUser.realName}"></div>
+            <small class="text-primary" th:text="${currentUser.role.description}"></small>
+        </div>
+        <div th:if="${currentTeacher}" class="text-center">
+            <small class="text-muted">当前用户</small>
+            <div class="fw-bold" th:text="${currentTeacher.name}"></div>
+            <small class="text-primary">教师</small>
+        </div>
+        <div class="mt-2">
+            <a href="/logout" class="btn btn-sm btn-outline-secondary w-100">
+                <i class="bi bi-box-arrow-right"></i> 退出登录
+            </a>
+        </div>
+    </div>
 </div>
 
 <div class="main-content">
@@ -198,7 +223,14 @@
     <div id="dashboard-view" class="view-container">
         <header class="header">
             <h1>仪表盘</h1>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addGroupModal"><i class="bi bi-plus-circle"></i> 添加新小组</button>
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <span class="text-muted">欢迎，</span>
+                    <span th:if="${currentUser}" class="fw-bold" th:text="${currentUser.realName}"></span>
+                    <span th:if="${currentTeacher}" class="fw-bold" th:text="${currentTeacher.name}"></span>
+                </div>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addGroupModal"><i class="bi bi-plus-circle"></i> 添加新小组</button>
+            </div>
         </header>
 
         <div class="summary-cards">
@@ -421,6 +453,9 @@
     let scoreChart;
 
     document.addEventListener('DOMContentLoaded', function() {
+        // 显示登录成功提示
+        showLoginSuccessAlert();
+        
         // Drag and Drop
         new Sortable(document.getElementById('group-list'), {
             handle: '.drag-handle',
@@ -460,6 +495,37 @@
         updateSummaryCards(initialData);
         renderChart(initialData);
     });
+    
+    function showLoginSuccessAlert() {
+        // 检查是否刚刚登录成功
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('login') === 'success') {
+            // 获取用户信息
+            const userName = document.querySelector('.fw-bold')?.textContent || '用户';
+            
+            // 创建成功提示
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <strong>登录成功！</strong> 欢迎您，${userName}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            // 3秒后自动消失
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 3000);
+            
+            // 清除URL参数
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
 
     function getGroupData() {
         const groups = document.querySelectorAll('.group-item');

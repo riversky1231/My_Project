@@ -3,11 +3,14 @@ package com.example.defensemanagement;
 import com.example.defensemanagement.service.DefenseService;
 import com.example.defensemanagement.entity.ArchiveSession;
 import com.example.defensemanagement.entity.ArchiveDetail;
+import com.example.defensemanagement.entity.User;
+import com.example.defensemanagement.entity.Teacher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpSession;
 import java.util.List;
 
 @Controller
@@ -17,8 +20,19 @@ public class DefenseController {
     private DefenseService defenseService;
 
     @GetMapping("/")
-    public String index(Model model) {
+    public String index(Model model, HttpSession session) {
+        // 检查是否已登录
+        User currentUser = (User) session.getAttribute("currentUser");
+        Teacher currentTeacher = (Teacher) session.getAttribute("currentTeacher");
+        
+        if (currentUser == null && currentTeacher == null) {
+            return "redirect:/login";
+        }
+        
         model.addAttribute("groups", defenseService.getAllGroups());
+        model.addAttribute("currentUser", currentUser);
+        model.addAttribute("currentTeacher", currentTeacher);
+        
         return "index";
     }
 
