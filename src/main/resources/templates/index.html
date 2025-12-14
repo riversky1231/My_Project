@@ -194,7 +194,7 @@
     <nav id="sidebar-nav" class="nav flex-column">
         <a class="nav-link active" href="javascript:void(0);" onclick="showView('dashboard-view', this)"><i class="bi bi-speedometer2"></i> 工作台</a>
         <a class="nav-link" href="javascript:void(0);" onclick="showView('group-management-view', this)"><i class="bi bi-people"></i> 小组管理</a>
-        <a class="nav-link" href="javascript:void(0);" onclick="showView('user-management-view', this)"><i class="bi bi-person-gear"></i> 用户管理</a>
+        <a class="nav-link" href="javascript:void(0);" onclick="showView('user-management-view', this)"><i class="bi bi-person-circle"></i> 用户管理</a>
         <a class="nav-link" href="#"><i class="bi bi-gear"></i> 系统设置</a>
     </nav>
     
@@ -725,8 +725,8 @@
                 updateSummaryCards(updatedData);
                 renderChart(updatedData);
             } else {
-                alert('分数更新失败!');
-            }
+                    showAlert('error', '分数更新失败!');
+                }
         }).finally(() => {
             buttonElement.innerHTML = '<i class="bi bi-check-lg"></i>';
             buttonElement.disabled = false;
@@ -809,7 +809,7 @@
             });
         } catch (error) {
             console.error(error);
-            alert(error.message);
+            showAlert('error', error.message || '获取用户列表失败');
         }
     }
 
@@ -891,24 +891,25 @@
             if (result === 'success') {
                 bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
                 loadUsers();
+                showAlert('success', '用户保存成功！');
             } else {
-                alert('保存失败: ' + result);
+                showAlert('error', '保存失败: ' + result);
             }
         } catch (error) {
             console.error(error);
-            alert('保存失败');
+            showAlert('error', '保存失败，请检查网络连接');
         }
     }
 
     async function deleteUser(userId) {
         if (!confirm('确定要删除这个用户吗？')) return;
         // Implement delete logic here
-        alert('删除功能待实现');
+        showAlert('info', '删除功能待实现');
     }
 
     async function toggleUserStatus(userId, currentStatus) {
         // Implement status toggle logic here
-        alert('状态切换功能待实现');
+        showAlert('info', '状态切换功能待实现');
     }
     
     async function populateSelect(url, selectId) {
@@ -925,6 +926,7 @@
             select.value = currentValue;
         } catch (error) {
             console.error(`Failed to populate ${selectId}:`, error);
+            showAlert('error', `加载${selectId === 'role' ? '角色' : '院系'}列表失败`);
         }
     }
 
@@ -933,7 +935,7 @@
         const memberName = document.getElementById('memberName').value;
         
         if (!memberName.trim()) {
-            alert('请输入成员姓名');
+            showAlert('warning', '请输入成员姓名');
             return;
         }
 
@@ -945,7 +947,7 @@
             if (response.ok) {
                 location.reload(); // 刷新页面
             } else {
-                alert('添加成员失败');
+                showAlert('error', '添加成员失败');
             }
         });
     }
@@ -958,7 +960,7 @@
                 if (response.ok) {
                     location.reload();
                 } else {
-                    alert('删除失败');
+                    showAlert('error', '删除失败');
                 }
             });
         }
@@ -972,7 +974,7 @@
         const groupMembers = document.getElementById('groupMembers').value;
         
         if (!groupName.trim()) {
-            alert('请输入小组名称');
+            showAlert('warning', '请输入小组名称');
             return;
         }
 
@@ -990,9 +992,63 @@
             if (response.ok) {
                 location.reload(); // 刷新页面
             } else {
-                alert('添加小组失败');
+                showAlert('error', '添加小组失败');
             }
         });
+    }
+
+    // 优化的提示框函数
+    function showAlert(type, message) {
+        // 移除已存在的提示框
+        const existingAlert = document.querySelector('.custom-alert');
+        if (existingAlert) {
+            existingAlert.remove();
+        }
+
+        // 创建新的提示框
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert custom-alert alert-dismissible fade show position-fixed`;
+        
+        // 根据类型设置样式和图标
+        let alertClass, icon;
+        switch(type) {
+            case 'success':
+                alertClass = 'alert-success';
+                icon = 'bi-check-circle-fill';
+                break;
+            case 'error':
+                alertClass = 'alert-danger';
+                icon = 'bi-exclamation-triangle-fill';
+                break;
+            case 'warning':
+                alertClass = 'alert-warning';
+                icon = 'bi-exclamation-triangle-fill';
+                break;
+            case 'info':
+                alertClass = 'alert-info';
+                icon = 'bi-info-circle-fill';
+                break;
+            default:
+                alertClass = 'alert-primary';
+                icon = 'bi-info-circle-fill';
+        }
+        
+        alertDiv.classList.add(alertClass);
+        alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; max-width: 500px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
+        alertDiv.innerHTML = `
+            <i class="bi ${icon} me-2"></i>
+            <strong>${message}</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        document.body.appendChild(alertDiv);
+        
+        // 4秒后自动消失
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 4000);
     }
 </script>
 

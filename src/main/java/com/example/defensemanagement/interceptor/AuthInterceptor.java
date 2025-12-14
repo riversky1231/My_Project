@@ -39,12 +39,18 @@ public class AuthInterceptor implements HandlerInterceptor {
 
         // 检查特定权限
         if (requestURI.startsWith("/admin/")) {
+            // Allow GET requests for listing data
             if ((requestURI.equals("/admin/users/list") || requestURI.equals("/admin/departments/list") || requestURI.equals("/admin/roles/list"))
                 && "GET".equalsIgnoreCase(request.getMethod())) {
                 return true;
             }
             
-            // For all other /admin/ paths (like saving or deleting), only super admins are allowed
+            // Allow user save operations for users with proper permissions (checked in controller)
+            if (requestURI.equals("/admin/users/save") && "POST".equalsIgnoreCase(request.getMethod())) {
+                return true; // Permission will be checked in the controller
+            }
+            
+            // For all other /admin/ paths (like department management), only super admins are allowed
             if (currentUser == null || !"SUPER_ADMIN".equals(currentUser.getRole().getName())) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "权限不足");
                 return false;
