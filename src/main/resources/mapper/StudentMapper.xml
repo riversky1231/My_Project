@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.defensemanagement.mapper.StudentMapper">
+
+    <resultMap id="StudentResultMap" type="com.example.defensemanagement.entity.Student">
+        <id property="id" column="id"/>
+        <result property="studentNo" column="student_no"/>
+        <result property="name" column="name"/>
+        <result property="classInfo" column="class_info"/>
+        <result property="departmentId" column="department_id"/>
+        <result property="advisorTeacherId" column="advisor_teacher_id"/>
+        <result property="reviewerTeacherId" column="reviewer_teacher_id"/>
+        <result property="defenseType" column="defense_type"/>
+        <result property="title" column="title"/>
+        <result property="summary" column="summary"/>
+        <result property="defenseGroupId" column="defense_group_id"/>
+        <result property="defenseYear" column="defense_year"/>
+    </resultMap>
+
+    <select id="findById" resultMap="StudentResultMap">
+        SELECT * FROM t_student WHERE id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="StudentResultMap">
+        SELECT * FROM t_student
+    </select>
+
+    <select id="findByDepartmentAndYear" resultMap="StudentResultMap">
+        SELECT * FROM t_student
+        WHERE department_id = #{departmentId} AND defense_year = #{year}
+    </select>
+
+    <select id="findByAdvisorIdAndYear" resultMap="StudentResultMap">
+        SELECT * FROM t_student
+        WHERE advisor_teacher_id = #{advisorId} AND defense_year = #{year}
+    </select>
+
+    <select id="findByDefenseGroupId" resultMap="StudentResultMap">
+        SELECT * FROM t_student
+        WHERE defense_group_id = #{groupId}
+    </select>
+
+    <select id="findByStudentNoAndYear" resultMap="StudentResultMap">
+        SELECT * FROM t_student
+        WHERE student_no = #{studentNo} AND defense_year = #{year}
+    </select>
+
+    <insert id="insert" parameterType="com.example.defensemanagement.entity.Student" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_student (student_no, name, class_info, department_id, defense_year, defense_type, title, summary)
+        VALUES (#{studentNo}, #{name}, #{classInfo}, #{departmentId}, #{defenseYear}, #{defenseType}, #{title}, #{summary})
+    </insert>
+
+    <update id="update" parameterType="com.example.defensemanagement.entity.Student">
+        UPDATE t_student
+        <set>
+            <if test="studentNo != null">student_no = #{studentNo},</if>
+            <if test="name != null">name = #{name},</if>
+            <if test="classInfo != null">class_info = #{classInfo},</if>
+            <if test="departmentId != null">department_id = #{departmentId},</if>
+            <if test="advisorTeacherId != null">advisor_teacher_id = #{advisorTeacherId},</if>
+            <if test="reviewerTeacherId != null">reviewer_teacher_id = #{reviewerTeacherId},</if>
+            <if test="defenseType != null">defense_type = #{defenseType},</if>
+            <if test="title != null">title = #{title},</if>
+            <if test="summary != null">summary = #{summary},</if>
+            <if test="defenseGroupId != null">defense_group_id = #{defenseGroupId},</if>
+            <if test="defenseYear != null">defense_year = #{defenseYear},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+</mapper>

@@ -20,17 +20,17 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .authorizeHttpRequests(authz -> authz
-                .antMatchers("/login", "/css/**", "/js/**", "/images/**").permitAll()
-                .anyRequest().permitAll() // 暂时允许所有请求，使用自定义登录逻辑
-            )
-            .formLogin().disable() // 禁用Spring Security默认登录
-            .logout(logout -> logout
-                .logoutUrl("/logout")
-                .logoutSuccessUrl("/login?logout=true")
-                .permitAll()
-            )
-            .csrf().disable();
+                .authorizeHttpRequests(authz -> authz
+                        .antMatchers("/login", "/css/**", "/js/**", "/images/**").permitAll()
+                        .anyRequest().permitAll() // 暂时允许所有请求，使用自定义登录逻辑
+                )
+                .formLogin().disable() // 禁用Spring Security默认登录
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/login?logout=true")
+                        .permitAll()
+                )
+                .csrf().disable();
 
         return http.build();
     }
