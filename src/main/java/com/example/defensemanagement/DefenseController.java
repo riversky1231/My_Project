@@ -24,15 +24,15 @@ public class DefenseController {
         // 检查是否已登录
         User currentUser = (User) session.getAttribute("currentUser");
         Teacher currentTeacher = (Teacher) session.getAttribute("currentTeacher");
-        
+
         if (currentUser == null && currentTeacher == null) {
             return "redirect:/login";
         }
-        
+
         model.addAttribute("groups", defenseService.getAllGroups());
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("currentTeacher", currentTeacher);
-        
+
         return "index";
     }
 
@@ -106,7 +106,7 @@ public class DefenseController {
     public static class GroupMemberRequest {
         private Long groupId;
         private String name;
-        
+
         public Long getGroupId() { return groupId; }
         public void setGroupId(Long groupId) { this.groupId = groupId; }
         public String getName() { return name; }
@@ -117,7 +117,7 @@ public class DefenseController {
         private String name;
         private int score;
         private List<String> members;
-        
+
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
         public int getScore() { return score; }

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0.//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.defensemanagement.mapper.TeacherScoreRecordMapper">
+
+    <resultMap id="TeacherScoreRecordMap" type="com.example.defensemanagement.entity.TeacherScoreRecord">
+        <id property="id" column="id"/>
+        <result property="studentId" column="student_id"/>
+        <result property="defenseGroupId" column="defense_group_id"/>
+        <result property="teacherId" column="teacher_id"/>
+        <result property="year" column="year"/>
+        <result property="item1Score" column="item1_score"/>
+        <result property="item2Score" column="item2_score"/>
+        <result property="item3Score" column="item3_score"/>
+        <result property="item4Score" column="item4_score"/>
+        <result property="item5Score" column="item5_score"/>
+        <result property="item6Score" column="item6_score"/>
+        <result property="totalScore" column="total_score"/>
+        <result property="submitTime" column="submit_time"/>
+    </resultMap>
+
+    <select id="findByStudentIdAndTeacherId" resultMap="TeacherScoreRecordMap">
+        SELECT * FROM teacher_score_record
+        WHERE student_id = #{studentId} AND teacher_id = #{teacherId}
+    </select>
+
+    <select id="findByStudentIdAndTeacherIdAndYear" resultMap="TeacherScoreRecordMap">
+        SELECT * FROM teacher_score_record
+        WHERE student_id = #{studentId} AND teacher_id = #{teacherId} AND year = #{year}
+    </select>
+
+    <select id="findByStudentId" resultMap="TeacherScoreRecordMap">
+        SELECT * FROM teacher_score_record
+        WHERE student_id = #{studentId}
+        ORDER BY submit_time DESC
+    </select>
+
+    <select id="findByStudentIdAndYear" resultMap="TeacherScoreRecordMap">
+        SELECT * FROM teacher_score_record
+        WHERE student_id = #{studentId} AND year = #{year}
+        ORDER BY submit_time DESC
+    </select>
+
+    <select id="findByGroupIdAndYear" resultMap="TeacherScoreRecordMap">
+        SELECT * FROM teacher_score_record
+        WHERE defense_group_id = #{defenseGroupId} AND year = #{year}
+        ORDER BY submit_time DESC
+    </select>
+
+    <insert id="insert" parameterType="com.example.defensemanagement.entity.TeacherScoreRecord" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO teacher_score_record
+        (student_id, defense_group_id, teacher_id, year,
+         item1_score, item2_score, item3_score, item4_score, item5_score, item6_score,
+         total_score, submit_time)
+        VALUES
+        (#{studentId}, #{defenseGroupId}, #{teacherId}, #{year},
+         #{item1Score}, #{item2Score}, #{item3Score}, #{item4Score}, #{item5Score}, #{item6Score},
+         #{totalScore}, #{submitTime})
+    </insert>
+
+    <update id="update" parameterType="com.example.defensemanagement.entity.TeacherScoreRecord">
+        UPDATE teacher_score_record
+        <set>
+            <if test="defenseGroupId != null">defense_group_id = #{defenseGroupId},</if>
+            <if test="year != null">year = #{year},</if>
+            <if test="item1Score != null">item1_score = #{item1Score},</if>
+            <if test="item2Score != null">item2_score = #{item2Score},</if>
+            <if test="item3Score != null">item3_score = #{item3Score},</if>
+            <if test="item4Score != null">item4_score = #{item4Score},</if>
+            <if test="item5Score != null">item5_score = #{item5Score},</if>
+            <if test="item6Score != null">item6_score = #{item6Score},</if>
+            <if test="totalScore != null">total_score = #{totalScore},</if>
+            <if test="submitTime != null">submit_time = #{submitTime},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+</mapper>
+

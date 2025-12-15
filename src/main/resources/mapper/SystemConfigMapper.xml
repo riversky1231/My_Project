@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.defensemanagement.mapper.SystemConfigMapper">
+
+    <resultMap id="ConfigMap" type="com.example.defensemanagement.entity.SystemConfig">
+        <id property="configKey" column="config_key"/>
+        <result property="configValue" column="config_value"/>
+        <result property="description" column="description"/>
+    </resultMap>
+
+    <select id="findByKey" resultMap="ConfigMap">
+        SELECT config_key, config_value, description
+        FROM system_config
+        WHERE config_key = #{configKey}
+    </select>
+
+    <insert id="insertOrUpdate" parameterType="com.example.defensemanagement.entity.SystemConfig">
+        INSERT INTO system_config (config_key, config_value, description)
+        VALUES (#{configKey}, #{configValue}, #{description})
+        ON DUPLICATE KEY UPDATE
+            config_value = VALUES(config_value),
+            description = VALUES(description)
+    </insert>
+
+</mapper>
+
