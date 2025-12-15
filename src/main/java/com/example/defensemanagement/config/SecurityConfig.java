@@ -21,15 +21,13 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authz -> authz
-                        .antMatchers("/login", "/css/**", "/js/**", "/images/**").permitAll()
-                        .anyRequest().permitAll() // 暂时允许所有请求，使用自定义登录逻辑
-                )
-                .formLogin().disable() // 禁用Spring Security默认登录
+                        // 交由应用内的 Session 逻辑控制权限，Spring Security 放行所有路径
+                        .antMatchers("/**").permitAll())
+                .formLogin().disable()
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout=true")
-                        .permitAll()
-                )
+                        .permitAll())
                 .csrf().disable();
 
         return http.build();

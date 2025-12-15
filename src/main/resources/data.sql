@@ -1,7 +1,7 @@
--- 创建数据库
 CREATE DATABASE IF NOT EXISTS defense_management DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
 USE defense_management;
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
 
 -- 创建答辩小组表
 CREATE TABLE IF NOT EXISTS defense_group (
@@ -34,24 +34,7 @@ CREATE TABLE IF NOT EXISTS comment (
     FOREIGN KEY (group_id) REFERENCES defense_group(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='小组评语表';
 
--- 插入初始数据
-INSERT INTO defense_group (name, display_order, score) VALUES 
-('第一小组：AI智能助手项目', 0, 85),
-('第二小组：电商平台系统', 1, 92),
-('第三小组：在线教育平台', 2, 78),
-('第四小组：智慧城市管理', 3, 88);
-
--- 插入小组成员
-INSERT INTO group_member (name, group_id) VALUES 
-('张三', 1), ('李四', 1), ('王五', 1),
-('赵六', 2), ('孙七', 2), ('周八', 2),
-('钱九', 3), ('吴十', 3), ('郑一', 3),
-('王二', 4), ('李三', 4), ('张四', 4);
-
--- 插入初始评语
-INSERT INTO comment (content, group_id) VALUES 
-('项目创新性强，技术实现较为完善，演示效果良好。', 1),
-('系统架构清晰，功能完整，用户体验优秀。', 2);
+-- 归档表
 
 -- 创建归档会话表
 CREATE TABLE IF NOT EXISTS archive_session (
@@ -135,34 +118,6 @@ CREATE TABLE IF NOT EXISTS defense_leader (
     UNIQUE KEY uk_teacher_year (teacher_id, year)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='答辩组长表';
 
--- 插入角色数据
-INSERT INTO role (name, description) VALUES 
-('SUPER_ADMIN', '超级管理员'),
-('DEPT_ADMIN', '院系管理员'),
-('DEFENSE_LEADER', '答辩组长'),
-('TEACHER', '教师');
-
--- 插入默认院系
-INSERT INTO department (name, code, description) VALUES 
-('计算机科学与技术学院', 'CS', '计算机科学与技术学院'),
-('软件学院', 'SE', '软件学院');
-
--- 插入超级管理员用户
-INSERT INTO user (username, password, real_name, role_id) VALUES 
-('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', '超级管理员', 1);
--- 密码是123456的BCrypt加密结果
-
--- 插入示例教师数据
-INSERT INTO teacher (teacher_no, name, department_id, title, email, password) VALUES 
-('T001', '张教授', 1, '教授', 'zhang@example.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi'),
-('T002', '李副教授', 1, '副教授', 'li@example.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi'),
-('T003', '王讲师', 2, '讲师', 'wang@example.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi');
-
--- 插入答辩组长数据（2024年）
-INSERT INTO defense_leader (teacher_id, year, department_id) VALUES 
-(1, 2024, 1),
-(3, 2024, 2);
-
 -- 学生表
 CREATE TABLE IF NOT EXISTS t_student (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -245,3 +200,200 @@ CREATE TABLE IF NOT EXISTS system_config (
     description VARCHAR(255) COMMENT '描述',
     updated_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系统配置';
+
+-- 权限管理表（备用，避免与业务表冲突）
+CREATE TABLE IF NOT EXISTS sys_user (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '用户ID',
+    username VARCHAR(50) NOT NULL UNIQUE COMMENT '用户名（登录账号）',
+    password VARCHAR(100) NOT NULL COMMENT '密码',
+    real_name VARCHAR(50) NOT NULL COMMENT '真实姓名',
+    teacher_code VARCHAR(20) COMMENT '教师编号（教师角色使用）',
+    email VARCHAR(100) COMMENT '邮箱',
+    phone VARCHAR(20) COMMENT '手机号',
+    status TINYINT DEFAULT 1 COMMENT '用户状态：1-启用，0-禁用',
+    department_id BIGINT COMMENT '所属部门ID',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by BIGINT COMMENT '创建人ID',
+    update_by BIGINT COMMENT '更新人ID',
+    INDEX idx_username (username),
+    INDEX idx_teacher_code (teacher_code),
+    INDEX idx_department_id (department_id)
+) COMMENT='用户表';
+
+CREATE TABLE IF NOT EXISTS sys_role (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '角色ID',
+    role_code VARCHAR(50) NOT NULL UNIQUE COMMENT '角色编码',
+    role_name VARCHAR(50) NOT NULL COMMENT '角色名称',
+    description VARCHAR(200) COMMENT '角色描述',
+    status TINYINT DEFAULT 1 COMMENT '角色状态：1-启用，0-禁用',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by BIGINT COMMENT '创建人ID',
+    update_by BIGINT COMMENT '更新人ID',
+    INDEX idx_role_code (role_code)
+) COMMENT='角色表';
+
+CREATE TABLE IF NOT EXISTS sys_user_role (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT 'ID',
+    user_id BIGINT NOT NULL COMMENT '用户ID',
+    role_id BIGINT NOT NULL COMMENT '角色ID',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    create_by BIGINT COMMENT '创建人ID',
+    UNIQUE KEY uk_user_role (user_id, role_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_role_id (role_id)
+) COMMENT='用户角色关联表';
+
+CREATE TABLE IF NOT EXISTS sys_department (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '部门ID',
+    dept_code VARCHAR(50) NOT NULL UNIQUE COMMENT '部门编码',
+    dept_name VARCHAR(100) NOT NULL COMMENT '部门名称',
+    parent_id BIGINT DEFAULT 0 COMMENT '父部门ID',
+    level INT DEFAULT 1 COMMENT '部门层级',
+    sort INT DEFAULT 0 COMMENT '排序',
+    status TINYINT DEFAULT 1 COMMENT '部门状态：1-启用，0-禁用',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by BIGINT COMMENT '创建人ID',
+    update_by BIGINT COMMENT '更新人ID',
+    INDEX idx_dept_code (dept_code),
+    INDEX idx_parent_id (parent_id)
+) COMMENT='部门表';
+
+-- 基础数据 ------------------------------------------------------------------
+
+-- 角色
+INSERT INTO role (name, description) VALUES
+('SUPER_ADMIN', '超级管理员'),
+('DEPT_ADMIN', '院系管理员'),
+('DEFENSE_LEADER', '答辩组长'),
+('TEACHER', '教师');
+
+-- 院系
+INSERT INTO department (name, code, description) VALUES
+('计算机科学与技术学院', 'CS', '计算机科学与技术学院'),
+('软件学院', 'SE', '软件学院'),
+('信息与通信工程学院', 'ICE', '信息与通信工程'),
+('人工智能学院', 'AI', '人工智能学院');
+
+-- 超级管理员用户（密码 123456）
+INSERT INTO user (username, password, real_name, role_id, department_id) VALUES
+('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', '超级管理员', 1, NULL);
+
+-- 院系管理员
+INSERT INTO user (username, password, real_name, role_id, department_id, email, phone) VALUES
+('cs_admin',  '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', '计院管理员', 2, 1, 'cs_admin@example.com', '13800000001'),
+('se_admin',  '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', '软院管理员', 2, 2, 'se_admin@example.com', '13800000002'),
+('ice_admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', '信通管理员', 2, 3, 'ice_admin@example.com', '13800000003');
+
+-- 教师（密码同编号）
+INSERT INTO teacher (teacher_no, name, department_id, title, email, phone, password) VALUES
+('T001', '张教授', 1, '教授', 'zhang@example.com', '13900010001', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi'),
+('T002', '李副教授', 1, '副教授', 'li@example.com', '13900010002', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi'),
+('T003', '王讲师', 2, '讲师', 'wang@example.com', '13900020003', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi'),
+('T004', '赵老师', 2, '副教授', 'zhao@example.com', '13900020004', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi'),
+('T005', '钱博士', 3, '讲师', 'qian@example.com', '13900030005', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi'),
+('T006', '孙博士', 4, '副教授', 'sun@example.com', '13900040006', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi'),
+('T007', '周老师', 4, '讲师', 'zhou@example.com', '13900040007', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi');
+
+-- 答辩组长
+INSERT INTO defense_leader (teacher_id, year, department_id) VALUES
+(1, 2024, 1), (1, 2025, 1),
+(3, 2024, 2),
+(5, 2024, 3),
+(6, 2025, 4);
+
+-- 答辩小组与成员
+INSERT INTO defense_group (name, display_order, score) VALUES
+('第一小组：AI 智能助手', 0, 85),
+('第二小组：电商平台',     1, 92),
+('第三小组：在线教育',     2, 78),
+('第四小组：智慧城市',     3, 88),
+('第五小组：车联网',       4, 90);
+
+INSERT INTO group_member (name, group_id) VALUES
+('张三', 1), ('李四', 1), ('王五', 1), ('陈六', 1),
+('赵七', 2), ('孙八', 2), ('周九', 2),
+('钱十', 3), ('吴十一', 3),
+('郑十二', 4), ('王十三', 4), ('李十四', 4),
+('马十五', 5), ('胡十六', 5);
+
+INSERT INTO comment (content, group_id) VALUES
+('项目创新性强，技术实现完善，演示效果良好。', 1),
+('系统架构清晰，功能完整，用户体验优秀。', 2),
+('教学交互流畅，内容策划合理，但性能需优化。', 3);
+
+-- 学生数据
+INSERT INTO t_student (student_no, name, class_info, department_id, advisor_teacher_id, reviewer_teacher_id, defense_type, title, summary, defense_group_id, defense_year) VALUES
+('20210001', '林宇轩', '计科2001', 1, 1, 2, 'PAPER', '多模态对话系统研究', '针对多模态对话的模型融合方案。', 1, 2024),
+('20210002', '周雨桐', '计科2002', 1, 2, 1, 'DESIGN', '智能助老 APP 设计', '便捷健康监测与陪伴。', 1, 2024),
+('20210003', '陈思琪', '软工2001', 2, 3, 4, 'PAPER', '微服务网关安全加固', '零信任与熔断策略结合。', 2, 2024),
+('20210004', '王俊凯', '软工2001', 2, 4, 3, 'DESIGN', '校园二手交易平台', '交易、信誉与物流一体化。', 2, 2024),
+('20210005', '李怡然', '信通2001', 3, 5, 1, 'PAPER', '5G 上行调度优化', '毫米波场景资源分配。', 3, 2024),
+('20210006', '赵梓涵', '信通2002', 3, 5, 2, 'DESIGN', '低功耗传感网关', '面向智慧城市的边缘采集。', 4, 2024),
+('20210007', '吴昊', 'AI2101', 4, 6, 7, 'PAPER', '大模型蒸馏与压缩', '蒸馏策略与结构化剪枝。', 5, 2025),
+('20210008', '张可心', 'AI2102', 4, 7, 6, 'DESIGN', '视觉导航小车', '目标检测与路径规划集成。', 5, 2025);
+
+-- 评分指标（权值合计 1.0）
+INSERT INTO evaluation_item (defense_type, item_name, weight, max_score, display_order) VALUES
+('PAPER',  '论文质量',        0.5, 50, 1),
+('PAPER',  '自述报告',        0.25, 25, 2),
+('PAPER',  '回答问题',        0.25, 25, 3),
+('DESIGN', '设计质量1',       0.15, 15, 1),
+('DESIGN', '设计质量2',       0.15, 15, 2),
+('DESIGN', '设计质量3',       0.15, 15, 3),
+('DESIGN', '自述报告',        0.25, 25, 4),
+('DESIGN', '回答问题1',       0.15, 15, 5),
+('DESIGN', '回答问题2',       0.15, 15, 6);
+
+-- 教师评分记录
+INSERT INTO teacher_score_record (student_id, defense_group_id, teacher_id, year, item1_score, item2_score, item3_score, total_score, submit_time) VALUES
+(1, 1, 1, 2024, 45, 23, 22, 90, NOW()),
+(1, 1, 2, 2024, 44, 22, 21, 87, NOW()),
+(2, 1, 1, 2024, 13, 13, 12, 80, NOW()),
+(2, 1, 2, 2024, 14, 14, 13, 85, NOW()),
+(3, 2, 3, 2024, 46, 24, 23, 93, NOW()),
+(4, 2, 4, 2024, 13, 14, 13, 82, NOW()),
+(5, 3, 5, 2024, 41, 21, 20, 82, NOW()),
+(6, 4, 5, 2024, 12, 12, 11, 76, NOW()),
+(7, 5, 6, 2025, 47, 24, 24, 95, NOW()),
+(8, 5, 7, 2025, 13, 14, 14, 85, NOW());
+
+-- 学生最终成绩示例
+INSERT INTO student_final_score (student_id, year, advisor_score, reviewer_score, final_defense_score, total_grade, adjustment_factor, group_avg_score, large_group_score) VALUES
+(1, 2024, 90, 92, 91.0, 91.6, 1.050, 88, 92),
+(2, 2024, 88, 86, 83.0, 85.6, 0.980, 85, 83),
+(3, 2024, 92, 90, 93.0, 92.0, 1.020, 91, 93),
+(4, 2024, 85, 84, 82.0, 83.4, 0.970, 82, 80),
+(5, 2024, 90, 90, 82.0, 86.0, 1.000, 82, NULL),
+(6, 2024, 84, 82, 78.0, 80.8, 0.950, 82, 78),
+(7, 2025, 95, 94, 96.0, 95.6, 1.030, 93, 96),
+(8, 2025, 90, 89, 85.0, 87.2, 0.980, 87, 85);
+
+-- 系统配置示例
+INSERT INTO system_config (config_key, config_value, description) VALUES
+('CURRENT_DEFENSE_YEAR', '2025', '当前答辩年份'),
+('DEFENSE_DATE_YEAR', '2025', '答辩日期-年'),
+('DEFENSE_DATE_MONTH', '6', '答辩日期-月'),
+('DEFENSE_DATE_DAY', '20', '答辩日期-日'),
+('GRADE_DATE_YEAR', '2025', '成绩评定日期-年'),
+('GRADE_DATE_MONTH', '6', '成绩评定日期-月'),
+('GRADE_DATE_DAY', '28', '成绩评定日期-日'),
+('QWEN_API_KEY', 'PLEASE_SET_REAL_KEY', 'QWEN 大模型 API Key'),
+('PAPER_PROMPT_TEMPLATE', '请根据论文题目、摘要与答辩表现生成简洁有力的评语。', '论文评语提示词'),
+('DESIGN_PROMPT_TEMPLATE', '请基于设计方案、实现细节与现场表现生成客观评语。', '设计评语提示词');
+
+-- sys_* 示例数据
+INSERT INTO sys_role (role_code, role_name, description) VALUES
+('SUPER_ADMIN', '超级管理员', '系统超级管理员，拥有所有权限'),
+('DEPT_ADMIN', '院系管理员', '院系管理员，管理本院系相关事务'),
+('DEFENSE_LEADER', '答辩组长', '答辩组长，负责答辩组织管理'),
+('TEACHER', '教师', '普通教师用户');
+
+INSERT INTO sys_user (username, password, real_name, status) VALUES
+('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iKTcKBhKKDQUP9fhpfYBKnbm6Ei2', '超级管理员', 1);
+
+INSERT INTO sys_user_role (user_id, role_id) VALUES (1, 1);
+
+SET FOREIGN_KEY_CHECKS = 1;
