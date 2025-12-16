@@ -34,4 +34,10 @@ public interface UserService {
     User saveUser(User user);
     
     List<Role> getManagableRoles(User currentUser);
+    
+    boolean deleteUser(Long userId);
+    
+    List<User> searchUsers(String keyword, int page, int pageSize);
+    
+    int countUsers(String keyword);
 }

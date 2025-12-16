@@ -162,4 +162,23 @@ public class UserServiceImpl implements UserService {
         System.out.println("DEBUG: Roles to be returned: " + manageableRoles.stream().map(Role::getName).collect(java.util.stream.Collectors.joining(", ")));
         return manageableRoles;
     }
+    
+    @Override
+    public boolean deleteUser(Long userId) {
+        if (userId == null) {
+            return false;
+        }
+        return userMapper.deleteById(userId) > 0;
+    }
+    
+    @Override
+    public List<User> searchUsers(String keyword, int page, int pageSize) {
+        int offset = (page - 1) * pageSize;
+        return userMapper.searchUsers(keyword, offset, pageSize);
+    }
+    
+    @Override
+    public int countUsers(String keyword) {
+        return userMapper.countUsers(keyword);
+    }
 }
