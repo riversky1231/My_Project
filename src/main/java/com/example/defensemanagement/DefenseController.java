@@ -39,7 +39,8 @@ public class DefenseController {
     @GetMapping("/group/{id}/members")
     @ResponseBody
     public List<String> getMembers(@PathVariable Long id) {
-        return defenseService.getGroupMemberNames(id);
+        // 返回学生姓名和项目名称
+        return defenseService.getGroupStudentInfo(id);
     }
 
     @PostMapping("/comment")

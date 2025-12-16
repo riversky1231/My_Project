@@ -17,9 +17,15 @@ public interface DefenseService {
     DefenseGroup getGroupById(Long id);
     
     /**
-     * 获取小组成员名称列表
+     * 获取小组成员名称列表 (已废弃，使用 Student 表)
      */
+    @Deprecated
     List<String> getGroupMemberNames(Long groupId);
+    
+    /**
+     * 获取小组学生信息（姓名 + 项目）
+     */
+    List<String> getGroupStudentInfo(Long groupId);
     
     /**
      * 添加评语

@@ -162,7 +162,7 @@
 
         .group-item:hover {
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px var(--secondary-color-opacity, rgba(99, 102, 241, 0.2));
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
         }
 
         .group-item .drag-handle {
@@ -374,8 +374,7 @@
         <div id="group-management-view" class="view-container" style="display: none;">
             <header class="header">
                 <h1>小组管理</h1>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addMemberModal"><i
-                        class="bi bi-plus-circle"></i> 添加新成员</button>
+                <p class="text-muted">学生信息通过学生管理模块维护，在学生表中指定 defense_group_id 即可关联到小组</p>
             </header>
             <div class="module">
                 <div class="accordion" id="groupsAccordion">
@@ -393,12 +392,14 @@
                             <div class="accordion-body">
                                 <ul class="list-group">
                                     <li th:each="member : ${group.members}"
-                                        class="list-group-item d-flex justify-content-between align-items-center">
-                                        <span th:text="${member.name}"></span>
-                                        <button class="btn btn-sm btn-outline-danger"
-                                            th:onclick="'deleteMember(' + ${member.id} + ')'">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
+                                        class="list-group-item d-flex justify-content-between align-items-start">
+                                        <div class="ms-2 me-auto">
+                                            <div class="fw-bold" th:text="${member.name + ' (' + member.studentNo + ')'}">学生姓名(学号)</div>
+                                            <small class="text-muted">
+                                                <span th:text="'项目：' + ${member.title}">项目名称</span>
+                                                <span class="badge bg-info ms-2" th:text="${member.defenseType == 'PAPER' ? '论文' : '设计'}">类型</span>
+                                            </small>
+                                        </div>
                                     </li>
                                 </ul>
                             </div>
@@ -417,7 +418,7 @@
                         <input type="text" id="user-search-input" class="form-control" placeholder="搜索用户..." onkeypress="if(event.key==='Enter') searchUsersWithPagination()">
                         <button class="btn btn-outline-secondary" type="button" onclick="searchUsersWithPagination()"><i class="bi bi-search"></i></button>
                     </div>
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                    <button class="btn btn-primary" onclick="openUserModal()">
                         <i class="bi bi-plus-circle"></i> 添加新用户
                     </button>
                 </div>
@@ -791,6 +792,7 @@
                         <div class="col-md-6">
                             <label for="username" class="form-label">用户名</label>
                             <input type="text" class="form-control" id="username" required>
+                            <small class="text-muted" id="username-hint" style="display: none;">提示：只有超级管理员可以修改用户名</small>
                         </div>
                         <div class="col-md-6">
                             <label for="realName" class="form-label">真实姓名</label>
@@ -1178,23 +1180,61 @@
             const modal = new bootstrap.Modal(document.getElementById('addUserModal'));
             const form = document.getElementById('addUserForm');
             const modalLabel = document.getElementById('addUserModalLabel');
+            const usernameInput = document.getElementById('username');
+            const usernameHint = document.getElementById('username-hint');
+            
+            // 获取当前用户角色
+            const userInfoDiv = document.querySelector('.user-info');
+            const currentUserRole = userInfoDiv.dataset.userRole;
+            
+            console.log('DEBUG: 当前用户角色:', currentUserRole);
+            console.log('DEBUG: 是否为超级管理员:', currentUserRole === 'SUPER_ADMIN');
 
+            // 先重置表单
             form.reset();
+            
+            // 清空所有字段
             document.getElementById('userId').value = '';
+            usernameInput.value = '';
+            document.getElementById('realName').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+            
+            // 重置用户名字段状态
+            usernameInput.readOnly = false;
+            usernameInput.removeAttribute('readonly');
+            usernameHint.style.display = 'none';
 
             if (user) {
+                // 编辑模式
                 modalLabel.textContent = '编辑用户';
                 document.getElementById('userId').value = user.id;
-                document.getElementById('username').value = user.username;
-                document.getElementById('username').readOnly = true; // Username cannot be changed
-                document.getElementById('realName').value = user.realName;
-                document.getElementById('email').value = user.email;
+                usernameInput.value = user.username;
+                
+                console.log('DEBUG: 编辑模式 - 用户名:', user.username);
+                
+                // 只有超级管理员才能修改用户名
+                if (currentUserRole !== 'SUPER_ADMIN') {
+                    console.log('DEBUG: 非超级管理员，锁定用户名');
+                    usernameInput.readOnly = true;
+                    usernameHint.style.display = 'block';
+                } else {
+                    console.log('DEBUG: 超级管理员，允许修改用户名');
+                }
+                
+                document.getElementById('realName').value = user.realName || '';
+                document.getElementById('email').value = user.email || '';
                 document.getElementById('role').value = user.roleId;
-                document.getElementById('department').value = user.departmentId;
+                document.getElementById('department').value = user.departmentId || '';
                 document.getElementById('userStatus').checked = user.status === 1;
+                // 编辑模式下密码为可选
+                document.getElementById('password').placeholder = '留空表示不修改密码';
             } else {
+                // 新增模式
+                console.log('DEBUG: 新增模式');
                 modalLabel.textContent = '添加新用户';
-                document.getElementById('username').readOnly = false;
+                document.getElementById('userStatus').checked = true; // 默认启用
+                document.getElementById('password').placeholder = '请输入密码';
             }
 
             // Populate dropdowns

@@ -13,16 +13,6 @@ CREATE TABLE IF NOT EXISTS defense_group (
     updated_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='答辩小组表';
 
--- 创建小组成员表
-CREATE TABLE IF NOT EXISTS group_member (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL COMMENT '成员姓名',
-    group_id BIGINT NOT NULL COMMENT '所属小组ID',
-    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    INDEX idx_group_id (group_id),
-    FOREIGN KEY (group_id) REFERENCES defense_group(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='小组成员表';
-
 -- 创建评语表
 CREATE TABLE IF NOT EXISTS comment (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -201,66 +191,6 @@ CREATE TABLE IF NOT EXISTS system_config (
     updated_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系统配置';
 
--- 权限管理表（备用，避免与业务表冲突）
-CREATE TABLE IF NOT EXISTS sys_user (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '用户ID',
-    username VARCHAR(50) NOT NULL UNIQUE COMMENT '用户名（登录账号）',
-    password VARCHAR(100) NOT NULL COMMENT '密码',
-    real_name VARCHAR(50) NOT NULL COMMENT '真实姓名',
-    teacher_code VARCHAR(20) COMMENT '教师编号（教师角色使用）',
-    email VARCHAR(100) COMMENT '邮箱',
-    phone VARCHAR(20) COMMENT '手机号',
-    status TINYINT DEFAULT 1 COMMENT '用户状态：1-启用，0-禁用',
-    department_id BIGINT COMMENT '所属部门ID',
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    create_by BIGINT COMMENT '创建人ID',
-    update_by BIGINT COMMENT '更新人ID',
-    INDEX idx_username (username),
-    INDEX idx_teacher_code (teacher_code),
-    INDEX idx_department_id (department_id)
-) COMMENT='用户表';
-
-CREATE TABLE IF NOT EXISTS sys_role (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '角色ID',
-    role_code VARCHAR(50) NOT NULL UNIQUE COMMENT '角色编码',
-    role_name VARCHAR(50) NOT NULL COMMENT '角色名称',
-    description VARCHAR(200) COMMENT '角色描述',
-    status TINYINT DEFAULT 1 COMMENT '角色状态：1-启用，0-禁用',
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    create_by BIGINT COMMENT '创建人ID',
-    update_by BIGINT COMMENT '更新人ID',
-    INDEX idx_role_code (role_code)
-) COMMENT='角色表';
-
-CREATE TABLE IF NOT EXISTS sys_user_role (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT 'ID',
-    user_id BIGINT NOT NULL COMMENT '用户ID',
-    role_id BIGINT NOT NULL COMMENT '角色ID',
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    create_by BIGINT COMMENT '创建人ID',
-    UNIQUE KEY uk_user_role (user_id, role_id),
-    INDEX idx_user_id (user_id),
-    INDEX idx_role_id (role_id)
-) COMMENT='用户角色关联表';
-
-CREATE TABLE IF NOT EXISTS sys_department (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '部门ID',
-    dept_code VARCHAR(50) NOT NULL UNIQUE COMMENT '部门编码',
-    dept_name VARCHAR(100) NOT NULL COMMENT '部门名称',
-    parent_id BIGINT DEFAULT 0 COMMENT '父部门ID',
-    level INT DEFAULT 1 COMMENT '部门层级',
-    sort INT DEFAULT 0 COMMENT '排序',
-    status TINYINT DEFAULT 1 COMMENT '部门状态：1-启用，0-禁用',
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    create_by BIGINT COMMENT '创建人ID',
-    update_by BIGINT COMMENT '更新人ID',
-    INDEX idx_dept_code (dept_code),
-    INDEX idx_parent_id (parent_id)
-) COMMENT='部门表';
-
 -- 基础数据 ------------------------------------------------------------------
 
 -- 角色
@@ -304,20 +234,13 @@ INSERT INTO defense_leader (teacher_id, year, department_id) VALUES
 (5, 2024, 3),
 (6, 2025, 4);
 
--- 答辩小组与成员
+-- 答辩小组与成员（学生通过 defense_group_id 关联到小组）
 INSERT INTO defense_group (name, display_order, score) VALUES
-('第一小组：AI 智能助手', 0, 85),
-('第二小组：电商平台',     1, 92),
-('第三小组：在线教育',     2, 78),
-('第四小组：智慧城市',     3, 88),
-('第五小组：车联网',       4, 90);
-
-INSERT INTO group_member (name, group_id) VALUES
-('张三', 1), ('李四', 1), ('王五', 1), ('陈六', 1),
-('赵七', 2), ('孙八', 2), ('周九', 2),
-('钱十', 3), ('吴十一', 3),
-('郑十二', 4), ('王十三', 4), ('李十四', 4),
-('马十五', 5), ('胡十六', 5);
+('第一小组', 0, 85),
+('第二小组',     1, 92),
+('第三小组',     2, 78),
+('第四小组',     3, 88),
+('第五小组',       4, 90);
 
 INSERT INTO comment (content, group_id) VALUES
 ('项目创新性强，技术实现完善，演示效果良好。', 1),
@@ -383,17 +306,5 @@ INSERT INTO system_config (config_key, config_value, description) VALUES
 ('QWEN_API_KEY', 'PLEASE_SET_REAL_KEY', 'QWEN 大模型 API Key'),
 ('PAPER_PROMPT_TEMPLATE', '请根据论文题目、摘要与答辩表现生成简洁有力的评语。', '论文评语提示词'),
 ('DESIGN_PROMPT_TEMPLATE', '请基于设计方案、实现细节与现场表现生成客观评语。', '设计评语提示词');
-
--- sys_* 示例数据
-INSERT INTO sys_role (role_code, role_name, description) VALUES
-('SUPER_ADMIN', '超级管理员', '系统超级管理员，拥有所有权限'),
-('DEPT_ADMIN', '院系管理员', '院系管理员，管理本院系相关事务'),
-('DEFENSE_LEADER', '答辩组长', '答辩组长，负责答辩组织管理'),
-('TEACHER', '教师', '普通教师用户');
-
-INSERT INTO sys_user (username, password, real_name, status) VALUES
-('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iKTcKBhKKDQUP9fhpfYBKnbm6Ei2', '超级管理员', 1);
-
-INSERT INTO sys_user_role (user_id, role_id) VALUES (1, 1);
 
 SET FOREIGN_KEY_CHECKS = 1;

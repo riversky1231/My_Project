@@ -12,33 +12,40 @@
             <result column="comment_content" property="content"/>
             <result column="comment_group_id" property="groupId"/>
         </association>
-        <collection property="members" ofType="com.example.defensemanagement.entity.GroupMember">
-            <id column="member_id" property="id"/>
-            <result column="member_name" property="name"/>
-            <result column="member_group_id" property="groupId"/>
+        <collection property="members" ofType="com.example.defensemanagement.entity.Student">
+            <id column="student_id" property="id"/>
+            <result column="student_no" property="studentNo"/>
+            <result column="student_name" property="name"/>
+            <result column="student_class" property="classInfo"/>
+            <result column="student_title" property="title"/>
+            <result column="student_defense_type" property="defenseType"/>
+            <result column="student_defense_group_id" property="defenseGroupId"/>
         </collection>
     </resultMap>
 
     <select id="findAllByOrderByDisplayOrderAsc" resultMap="DefenseGroupResultMap">
         SELECT 
             dg.id, dg.name, dg.display_order, dg.score,
-            gm.id as member_id, gm.name as member_name, gm.group_id as member_group_id,
+            s.id as student_id, s.student_no, s.name as student_name, s.class_info as student_class,
+            s.title as student_title, s.defense_type as student_defense_type, s.defense_group_id as student_defense_group_id,
             c.id as comment_id, c.content as comment_content, c.group_id as comment_group_id
         FROM defense_group dg
-        LEFT JOIN group_member gm ON dg.id = gm.group_id
+        LEFT JOIN t_student s ON dg.id = s.defense_group_id
         LEFT JOIN comment c ON dg.id = c.group_id
-        ORDER BY dg.display_order ASC
+        ORDER BY dg.display_order ASC, s.id ASC
     </select>
 
     <select id="findById" resultMap="DefenseGroupResultMap">
         SELECT 
             dg.id, dg.name, dg.display_order, dg.score,
-            gm.id as member_id, gm.name as member_name, gm.group_id as member_group_id,
+            s.id as student_id, s.student_no, s.name as student_name, s.class_info as student_class,
+            s.title as student_title, s.defense_type as student_defense_type, s.defense_group_id as student_defense_group_id,
             c.id as comment_id, c.content as comment_content, c.group_id as comment_group_id
         FROM defense_group dg
-        LEFT JOIN group_member gm ON dg.id = gm.group_id
+        LEFT JOIN t_student s ON dg.id = s.defense_group_id
         LEFT JOIN comment c ON dg.id = c.group_id
         WHERE dg.id = #{id}
+        ORDER BY s.id ASC
     </select>
 
     <insert id="insert" parameterType="com.example.defensemanagement.entity.DefenseGroup" useGeneratedKeys="true" keyProperty="id">

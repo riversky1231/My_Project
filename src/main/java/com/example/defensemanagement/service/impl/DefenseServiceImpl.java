@@ -20,7 +20,7 @@ public class DefenseServiceImpl implements DefenseService {
     private DefenseGroupMapper defenseGroupMapper;
     
     @Autowired
-    private GroupMemberMapper groupMemberMapper;
+    private StudentMapper studentMapper;
     
     @Autowired
     private CommentMapper commentMapper;
@@ -41,9 +41,21 @@ public class DefenseServiceImpl implements DefenseService {
     }
 
     @Override
+    @Deprecated
     public List<String> getGroupMemberNames(Long groupId) {
-        List<GroupMember> members = groupMemberMapper.findByGroupId(groupId);
-        return members.stream().map(GroupMember::getName).collect(Collectors.toList());
+        // 已废弃，返回空列表或调用新方法
+        return getGroupStudentInfo(groupId);
+    }
+    
+    @Override
+    public List<String> getGroupStudentInfo(Long groupId) {
+        DefenseGroup group = defenseGroupMapper.findById(groupId);
+        if (group == null || group.getMembers() == null) {
+            return new java.util.ArrayList<>();
+        }
+        return group.getMembers().stream()
+            .map(student -> student.getName() + " - " + student.getTitle())
+            .collect(Collectors.toList());
     }
 
     @Override
@@ -84,24 +96,25 @@ public class DefenseServiceImpl implements DefenseService {
     @Override
     @Transactional
     public void deleteGroup(Long groupId) {
-        groupMemberMapper.deleteByGroupId(groupId);
+        // 学生表中的 defense_group_id 会自动设置为 NULL（需要数据库外键设置 SET NULL）
         commentMapper.deleteByGroupId(groupId);
         defenseGroupMapper.delete(groupId);
     }
 
     @Override
     @Transactional
+    @Deprecated
     public void addMember(Long groupId, String memberName) {
-        GroupMember member = new GroupMember();
-        member.setName(memberName);
-        member.setGroupId(groupId);
-        groupMemberMapper.insert(member);
+        // 已废弃，通过学生表维护
+        throw new UnsupportedOperationException("请通过学生管理模块添加学生到小组");
     }
 
     @Override
     @Transactional
+    @Deprecated
     public void deleteMember(Long memberId) {
-        groupMemberMapper.delete(memberId);
+        // 已废弃，通过学生表维护
+        throw new UnsupportedOperationException("请通过学生管理模块从小组移除学生");
     }
 
     @Override
@@ -153,7 +166,12 @@ public class DefenseServiceImpl implements DefenseService {
                 ArchiveDetail.ArchiveGroup ag = new ArchiveDetail.ArchiveGroup();
                 ag.setName(group.getName());
                 ag.setScore(group.getScore());
-                ag.setMembers(group.getMembers().stream().map(GroupMember::getName).collect(Collectors.toList()));
+                // 使用 Student 对象
+                if (group.getMembers() != null) {
+                    ag.setMembers(group.getMembers().stream()
+                        .map(student -> student.getName() + " - " + student.getTitle())
+                        .collect(Collectors.toList()));
+                }
                 ag.setComment(group.getComment() != null ? group.getComment().getContent() : null);
                 return ag;
             }).collect(Collectors.toList());
@@ -173,34 +191,10 @@ public class DefenseServiceImpl implements DefenseService {
 
     @Override
     @Transactional
+    @Deprecated
     public void addGroupWithMembers(Object request) {
-        try {
-            String requestJson = objectMapper.writeValueAsString(request);
-            AddGroupRequest addGroupRequest = objectMapper.readValue(requestJson, AddGroupRequest.class);
-            
-            DefenseGroup group = new DefenseGroup();
-            group.setName(addGroupRequest.getName());
-            group.setScore(addGroupRequest.getScore());
-            
-            List<DefenseGroup> existingGroups = defenseGroupMapper.findAllByOrderByDisplayOrderAsc();
-            int nextOrder = existingGroups.isEmpty() ? 0 : existingGroups.size();
-            group.setDisplayOrder(nextOrder);
-            
-            defenseGroupMapper.insert(group);
-            
-            if (addGroupRequest.getMembers() != null && !addGroupRequest.getMembers().isEmpty()) {
-                for (String memberName : addGroupRequest.getMembers()) {
-                    if (memberName.trim().length() > 0) {
-                        GroupMember member = new GroupMember();
-                        member.setName(memberName.trim());
-                        member.setGroupId(group.getId());
-                        groupMemberMapper.insert(member);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("添加小组失败", e);
-        }
+        // 已废弃，请通过学生管理模块维护
+        throw new UnsupportedOperationException("请通过小组管理创建小组，通过学生管理添加成员");
     }
 
     public static class AddGroupRequest {

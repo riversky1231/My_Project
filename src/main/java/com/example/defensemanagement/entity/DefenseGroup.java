@@ -9,6 +9,6 @@ public class DefenseGroup {
     private String name;
     private int displayOrder;
     private int score;
-    private List<GroupMember> members;
+    private List<Student> members;  // 使用 Student 代替 GroupMember
     private Comment comment;
 }

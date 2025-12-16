@@ -114,16 +114,31 @@ public class UserServiceImpl implements UserService {
     @Override
     public User saveUser(User user) {
         if (user.getId() == null) {
+            // 新增用户
             if (userMapper.findByUsername(user.getUsername()) != null) {
                 throw new RuntimeException("用户名已存在");
             }
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             userMapper.insert(user);
         } else {
+            // 更新用户
+            User oldUser = userMapper.findById(user.getId());
+            if (oldUser == null) {
+                throw new RuntimeException("用户不存在");
+            }
+            
+            // 检查用户名是否被修改，如果修改了需要验证新用户名是否已存在
+            if (!oldUser.getUsername().equals(user.getUsername())) {
+                User existingUser = userMapper.findByUsername(user.getUsername());
+                if (existingUser != null && !existingUser.getId().equals(user.getId())) {
+                    throw new RuntimeException("用户名已存在");
+                }
+            }
+            
+            // 处理密码：如果密码为空或null，保留原密码
             if (StringUtils.hasText(user.getPassword())) {
                 user.setPassword(passwordEncoder.encode(user.getPassword()));
             } else {
-                User oldUser = userMapper.findById(user.getId());
                 user.setPassword(oldUser.getPassword());
             }
             userMapper.update(user);
