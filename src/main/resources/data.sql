@@ -256,7 +256,7 @@ INSERT INTO t_student (student_no, name, class_info, department_id, advisor_teac
 ('20210005', '李怡然', '信通2001', 3, 5, 1, 'PAPER', '5G 上行调度优化', '毫米波场景资源分配。', 3, 2024),
 ('20210006', '赵梓涵', '信通2002', 3, 5, 2, 'DESIGN', '低功耗传感网关', '面向智慧城市的边缘采集。', 4, 2024),
 ('20210007', '吴昊', 'AI2101', 4, 6, 7, 'PAPER', '大模型蒸馏与压缩', '蒸馏策略与结构化剪枝。', 5, 2025),
-('20210008', '张可心', 'AI2102', 4, 7, 6, 'DESIGN', '视觉导航小车', '目标检测与路径规划集成。', 5, 2025);
+('20210008', '张可欣', 'AI2102', 4, 7, 6, 'DESIGN', '视觉导航小车', '目标检测与路径规划集成。', 5, 2025);
 
 -- 评分指标（权值合计 1.0）
 INSERT INTO evaluation_item (defense_type, item_name, weight, max_score, display_order) VALUES
