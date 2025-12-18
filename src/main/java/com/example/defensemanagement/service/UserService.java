@@ -25,6 +25,8 @@ public interface UserService {
     List<Department> getAllDepartments();
 
     boolean updateDepartment(Department department);
+    
+    boolean deleteDepartment(Long id);
 
     // 修改：接收 departmentId 参数
     List<User> getAllUsers(Long departmentId);

@@ -25,60 +25,82 @@ public class StudentController {
     private StudentService studentService;
 
     @Autowired
-    private AuthService authService;
-
-    @Autowired
     private ConfigService configService;
     
     @Autowired
     private DefenseGroupMapper defenseGroupMapper;
 
-    // 检查院系管理员权限的辅助方法
+    // 检查院系管理员或超级管理员权限的辅助方法
     private String checkDeptAdmin(HttpSession session) {
         User currentUser = (User) session.getAttribute("currentUser");
-        if (currentUser == null || !authService.hasPermission(currentUser, "MANAGE_STUDENTS")) {
+        if (currentUser == null) {
             return "error:权限不足";
         }
-        return null; // 权限通过
+        String roleName = currentUser.getRole() != null ? currentUser.getRole().getName() : null;
+        // 超级管理员和院系管理员都有权限
+        if ("SUPER_ADMIN".equals(roleName) || "DEPT_ADMIN".equals(roleName)) {
+            return null; // 权限通过
+        }
+        return "error:权限不足";
     }
 
     /**
-     * 获取当前年份和院系的学生列表 (院系管理员功能)
+     * 获取学生列表
+     * - 超级管理员：查看所有学生
+     * - 院系管理员：查看本院系的学生
+     * - 教师/答辩组长：查看自己指导的学生
      * GET /department/student/list
      */
     @GetMapping("/list")
     @ResponseBody
     public List<Student> getStudentsByDept(HttpSession session) {
-        String permissionError = checkDeptAdmin(session);
-        if (permissionError != null) {
-            // 如果不是院系管理员，则只允许教师查看自己指导的学生
-            Teacher currentTeacher = (Teacher) session.getAttribute("currentTeacher");
-            if (currentTeacher != null) {
+        User currentUser = (User) session.getAttribute("currentUser");
+        Teacher currentTeacher = (Teacher) session.getAttribute("currentTeacher");
+        
+        // 如果是教师（包括答辩组长），返回其指导的学生
+        if (currentTeacher != null) {
+            Integer currentYear = configService.getCurrentDefenseYear();
+            if (currentYear == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "请先设置当前答辩年份");
+            }
+            // 教师只能查看自己指导的学生
+            return studentService.getStudentsByAdvisor(currentTeacher.getId(), currentYear);
+        }
+        
+        // 如果是用户登录
+        if (currentUser != null) {
+            String roleName = currentUser.getRole() != null ? currentUser.getRole().getName() : null;
+            
+            // 超级管理员：查看所有学生
+            if ("SUPER_ADMIN".equals(roleName)) {
                 Integer currentYear = configService.getCurrentDefenseYear();
+                if (currentYear == null) {
+                    // 如果没有设置年份，返回所有学生
+                    return studentService.findAll();
+                }
+                // 返回当前年份的所有学生
+                return studentService.findByYear(currentYear);
+            }
+            
+            // 院系管理员：查看本院系的学生
+            if ("DEPT_ADMIN".equals(roleName)) {
+                Long departmentId = currentUser.getDepartmentId();
+                Integer currentYear = configService.getCurrentDefenseYear();
+                
+                if (departmentId == null) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "院系信息未配置，请联系管理员");
+                }
                 if (currentYear == null) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "请先设置当前答辩年份");
                 }
-                // 教师只能查看自己指导的学生
-                return studentService.getStudentsByAdvisor(currentTeacher.getId(), currentYear);
+                
+                // 院系管理员管理自己系的学生
+                List<Student> students = studentService.findByDepartmentAndYear(departmentId, currentYear);
+                return students != null ? students : new java.util.ArrayList<>();
             }
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "权限不足或未登录");
         }
-
-        User currentUser = (User) session.getAttribute("currentUser");
-        Long departmentId = currentUser.getDepartmentId();
-        Integer currentYear = configService.getCurrentDefenseYear();
-
-        if (departmentId == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "院系信息未配置，请联系管理员");
-        }
-        if (currentYear == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "请先设置当前答辩年份");
-        }
-
-        // 院系管理员管理自己系的学生
-        List<Student> students = studentService.findByDepartmentAndYear(departmentId, currentYear);
-        // 如果没有当前年份的学生，返回空列表而不是抛出异常
-        return students != null ? students : new java.util.ArrayList<>();
+        
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "权限不足或未登录");
     }
 
     /**
@@ -98,12 +120,24 @@ public class StudentController {
     @GetMapping("/groups")
     @ResponseBody
     public List<DefenseGroup> getDefenseGroups(HttpSession session) {
-        String permissionError = checkDeptAdmin(session);
-        if (permissionError != null) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "权限不足");
+        User currentUser = (User) session.getAttribute("currentUser");
+        Teacher currentTeacher = (Teacher) session.getAttribute("currentTeacher");
+        
+        // 允许超级管理员、院系管理员和教师访问
+        if (currentUser != null) {
+            String roleName = currentUser.getRole() != null ? currentUser.getRole().getName() : null;
+            if ("SUPER_ADMIN".equals(roleName) || "DEPT_ADMIN".equals(roleName)) {
+                // 返回所有答辩小组（按显示顺序排序）
+                return defenseGroupMapper.findAllByOrderByDisplayOrderAsc();
+            }
         }
-        // 返回所有答辩小组（按显示顺序排序）
-        return defenseGroupMapper.findAllByOrderByDisplayOrderAsc();
+        
+        // 教师也可以访问（用于查看自己指导的学生所在的小组）
+        if (currentTeacher != null) {
+            return defenseGroupMapper.findAllByOrderByDisplayOrderAsc();
+        }
+        
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "权限不足");
     }
 
     /**

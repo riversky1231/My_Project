@@ -20,20 +20,22 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(@NonNull HttpServletRequest request,
-                             @NonNull HttpServletResponse response,
-                             @NonNull Object handler) throws Exception {
-        // IMPORTANT: request.getRequestURI() includes contextPath (e.g. "/app/admin/...") when deployed under a prefix.
-        // Normalize to an application-relative path so all permission checks work in both root and non-root deployments.
+            @NonNull HttpServletResponse response,
+            @NonNull Object handler) throws Exception {
+        // IMPORTANT: request.getRequestURI() includes contextPath (e.g.
+        // "/app/admin/...") when deployed under a prefix.
+        // Normalize to an application-relative path so all permission checks work in
+        // both root and non-root deployments.
         String requestURI = request.getRequestURI();
         String contextPath = request.getContextPath();
         String path = requestURI;
         if (contextPath != null && !contextPath.isEmpty() && requestURI.startsWith(contextPath)) {
             path = requestURI.substring(contextPath.length());
         }
-        
+
         // 排除不需要权限验证的路径
         if (path.equals("/login") || path.startsWith("/css/") ||
-            path.startsWith("/js/") || path.startsWith("/images/")) {
+                path.startsWith("/js/") || path.startsWith("/images/")) {
             return true;
         }
 
@@ -51,27 +53,30 @@ public class AuthInterceptor implements HandlerInterceptor {
         if (path.startsWith("/admin/")) {
             // Allow GET requests for listing data
             if ((path.equals("/admin/users/list")
-                || path.equals("/admin/users/search")
-                || path.equals("/admin/departments/list")
-                || path.equals("/admin/roles/list"))
-                && "GET".equalsIgnoreCase(request.getMethod())) {
-                return true;
-            }
-            
-            // Allow user management operations; fine-grained permission is checked in AdminController/PermissionService
-            if ((path.startsWith("/admin/users/") || path.startsWith("/admin/user/"))
-                    && ("POST".equalsIgnoreCase(request.getMethod())
-                    || "DELETE".equalsIgnoreCase(request.getMethod())
-                    || "PUT".equalsIgnoreCase(request.getMethod()))) {
+                    || path.equals("/admin/users/search")
+                    || path.equals("/admin/departments/list")
+                    || path.equals("/admin/roles/list"))
+                    && "GET".equalsIgnoreCase(request.getMethod())) {
                 return true;
             }
 
-            // Allow user save operations for users with proper permissions (checked in controller)
+            // Allow user management operations; fine-grained permission is checked in
+            // AdminController/PermissionService
+            if ((path.startsWith("/admin/users/") || path.startsWith("/admin/user/"))
+                    && ("POST".equalsIgnoreCase(request.getMethod())
+                            || "DELETE".equalsIgnoreCase(request.getMethod())
+                            || "PUT".equalsIgnoreCase(request.getMethod()))) {
+                return true;
+            }
+
+            // Allow user save operations for users with proper permissions (checked in
+            // controller)
             if (path.equals("/admin/users/save") && "POST".equalsIgnoreCase(request.getMethod())) {
                 return true; // Permission will be checked in the controller
             }
-            
-            // For all other /admin/ paths (like department management), only super admins are allowed
+
+            // For all other /admin/ paths (like department management), only super admins
+            // are allowed
             if (currentUser == null || !"SUPER_ADMIN".equals(currentUser.getRole().getName())) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "权限不足");
                 return false;
@@ -79,13 +84,28 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         if (path.startsWith("/department/")) {
-            // 学生管理需要 MANAGE_STUDENTS 权限
+            // 学生管理：超级管理员、院系管理员可以管理，教师可以查看自己指导的学生
             if (path.startsWith("/department/student")) {
-                if (currentUser == null || !authService.hasPermission(currentUser, "MANAGE_STUDENTS")) {
+                // 允许教师访问（查看自己指导的学生）
+                if (currentTeacher != null) {
+                    // 教师可以访问 /list 接口查看自己指导的学生，以及获取当前年份和小组列表
+                    // 注意：request.getRequestURI()不包含查询参数，所以直接匹配路径即可
+                    if (path.equals("/department/student/list")
+                            || path.equals("/department/student/currentYear")
+                            || path.equals("/department/student/groups")) {
+                        return true;
+                    }
+                    // 其他操作需要管理员权限
+                    if (currentUser == null || !authService.hasPermission(currentUser, "MANAGE_STUDENTS")) {
+                        response.sendError(HttpServletResponse.SC_FORBIDDEN, "权限不足");
+                        return false;
+                    }
+                } else if (currentUser == null || !authService.hasPermission(currentUser, "MANAGE_STUDENTS")) {
                     response.sendError(HttpServletResponse.SC_FORBIDDEN, "权限不足");
                     return false;
                 }
-            } else if (path.startsWith("/department/group") || path.startsWith("/department/teachers") || path.startsWith("/department/defenseLeader")) {
+            } else if (path.startsWith("/department/group") || path.startsWith("/department/teachers")
+                    || path.startsWith("/department/defenseLeader")) {
                 // 小组教师管理、教师管理、答辩组长管理需要 MANAGE_TEACHERS 权限
                 if (currentUser == null || !authService.hasPermission(currentUser, "MANAGE_TEACHERS")) {
                     response.sendError(HttpServletResponse.SC_FORBIDDEN, "权限不足");
@@ -105,7 +125,7 @@ public class AuthInterceptor implements HandlerInterceptor {
             } else if (currentTeacher != null && authService.isDefenseLeader(currentTeacher.getId(), null)) {
                 hasPermission = true;
             }
-            
+
             if (!hasPermission) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "权限不足");
                 return false;

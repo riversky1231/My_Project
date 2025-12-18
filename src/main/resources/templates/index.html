@@ -237,16 +237,20 @@
         <nav id="sidebar-nav" class="nav flex-column">
             <a class="nav-link active" href="javascript:void(0);" onclick="showView('dashboard-view', this)"><i
                     class="bi bi-speedometer2"></i> 工作台</a>
-            <a class="nav-link" href="javascript:void(0);" onclick="showView('group-management-view', this)"><i
-                    class="bi bi-people"></i> 小组管理</a>
+            <a class="nav-link" id="nav-group-management" href="javascript:void(0);"
+                onclick="showView('group-management-view', this)"><i class="bi bi-people"></i> 小组管理</a>
             <a class="nav-link" href="javascript:void(0);" onclick="showView('student-management-view', this)"><i
                     class="bi bi-person-badge"></i> 学生管理</a>
-            <a class="nav-link" href="javascript:void(0);" onclick="showView('user-management-view', this)"><i
-                    class="bi bi-person-circle"></i> 用户管理</a>
+            <a class="nav-link" id="nav-user-management" href="javascript:void(0);"
+                onclick="showView('user-management-view', this)"><i class="bi bi-person-circle"></i> 用户管理</a>
+            <a class="nav-link" id="nav-department-management" href="javascript:void(0);"
+                onclick="showView('department-management-view', this)"><i class="bi bi-building"></i> 院系管理</a>
             <a class="nav-link" href="javascript:void(0);" onclick="showView('score-view', this)"><i
                     class="bi bi-clipboard-check"></i> 打分/评阅</a>
             <a class="nav-link" href="javascript:void(0);" onclick="showView('export-view', this)"><i
                     class="bi bi-download"></i> 导出/打包</a>
+            <a class="nav-link" id="nav-signature-management" href="javascript:void(0);"
+                onclick="showView('signature-view', this)"><i class="bi bi-pen"></i> 签名管理</a>
             <a class="nav-link" href="javascript:void(0);" onclick="showView('settings-view', this)"><i
                     class="bi bi-gear"></i> 系统设置</a>
         </nav>
@@ -466,6 +470,13 @@
                     </button>
                 </div>
             </header>
+            <!-- 教师签名上传提示（仅教师可见） -->
+            <div id="teacher-signature-hint" class="alert alert-info mb-3" style="display: none;">
+                <i class="bi bi-info-circle"></i>
+                <strong>提示：</strong>请前往 <a href="javascript:void(0);"
+                    onclick="showView('settings-view', document.querySelector('a[onclick*=\"
+                    settings-view\"]'))">系统设置</a> 页面上传您的签名图片，签名将用于导出成绩表。
+            </div>
             <div class="module">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
@@ -588,6 +599,44 @@
                         <!-- 分页按钮将由 JavaScript 生成 -->
                     </ul>
                 </nav>
+            </div>
+        </div>
+
+        <!-- Department Management View (Super Admin Only) -->
+        <div id="department-management-view" class="view-container" style="display: none;">
+            <header class="header">
+                <h1>院系管理</h1>
+                <div class="d-flex align-items-center">
+                    <div class="input-group me-3" style="width: 300px;">
+                        <input type="text" id="department-search-input" class="form-control" placeholder="搜索院系..."
+                            onkeypress="if(event.key==='Enter') loadDepartments()">
+                        <button class="btn btn-outline-secondary" type="button" onclick="loadDepartments()"><i
+                                class="bi bi-search"></i></button>
+                    </div>
+                    <button class="btn btn-primary" onclick="openDepartmentModal()">
+                        <i class="bi bi-plus-circle"></i> 添加新院系
+                    </button>
+                </div>
+            </header>
+            <div class="module">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>院系名称</th>
+                                <th>院系代码</th>
+                                <th>描述</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="department-list">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">加载中...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -769,11 +818,73 @@
                     </div>
                 </div>
                 <div class="row g-2 mt-3">
-                    <div class="col-md-4">
-                        <label class="form-label">上传签名 (自动命名)</label>
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            <i class="bi bi-pen"></i> 上传个人签名图片
+                            <small class="text-muted">(支持 JPG、PNG 等图片格式，自动命名为 user_用户ID 或 teacher_教师ID)</small>
+                        </label>
                         <div class="input-group">
                             <input type="file" class="form-control" id="sign-file" accept="image/*">
-                            <button class="btn btn-outline-primary" onclick="uploadSign()">上传签名</button>
+                            <button class="btn btn-primary" onclick="uploadSign()">
+                                <i class="bi bi-upload"></i> 上传签名
+                            </button>
+                        </div>
+                        <small class="text-muted d-block mt-2">
+                            <i class="bi bi-info-circle"></i>
+                            教师签名将用于导出成绩表时的评委签名位置；系主任签名将用于导出成绩评定表。
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Signature Management View (Teacher Only) -->
+        <div id="signature-view" class="view-container" style="display: none;">
+            <header class="header">
+                <h1>签名管理</h1>
+            </header>
+            <div class="module">
+                <div class="module-header">
+                    <h4><i class="bi bi-pen"></i> 个人签名上传</h4>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label">
+                            <i class="bi bi-image"></i> 选择签名图片
+                            <small class="text-muted">(支持 JPG、PNG 等图片格式)</small>
+                        </label>
+                        <div class="input-group">
+                            <input type="file" class="form-control" id="signature-file" accept="image/*">
+                            <button class="btn btn-primary" onclick="uploadSignature()">
+                                <i class="bi bi-upload"></i> 上传签名
+                            </button>
+                        </div>
+                        <small class="text-muted d-block mt-2">
+                            <i class="bi bi-info-circle"></i>
+                            签名图片将自动命名为 <code>teacher_教师ID</code> 或 <code>user_用户ID</code>，用于导出成绩表时的评委签名位置。
+                        </small>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="bi bi-question-circle"></i> 使用说明</h6>
+                            </div>
+                            <div class="card-body">
+                                <ul class="small mb-0">
+                                    <li>签名图片建议使用透明背景的PNG格式</li>
+                                    <li>图片大小建议不超过2MB</li>
+                                    <li>上传后会自动覆盖之前的签名</li>
+                                    <li>签名将用于导出成绩表时的评委签名位置</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3 mt-3" id="signature-preview-area" style="display: none;">
+                    <div class="col-md-12">
+                        <label class="form-label">当前签名预览</label>
+                        <div class="border rounded p-3 text-center">
+                            <img id="signature-preview" src="" alt="签名预览" style="max-height: 200px; max-width: 100%;">
                         </div>
                     </div>
                 </div>
@@ -966,6 +1077,42 @@
         </div>
     </div>
 
+    <!-- Department Management Modal -->
+    <div class="modal fade" id="addDepartmentModal" tabindex="-1" aria-labelledby="addDepartmentModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addDepartmentModalLabel">添加新院系</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addDepartmentForm" class="row g-3">
+                        <input type="hidden" id="departmentId">
+                        <div class="col-12">
+                            <label for="departmentName" class="form-label">院系名称 <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="departmentName" required>
+                        </div>
+                        <div class="col-12">
+                            <label for="departmentCode" class="form-label">院系代码 <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="departmentCode" required>
+                        </div>
+                        <div class="col-12">
+                            <label for="departmentDescription" class="form-label">描述</label>
+                            <textarea class="form-control" id="departmentDescription" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="saveDepartment()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 简易加载动画 -->
     <div id="global-loading" class="position-fixed top-0 start-0 w-100 h-100 d-none"
         style="background: rgba(255,255,255,0.6); z-index: 2000;">
@@ -986,19 +1133,72 @@
             // 显示登录成功提示
             showLoginSuccessAlert();
 
-            // Drag and Drop
-            new Sortable(document.getElementById('group-list'), {
-                handle: '.drag-handle',
-                animation: 150,
-                onEnd: function (evt) {
-                    const groupIds = Array.from(evt.to.children).map(item => item.dataset.id);
-                    fetch('/updateOrder', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(groupIds)
-                    });
+            // 根据用户角色控制菜单显示
+            const userInfoDiv = document.querySelector('.user-info');
+            if (userInfoDiv) {
+                const userRole = userInfoDiv.dataset.userRole;
+                const userType = userInfoDiv.dataset.userType;
+                const navGroupManagement = document.getElementById('nav-group-management');
+                const navUserManagement = document.getElementById('nav-user-management');
+                const navDepartmentManagement = document.getElementById('nav-department-management');
+                const teacherSignatureHint = document.getElementById('teacher-signature-hint');
+
+                // 超级管理员和院系管理员可以看到所有界面
+                // 答辩组长和教师不能看到小组管理和用户管理
+                if (userRole && (userRole === 'TEACHER' || userRole === 'DEFENSE_LEADER')) {
+                    if (navGroupManagement) {
+                        navGroupManagement.style.display = 'none';
+                    }
+                    if (navUserManagement) {
+                        navUserManagement.style.display = 'none';
+                    }
                 }
-            });
+
+                // 只有超级管理员可以看到院系管理
+                if (userRole !== 'SUPER_ADMIN') {
+                    if (navDepartmentManagement) {
+                        navDepartmentManagement.style.display = 'none';
+                    }
+                }
+
+                // 签名管理：只有教师（包括答辩组长）可以看到
+                const navSignatureManagement = document.getElementById('nav-signature-management');
+                if (navSignatureManagement) {
+                    // 教师登录时，userType为'TEACHER'，或者userRole为'TEACHER'/'DEFENSE_LEADER'
+                    // 注意：教师登录时，userRole会被设置为'TEACHER'（见第265行）
+                    // 如果userType是'TEACHER'，说明是教师登录；如果userRole是'TEACHER'或'DEFENSE_LEADER'，也是教师
+                    const isTeacher = userType === 'TEACHER' || userRole === 'TEACHER' || userRole === 'DEFENSE_LEADER';
+                    console.log('签名管理菜单检查 - userType:', userType, 'userRole:', userRole, 'isTeacher:', isTeacher);
+                    if (!isTeacher) {
+                        navSignatureManagement.style.display = 'none';
+                    } else {
+                        // 确保菜单显示
+                        navSignatureManagement.style.display = '';
+                    }
+                }
+
+                // 显示教师签名上传提示（教师或答辩组长登录时）
+                if (teacherSignatureHint && (userType === 'TEACHER' || userRole === 'TEACHER' || userRole === 'DEFENSE_LEADER')) {
+                    teacherSignatureHint.style.display = 'block';
+                }
+            }
+
+            // Drag and Drop
+            const groupList = document.getElementById('group-list');
+            if (groupList) {
+                new Sortable(groupList, {
+                    handle: '.drag-handle',
+                    animation: 150,
+                    onEnd: function (evt) {
+                        const groupIds = Array.from(evt.to.children).map(item => item.dataset.id);
+                        fetch('/updateOrder', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(groupIds)
+                        });
+                    }
+                });
+            }
 
             // Member Modal
             const membersModal = document.getElementById('membersModal');
@@ -1171,8 +1371,24 @@
             if (viewId === 'user-management-view') {
                 searchUsersWithPagination(1);
             }
+            if (viewId === 'department-management-view') {
+                loadDepartments();
+            }
             if (viewId === 'settings-view') {
                 // 可在此预加载当前配置
+            }
+            if (viewId === 'signature-view') {
+                // 签名管理页面加载时的处理
+                // 清空文件选择
+                const signatureFileInput = document.getElementById('signature-file');
+                if (signatureFileInput) {
+                    signatureFileInput.value = '';
+                }
+                // 隐藏预览区域（如果有）
+                const previewArea = document.getElementById('signature-preview-area');
+                if (previewArea) {
+                    previewArea.style.display = 'none';
+                }
             }
         }
 
@@ -1307,7 +1523,7 @@
             const currentUserRole = userInfoDiv.dataset.userRole;
             const currentUserDept = userInfoDiv.dataset.userDept;
 
-            users.forEach(user => {
+            users.forEach(async user => {
                 const canEdit = canCurrentUserEdit(currentUserRole, currentUserDept, user);
 
                 const actionButtons = canEdit ? `
@@ -1318,12 +1534,28 @@
                     </button>
                 ` : '<span class="text-muted">无权限</span>';
 
+                // 检查是否是答辩组长
+                let roleDisplay = user.role.description;
+                if (user.role.name === 'TEACHER') {
+                    try {
+                        const response = await fetch(`/admin/user/${user.id}/isDefenseLeader`);
+                        if (response.ok) {
+                            const isLeader = await response.json();
+                            if (isLeader) {
+                                roleDisplay = '答辩组长';
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Failed to check defense leader:', e);
+                    }
+                }
+
                 const row = `
-                    <tr>
+                    <tr data-user-id="${user.id}">
                         <td><input class="form-check-input" type="checkbox" value="${user.id}"></td>
                         <td><strong>${user.username}</strong></td>
                         <td>${user.realName}</td>
-                        <td><span class="badge bg-primary">${user.role.description}</span></td>
+                        <td><span class="badge bg-primary role-badge">${roleDisplay}</span></td>
                         <td>${user.department ? user.department.name : 'N/A'}</td>
                         <td>
                             <span class="badge ${user.status === 1 ? 'bg-success' : 'bg-secondary'}">
@@ -1647,6 +1879,13 @@
                 }
                 const students = await response.json();
                 console.log('Loaded students:', students);
+                // 调试：打印第一个学生的完整信息
+                if (students && students.length > 0) {
+                    console.log('First student full data:', JSON.stringify(students[0], null, 2));
+                    console.log('First student advisor:', students[0].advisor);
+                    console.log('First student reviewer:', students[0].reviewer);
+                    console.log('First student defenseGroup:', students[0].defenseGroup);
+                }
                 renderStudentTable(students, keyword);
             } catch (error) {
                 console.error('Load students error:', error);
@@ -1654,6 +1893,31 @@
                 document.getElementById('student-list').innerHTML =
                     '<tr><td colspan="9" class="text-center text-danger">加载失败: ' + (error.message || '未知错误') + '</td></tr>';
             }
+        }
+
+        // 辅助函数：获取教师显示信息
+        function getTeacherDisplay(teacher, teacherId) {
+            if (teacher && teacher.teacherNo && teacher.name) {
+                return `${teacher.teacherNo} - ${teacher.name}`;
+            }
+            if (teacher && teacher.name) {
+                return teacher.name;
+            }
+            if (teacherId) {
+                return `ID: ${teacherId}`;
+            }
+            return '未分配';
+        }
+
+        // 辅助函数：获取小组显示信息
+        function getGroupDisplay(group, groupId) {
+            if (group && group.name) {
+                return group.name;
+            }
+            if (groupId) {
+                return `组ID: ${groupId}`;
+            }
+            return '未分配';
         }
 
         function renderStudentTable(students, keyword) {
@@ -1691,9 +1955,9 @@
                             ${student.defenseType === 'PAPER' ? '论文' : (student.defenseType === 'DESIGN' ? '设计' : 'N/A')}
                         </span></td>
                         <td>${student.title || 'N/A'}</td>
-                        <td>${student.advisorTeacherId ? 'ID: ' + student.advisorTeacherId : '未分配'}</td>
-                        <td>${student.reviewerTeacherId ? 'ID: ' + student.reviewerTeacherId : '未分配'}</td>
-                        <td>${student.defenseGroupId ? '组ID: ' + student.defenseGroupId : '未分配'}</td>
+                        <td>${getTeacherDisplay(student.advisor, student.advisorTeacherId)}</td>
+                        <td>${getTeacherDisplay(student.reviewer, student.reviewerTeacherId)}</td>
+                        <td>${getGroupDisplay(student.defenseGroup, student.defenseGroupId)}</td>
                         <td>
                             <button class="btn btn-sm btn-outline-primary" onclick='openStudentModal(${JSON.stringify(student)})'>
                                 <i class="bi bi-pencil-square"></i>
@@ -2017,6 +2281,183 @@
             window.location.href = `/export/group/${groupId}/zip`;
         }
 
+        // --- Department Management Functions ---
+        async function loadDepartments() {
+            const keyword = document.getElementById('department-search-input')?.value.trim() || '';
+            try {
+                const response = await fetch('/admin/departments/list');
+                if (!response.ok) {
+                    throw new Error('获取院系列表失败');
+                }
+                const departments = await response.json();
+                renderDepartmentTable(departments, keyword);
+            } catch (error) {
+                console.error('Load departments error:', error);
+                showAlert('error', error.message || '获取院系列表失败');
+                document.getElementById('department-list').innerHTML =
+                    '<tr><td colspan="5" class="text-center text-danger">加载失败: ' + (error.message || '未知错误') + '</td></tr>';
+            }
+        }
+
+        function renderDepartmentTable(departments, keyword) {
+            const tbody = document.getElementById('department-list');
+            tbody.innerHTML = '';
+
+            if (!departments || departments.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">暂无院系数据</td></tr>';
+                return;
+            }
+
+            // 搜索过滤
+            let filtered = departments;
+            if (keyword) {
+                const kw = keyword.toLowerCase();
+                filtered = departments.filter(dept =>
+                    (dept.name && dept.name.toLowerCase().includes(kw)) ||
+                    (dept.code && dept.code.toLowerCase().includes(kw)) ||
+                    (dept.description && dept.description.toLowerCase().includes(kw))
+                );
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">未找到匹配的院系</td></tr>';
+                return;
+            }
+
+            filtered.forEach(dept => {
+                const row = `
+                    <tr>
+                        <td>${dept.id || 'N/A'}</td>
+                        <td><strong>${dept.name || 'N/A'}</strong></td>
+                        <td>${dept.code || 'N/A'}</td>
+                        <td>${dept.description || '-'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick='openDepartmentModal(${JSON.stringify(dept)})'>
+                                <i class="bi bi-pencil-square"></i> 编辑
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteDepartment(${dept.id})">
+                                <i class="bi bi-trash"></i> 删除
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function openDepartmentModal(department = null) {
+            const modal = new bootstrap.Modal(document.getElementById('addDepartmentModal'));
+            const form = document.getElementById('addDepartmentForm');
+            const modalLabel = document.getElementById('addDepartmentModalLabel');
+
+            // 重置表单
+            form.reset();
+            document.getElementById('departmentId').value = '';
+
+            if (department) {
+                // 编辑模式
+                modalLabel.textContent = '编辑院系';
+                document.getElementById('departmentId').value = department.id;
+                document.getElementById('departmentName').value = department.name || '';
+                document.getElementById('departmentCode').value = department.code || '';
+                document.getElementById('departmentDescription').value = department.description || '';
+            } else {
+                // 新增模式
+                modalLabel.textContent = '添加新院系';
+            }
+
+            modal.show();
+        }
+
+        async function saveDepartment() {
+            const form = document.getElementById('addDepartmentForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const departmentId = document.getElementById('departmentId').value;
+            const name = document.getElementById('departmentName').value.trim();
+            const code = document.getElementById('departmentCode').value.trim();
+            const description = document.getElementById('departmentDescription').value.trim();
+
+            if (!name || !code) {
+                showAlert('warning', '请填写院系名称和代码');
+                return;
+            }
+
+            toggleLoading(true);
+            try {
+                let result;
+                if (departmentId) {
+                    // 更新
+                    const response = await fetch('/admin/department/update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            id: parseInt(departmentId),
+                            name: name,
+                            code: code,
+                            description: description
+                        })
+                    });
+                    result = await response.text();
+                } else {
+                    // 创建
+                    const params = new URLSearchParams({
+                        name: name,
+                        code: code,
+                        description: description
+                    });
+                    const response = await fetch('/admin/department/create', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: params.toString()
+                    });
+                    result = await response.text();
+                }
+
+                if (result === 'success') {
+                    showAlert('success', departmentId ? '院系更新成功' : '院系创建成功');
+                    bootstrap.Modal.getInstance(document.getElementById('addDepartmentModal')).hide();
+                    loadDepartments();
+                } else {
+                    showAlert('error', result.startsWith('error:') ? result.substring(6) : '操作失败');
+                }
+            } catch (error) {
+                console.error(error);
+                showAlert('error', '操作失败，请检查网络连接');
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        async function deleteDepartment(id) {
+            if (!confirm('确定要删除该院系吗？删除前请确保该院系下没有用户或学生。')) {
+                return;
+            }
+
+            toggleLoading(true);
+            try {
+                const response = await fetch(`/admin/department/${id}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.text();
+
+                if (result === 'success') {
+                    showAlert('success', '院系删除成功');
+                    loadDepartments();
+                } else {
+                    showAlert('error', result.startsWith('error:') ? result.substring(6) : '删除失败');
+                }
+            } catch (error) {
+                console.error(error);
+                showAlert('error', '删除失败，请检查网络连接');
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
         // --- Settings ---
         async function setDefenseYear() {
             const year = document.getElementById('cfg-year').value;
@@ -2066,15 +2507,36 @@
         async function uploadSign() {
             const file = document.getElementById('sign-file').files[0];
             if (!file) return showAlert('warning', '请选择文件');
+            await uploadSignatureFile(file, 'sign-file');
+        }
+
+        async function uploadSignature() {
+            const file = document.getElementById('signature-file').files[0];
+            if (!file) return showAlert('warning', '请选择签名图片文件');
+            await uploadSignatureFile(file, 'signature-file');
+        }
+
+        async function uploadSignatureFile(file, inputId) {
             const fd = new FormData();
             fd.append('file', file);
             toggleLoading(true);
             try {
                 const resp = await fetch('/signature/upload', { method: 'POST', body: fd });
                 const text = await resp.text();
-                showAlert(text.startsWith('error') ? 'error' : 'success', text);
+                if (text.startsWith('error')) {
+                    showAlert('error', text);
+                } else {
+                    showAlert('success', '签名上传成功！');
+                    // 如果是签名管理页面，显示预览
+                    if (inputId === 'signature-file') {
+                        // 清空文件选择
+                        document.getElementById('signature-file').value = '';
+                        // 可以尝试加载预览（需要后端提供获取签名的接口）
+                        // loadSignaturePreview();
+                    }
+                }
             } catch (e) {
-                showAlert('error', '上传失败');
+                showAlert('error', '上传失败：' + e.message);
             } finally {
                 toggleLoading(false);
             }

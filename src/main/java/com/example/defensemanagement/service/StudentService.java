@@ -56,4 +56,9 @@ public interface StudentService {
     List<Student> findAll();
 
     List<Student> findByDepartmentAndYear(Long departmentId, Integer currentYear);
+    
+    /**
+     * 根据年份查找所有学生（超级管理员使用）
+     */
+    List<Student> findByYear(Integer year);
 }

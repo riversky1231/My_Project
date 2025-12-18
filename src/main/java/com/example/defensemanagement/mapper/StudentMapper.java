@@ -36,4 +36,7 @@ public interface StudentMapper {
 
     // 根据答辩小组ID查找
     List<Student> findByDefenseGroupId(Long groupId);
+    
+    // 根据年份查找所有学生（超级管理员使用）
+    List<Student> findByYear(@Param("year") Integer year);
 }

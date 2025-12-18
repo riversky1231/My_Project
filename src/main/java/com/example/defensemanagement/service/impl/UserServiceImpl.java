@@ -107,6 +107,11 @@ public class UserServiceImpl implements UserService {
     public boolean updateDepartment(Department department) {
         return departmentMapper.update(department) > 0;
     }
+    
+    @Override
+    public boolean deleteDepartment(Long id) {
+        return departmentMapper.deleteById(id) > 0;
+    }
 
     // 修改：实现带 departmentId 的查询
     @Override

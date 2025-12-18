@@ -16,34 +16,105 @@
         <result property="summary" column="summary"/>
         <result property="defenseGroupId" column="defense_group_id"/>
         <result property="defenseYear" column="defense_year"/>
+        <association property="advisor" javaType="com.example.defensemanagement.entity.Teacher">
+            <id property="id" column="advisor_id"/>
+            <result property="teacherNo" column="advisor_teacher_no"/>
+            <result property="name" column="advisor_name"/>
+            <result property="title" column="advisor_title"/>
+        </association>
+        <association property="reviewer" javaType="com.example.defensemanagement.entity.Teacher">
+            <id property="id" column="reviewer_id"/>
+            <result property="teacherNo" column="reviewer_teacher_no"/>
+            <result property="name" column="reviewer_name"/>
+            <result property="title" column="reviewer_title"/>
+        </association>
+        <association property="defenseGroup" javaType="com.example.defensemanagement.entity.DefenseGroup">
+            <id property="id" column="group_id"/>
+            <result property="name" column="group_name"/>
+        </association>
     </resultMap>
 
     <select id="findById" resultMap="StudentResultMap">
-        SELECT * FROM t_student WHERE id = #{id}
+        SELECT s.*,
+               a.id as advisor_id, a.teacher_no as advisor_teacher_no, a.name as advisor_name, a.title as advisor_title,
+               r.id as reviewer_id, r.teacher_no as reviewer_teacher_no, r.name as reviewer_name, r.title as reviewer_title,
+               g.id as group_id, g.name as group_name
+        FROM t_student s
+        LEFT JOIN teacher a ON s.advisor_teacher_id = a.id
+        LEFT JOIN teacher r ON s.reviewer_teacher_id = r.id
+        LEFT JOIN defense_group g ON s.defense_group_id = g.id
+        WHERE s.id = #{id}
     </select>
 
     <select id="findAll" resultMap="StudentResultMap">
-        SELECT * FROM t_student
+        SELECT s.*,
+               a.id as advisor_id, a.teacher_no as advisor_teacher_no, a.name as advisor_name, a.title as advisor_title,
+               r.id as reviewer_id, r.teacher_no as reviewer_teacher_no, r.name as reviewer_name, r.title as reviewer_title,
+               g.id as group_id, g.name as group_name
+        FROM t_student s
+        LEFT JOIN teacher a ON s.advisor_teacher_id = a.id
+        LEFT JOIN teacher r ON s.reviewer_teacher_id = r.id
+        LEFT JOIN defense_group g ON s.defense_group_id = g.id
     </select>
 
     <select id="findByDepartmentAndYear" resultMap="StudentResultMap">
-        SELECT * FROM t_student
-        WHERE department_id = #{departmentId} AND defense_year = #{year}
+        SELECT s.*,
+               a.id as advisor_id, a.teacher_no as advisor_teacher_no, a.name as advisor_name, a.title as advisor_title,
+               r.id as reviewer_id, r.teacher_no as reviewer_teacher_no, r.name as reviewer_name, r.title as reviewer_title,
+               g.id as group_id, g.name as group_name
+        FROM t_student s
+        LEFT JOIN teacher a ON s.advisor_teacher_id = a.id
+        LEFT JOIN teacher r ON s.reviewer_teacher_id = r.id
+        LEFT JOIN defense_group g ON s.defense_group_id = g.id
+        WHERE s.department_id = #{departmentId} AND s.defense_year = #{year}
+    </select>
+    
+    <select id="findByYear" resultMap="StudentResultMap">
+        SELECT s.*,
+               a.id as advisor_id, a.teacher_no as advisor_teacher_no, a.name as advisor_name, a.title as advisor_title,
+               r.id as reviewer_id, r.teacher_no as reviewer_teacher_no, r.name as reviewer_name, r.title as reviewer_title,
+               g.id as group_id, g.name as group_name
+        FROM t_student s
+        LEFT JOIN teacher a ON s.advisor_teacher_id = a.id
+        LEFT JOIN teacher r ON s.reviewer_teacher_id = r.id
+        LEFT JOIN defense_group g ON s.defense_group_id = g.id
+        WHERE s.defense_year = #{year}
     </select>
 
     <select id="findByAdvisorIdAndYear" resultMap="StudentResultMap">
-        SELECT * FROM t_student
-        WHERE advisor_teacher_id = #{advisorId} AND defense_year = #{year}
+        SELECT s.*,
+               a.id as advisor_id, a.teacher_no as advisor_teacher_no, a.name as advisor_name, a.title as advisor_title,
+               r.id as reviewer_id, r.teacher_no as reviewer_teacher_no, r.name as reviewer_name, r.title as reviewer_title,
+               g.id as group_id, g.name as group_name
+        FROM t_student s
+        LEFT JOIN teacher a ON s.advisor_teacher_id = a.id
+        LEFT JOIN teacher r ON s.reviewer_teacher_id = r.id
+        LEFT JOIN defense_group g ON s.defense_group_id = g.id
+        WHERE s.advisor_teacher_id = #{advisorId} AND s.defense_year = #{year}
     </select>
 
     <select id="findByDefenseGroupId" resultMap="StudentResultMap">
-        SELECT * FROM t_student
-        WHERE defense_group_id = #{groupId}
+        SELECT s.*,
+               a.id as advisor_id, a.teacher_no as advisor_teacher_no, a.name as advisor_name, a.title as advisor_title,
+               r.id as reviewer_id, r.teacher_no as reviewer_teacher_no, r.name as reviewer_name, r.title as reviewer_title,
+               g.id as group_id, g.name as group_name
+        FROM t_student s
+        LEFT JOIN teacher a ON s.advisor_teacher_id = a.id
+        LEFT JOIN teacher r ON s.reviewer_teacher_id = r.id
+        LEFT JOIN defense_group g ON s.defense_group_id = g.id
+        WHERE s.defense_group_id = #{groupId}
     </select>
 
     <select id="findByStudentNoAndYear" resultMap="StudentResultMap">
-        SELECT * FROM t_student
-        WHERE student_no = #{studentNo} AND defense_year = #{year}
+        SELECT s.*,
+               a.id as advisor_id, a.teacher_no as advisor_teacher_no, a.name as advisor_name, a.title as advisor_title,
+               r.id as reviewer_id, r.teacher_no as reviewer_teacher_no, r.name as reviewer_name, r.title as reviewer_title,
+               g.id as group_id, g.name as group_name
+        FROM t_student s
+        LEFT JOIN teacher a ON s.advisor_teacher_id = a.id
+        LEFT JOIN teacher r ON s.reviewer_teacher_id = r.id
+        LEFT JOIN defense_group g ON s.defense_group_id = g.id
+        WHERE s.student_no = #{studentNo} AND s.defense_year = #{year}
     </select>
 
     <insert id="insert" parameterType="com.example.defensemanagement.entity.Student" useGeneratedKeys="true" keyProperty="id">

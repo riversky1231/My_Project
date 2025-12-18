@@ -5,6 +5,8 @@ import com.example.defensemanagement.entity.Department;
 import com.example.defensemanagement.service.UserService;
 import com.example.defensemanagement.service.AuthService;
 import com.example.defensemanagement.service.PermissionService;
+import com.example.defensemanagement.service.TeacherService;
+import com.example.defensemanagement.mapper.TeacherMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -29,6 +31,12 @@ public class AdminController {
 
     @Autowired
     private PermissionService permissionService;
+    
+    @Autowired
+    private TeacherService teacherService;
+    
+    @Autowired
+    private TeacherMapper teacherMapper;
 
     @GetMapping("/departments")
     public String departmentManagement(Model model, HttpSession session) {
@@ -57,6 +65,51 @@ public class AdminController {
         try {
             userService.createDepartment(name, code, description);
             return "success";
+        } catch (Exception e) {
+            return "error:" + e.getMessage();
+        }
+    }
+    
+    @PostMapping("/department/update")
+    @ResponseBody
+    public String updateDepartment(@RequestBody Department department, HttpSession session) {
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser == null || !authService.hasPermission(currentUser, "CREATE_DEPARTMENT")) {
+            return "error:权限不足";
+        }
+        
+        try {
+            if (userService.updateDepartment(department)) {
+                return "success";
+            } else {
+                return "error:更新失败";
+            }
+        } catch (Exception e) {
+            return "error:" + e.getMessage();
+        }
+    }
+    
+    @DeleteMapping("/department/{id}")
+    @ResponseBody
+    public String deleteDepartment(@PathVariable Long id, HttpSession session) {
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser == null || !authService.hasPermission(currentUser, "CREATE_DEPARTMENT")) {
+            return "error:权限不足";
+        }
+        
+        try {
+            // 检查是否有用户或学生关联到此院系
+            List<User> users = userService.getAllUsers(id);
+            if (users != null && !users.isEmpty()) {
+                return "error:该院系下还有用户，无法删除";
+            }
+            
+            // 删除院系
+            if (userService.deleteDepartment(id)) {
+                return "success";
+            } else {
+                return "error:删除失败";
+            }
         } catch (Exception e) {
             return "error:" + e.getMessage();
         }
@@ -234,6 +287,35 @@ public class AdminController {
         }
     }
 
+    /**
+     * 检查用户是否是答辩组长
+     * GET /admin/user/{userId}/isDefenseLeader
+     */
+    @GetMapping("/user/{userId}/isDefenseLeader")
+    @ResponseBody
+    public boolean isDefenseLeader(@PathVariable Long userId, HttpSession session) {
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser == null) {
+            return false;
+        }
+        
+        // 查找对应的教师ID
+        User targetUser = userService.findById(userId);
+        if (targetUser == null || targetUser.getRole() == null || !"TEACHER".equals(targetUser.getRole().getName())) {
+            return false;
+        }
+        
+        // 查找教师记录
+        com.example.defensemanagement.entity.Teacher teacher = teacherMapper.findByUserId(userId);
+        if (teacher == null) {
+            return false;
+        }
+        
+        // 检查是否是答辩组长（使用当前年份）
+        java.time.LocalDate now = java.time.LocalDate.now();
+        return authService.isDefenseLeader(teacher.getId(), now.getYear());
+    }
+    
     // 辅助方法：如果是院系管理员，返回其院系ID；否则返回null
     private Long getDepartmentIdIfDeptAdmin(Object userObj) {
         if (userObj instanceof User) {

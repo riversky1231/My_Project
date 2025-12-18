@@ -40,6 +40,11 @@ public class StudentServiceImpl implements StudentService {
     public List<Student> findByDepartmentAndYear(Long departmentId, Integer currentYear) {
         return studentMapper.findByDepartmentAndYear(departmentId, currentYear);
     }
+    
+    @Override
+    public List<Student> findByYear(Integer year) {
+        return studentMapper.findByYear(year);
+    }
 
     @Override
     public List<Student> getStudentsByGroup(Long groupId) {
@@ -102,6 +107,14 @@ public class StudentServiceImpl implements StudentService {
         DefenseGroup group = defenseGroupMapper.findById(groupId);
         if (group == null) {
             throw new IllegalArgumentException("答辩小组不存在：" + groupId);
+        }
+        
+        // 验证：每个学生只能属于一个小组
+        // 如果学生已经在其他小组，需要先移除（实际上数据库字段是单个，所以直接更新即可）
+        // 但这里我们添加一个提示，如果学生已经在其他小组，会覆盖之前的分配
+        if (student.getDefenseGroupId() != null && !student.getDefenseGroupId().equals(groupId)) {
+            // 学生已经在其他小组，这里直接更新到新小组
+            // 如果需要更严格的验证，可以抛出异常
         }
 
         student.setDefenseGroupId(groupId);
