@@ -13,6 +13,19 @@ CREATE TABLE IF NOT EXISTS defense_group (
     updated_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='答辩小组表';
 
+-- 小组-教师关系表（一个小组可分配多个教师，并指定一个教师为组长）
+CREATE TABLE IF NOT EXISTS defense_group_teacher (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    group_id BIGINT NOT NULL COMMENT '小组ID',
+    teacher_id BIGINT NOT NULL COMMENT '教师ID',
+    is_leader TINYINT NOT NULL DEFAULT 0 COMMENT '是否组长：1-是，0-否',
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    UNIQUE KEY uk_group_teacher (group_id, teacher_id),
+    INDEX idx_group_leader (group_id, is_leader),
+    FOREIGN KEY (group_id) REFERENCES defense_group(id) ON DELETE CASCADE,
+    FOREIGN KEY (teacher_id) REFERENCES teacher(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='答辩小组教师关联表';
+
 -- 创建评语表
 CREATE TABLE IF NOT EXISTS comment (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -87,11 +100,14 @@ CREATE TABLE IF NOT EXISTS teacher (
     phone VARCHAR(20) COMMENT '手机号',
     password VARCHAR(255) COMMENT '登录密码(加密)',
     status TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
+    user_id BIGINT NULL COMMENT '关联的用户ID（user表），用于统一管理',
     created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     INDEX idx_teacher_no (teacher_no),
     INDEX idx_department_id (department_id),
-    FOREIGN KEY (department_id) REFERENCES department(id)
+    INDEX idx_user_id (user_id),
+    FOREIGN KEY (department_id) REFERENCES department(id),
+    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='教师表';
 
 -- 创建答辩组长表
@@ -217,15 +233,26 @@ INSERT INTO user (username, password, real_name, role_id, department_id, email, 
 ('se_admin',  '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', '软院管理员', 2, 2, 'se_admin@example.com', '13800000002'),
 ('ice_admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', '信通管理员', 2, 3, 'ice_admin@example.com', '13800000003');
 
--- 教师（密码同编号）
-INSERT INTO teacher (teacher_no, name, department_id, title, email, phone, password) VALUES
-('T001', '张教授', 1, '教授', 'zhang@example.com', '13900010001', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi'),
-('T002', '李副教授', 1, '副教授', 'li@example.com', '13900010002', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi'),
-('T003', '王讲师', 2, '讲师', 'wang@example.com', '13900020003', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi'),
-('T004', '赵老师', 2, '副教授', 'zhao@example.com', '13900020004', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi'),
-('T005', '钱博士', 3, '讲师', 'qian@example.com', '13900030005', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi'),
-('T006', '孙博士', 4, '副教授', 'sun@example.com', '13900040006', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi'),
-('T007', '周老师', 4, '讲师', 'zhou@example.com', '13900040007', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi');
+-- 教师用户（在user表中创建，用于统一管理，密码统一为123456）
+INSERT INTO user (username, password, real_name, role_id, department_id, email, phone) VALUES
+('teacher_zhang', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', '张教授', 4, 1, 'zhang@example.com', '13900010001'),
+('teacher_li', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', '李副教授', 4, 1, 'li@example.com', '13900010002'),
+('teacher_wang', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', '王讲师', 4, 2, 'wang@example.com', '13900020003'),
+('teacher_zhao', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', '赵老师', 4, 2, 'zhao@example.com', '13900020004'),
+('teacher_qian', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', '钱博士', 4, 3, 'qian@example.com', '13900030005'),
+('teacher_sun', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', '孙博士', 4, 4, 'sun@example.com', '13900040006'),
+('teacher_zhou', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', '周老师', 4, 4, 'zhou@example.com', '13900040007');
+
+-- 教师（关联到user表，user_id对应上面创建的教师用户ID）
+-- 注意：假设上面插入的教师用户ID从5开始（前4个是admin和3个院系管理员）
+INSERT INTO teacher (teacher_no, name, department_id, title, email, phone, password, user_id) VALUES
+('T001', '张教授', 1, '教授', 'zhang@example.com', '13900010001', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 5),
+('T002', '李副教授', 1, '副教授', 'li@example.com', '13900010002', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 6),
+('T003', '王讲师', 2, '讲师', 'wang@example.com', '13900020003', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 7),
+('T004', '赵老师', 2, '副教授', 'zhao@example.com', '13900020004', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 8),
+('T005', '钱博士', 3, '讲师', 'qian@example.com', '13900030005', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 9),
+('T006', '孙博士', 4, '副教授', 'sun@example.com', '13900040006', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 10),
+('T007', '周老师', 4, '讲师', 'zhou@example.com', '13900040007', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 11);
 
 -- 答辩组长
 INSERT INTO defense_leader (teacher_id, year, department_id) VALUES
@@ -296,7 +323,7 @@ INSERT INTO student_final_score (student_id, year, advisor_score, reviewer_score
 
 -- 系统配置示例
 INSERT INTO system_config (config_key, config_value, description) VALUES
-('CURRENT_DEFENSE_YEAR', '2025', '当前答辩年份'),
+('CURRENT_DEFENSE_YEAR', '2024', '当前答辩年份'),
 ('DEFENSE_DATE_YEAR', '2025', '答辩日期-年'),
 ('DEFENSE_DATE_MONTH', '6', '答辩日期-月'),
 ('DEFENSE_DATE_DAY', '20', '答辩日期-日'),

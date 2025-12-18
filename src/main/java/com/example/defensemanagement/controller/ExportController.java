@@ -3,9 +3,11 @@ package com.example.defensemanagement.controller;
 import com.example.defensemanagement.entity.Student;
 import com.example.defensemanagement.entity.StudentFinalScore;
 import com.example.defensemanagement.entity.TeacherScoreRecord;
+import com.example.defensemanagement.entity.DefenseGroupTeacher;
 import com.example.defensemanagement.mapper.StudentFinalScoreMapper;
 import com.example.defensemanagement.mapper.StudentMapper;
 import com.example.defensemanagement.mapper.TeacherScoreRecordMapper;
+import com.example.defensemanagement.mapper.DefenseGroupTeacherMapper;
 import com.example.defensemanagement.service.DocTemplateService;
 import com.example.defensemanagement.service.ConfigService;
 import com.example.defensemanagement.service.AiCommentService;
@@ -64,6 +66,9 @@ public class ExportController {
 
     @Autowired
     private AiCommentService aiCommentService;
+
+    @Autowired
+    private DefenseGroupTeacherMapper defenseGroupTeacherMapper;
 
     @Value("${app.upload.base-dir:uploads}")
     private String uploadBaseDir;
@@ -341,8 +346,14 @@ public class ExportController {
             if (bytes != null) img.put("{{SIGN_REVIEWER}}", bytes);
         }
         if (stu.getDefenseGroupId() != null) {
-            byte[] bytes = loadSignature("leader_group_" + stu.getDefenseGroupId());
-            if (bytes != null) img.put("{{SIGN_LEADER}}", bytes);
+            // Leader signature: use assigned group leader teacher's signature (teacher_{id}.png/jpg)
+            try {
+                DefenseGroupTeacher leader = defenseGroupTeacherMapper.findLeaderByGroupId(stu.getDefenseGroupId());
+                if (leader != null && leader.getTeacherId() != null) {
+                    byte[] bytes = loadSignature("teacher_" + leader.getTeacherId());
+                    if (bytes != null) img.put("{{SIGN_LEADER}}", bytes);
+                }
+            } catch (Exception ignored) {}
         }
     }
 

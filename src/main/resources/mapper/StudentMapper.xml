@@ -69,4 +69,14 @@
         WHERE id = #{id}
     </update>
 
+    <update id="updateDefenseGroupId">
+        UPDATE t_student
+        SET defense_group_id = #{groupId}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM t_student WHERE id = #{id}
+    </delete>
+
 </mapper>

@@ -17,15 +17,20 @@ public interface TeacherMapper {
     })
     Teacher findById(Long id);
     
-    @Select("SELECT * FROM teacher WHERE department_id = #{departmentId}")
+    @Select("<script>" +
+            "SELECT * FROM teacher " +
+            "<where>" +
+            "  <if test='departmentId != null'> department_id = #{departmentId} </if>" +
+            "</where>" +
+            "</script>")
     @Results({
         @Result(property = "teacherNo", column = "teacher_no"),
         @Result(property = "departmentId", column = "department_id")
     })
     List<Teacher> findByDepartmentId(Long departmentId);
     
-    @Insert("INSERT INTO teacher (teacher_no, name, department_id, title, email, phone, password) " +
-            "VALUES (#{teacherNo}, #{name}, #{departmentId}, #{title}, #{email}, #{phone}, #{password})")
+    @Insert("INSERT INTO teacher (teacher_no, name, department_id, title, email, phone, password, user_id) " +
+            "VALUES (#{teacherNo}, #{name}, #{departmentId}, #{title}, #{email}, #{phone}, #{password}, #{userId})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(Teacher teacher);
     
@@ -33,9 +38,17 @@ public interface TeacherMapper {
     int updatePassword(@Param("id") Long id, @Param("password") String password);
     
     @Update("UPDATE teacher SET name = #{name}, department_id = #{departmentId}, title = #{title}, " +
-            "email = #{email}, phone = #{phone}, updated_time = CURRENT_TIMESTAMP WHERE id = #{id}")
+            "email = #{email}, phone = #{phone}, user_id = #{userId}, updated_time = CURRENT_TIMESTAMP WHERE id = #{id}")
     int update(Teacher teacher);
     
     @Update("UPDATE teacher SET status = #{status}, updated_time = CURRENT_TIMESTAMP WHERE id = #{id}")
     int updateStatus(@Param("id") Long id, @Param("status") Integer status);
+    
+    @Select("SELECT * FROM teacher WHERE user_id = #{userId}")
+    @Results({
+        @Result(property = "teacherNo", column = "teacher_no"),
+        @Result(property = "departmentId", column = "department_id"),
+        @Result(property = "userId", column = "user_id")
+    })
+    Teacher findByUserId(Long userId);
 }

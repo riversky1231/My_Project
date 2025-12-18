@@ -12,13 +12,13 @@
         <result property="status" column="status"/>
         <result property="roleId" column="role_id"/>
         <result property="departmentId" column="department_id"/>
-        
+
         <association property="role" javaType="com.example.defensemanagement.entity.Role">
             <id property="id" column="role_id"/>
             <result property="name" column="role_name"/>
             <result property="description" column="role_description"/>
         </association>
-        
+
         <association property="department" javaType="com.example.defensemanagement.entity.Department">
             <id property="id" column="department_id"/>
             <result property="name" column="department_name"/>
@@ -30,38 +30,46 @@
         SELECT u.*, r.name as role_name, r.description as role_description,
                d.name as department_name, d.code as department_code
         FROM user u
-        LEFT JOIN role r ON u.role_id = r.id
-        LEFT JOIN department d ON u.department_id = d.id
+                 LEFT JOIN role r ON u.role_id = r.id
+                 LEFT JOIN department d ON u.department_id = d.id
         WHERE u.username = #{username}
     </select>
-    
+
     <select id="findById" resultMap="UserResultMap">
         SELECT u.*, r.name as role_name, r.description as role_description,
                d.name as department_name, d.code as department_code
         FROM user u
-        LEFT JOIN role r ON u.role_id = r.id
-        LEFT JOIN department d ON u.department_id = d.id
+                 LEFT JOIN role r ON u.role_id = r.id
+                 LEFT JOIN department d ON u.department_id = d.id
         WHERE u.id = #{id}
     </select>
 
     <select id="findAll" resultMap="UserResultMap">
         SELECT u.*, r.name as role_name, r.description as role_description,
-               d.name as department_name, d.code as department_code
-        FROM user u
-        LEFT JOIN role r ON u.role_id = r.id
-        LEFT JOIN department d ON u.department_id = d.id
-        ORDER BY u.id DESC
-    </select>
-    
-    <select id="searchUsers" resultMap="UserResultMap">
-        SELECT u.*, r.name as role_name, r.description as role_description,
-               d.name as department_name, d.code as department_code
+        d.name as department_name, d.code as department_code
         FROM user u
         LEFT JOIN role r ON u.role_id = r.id
         LEFT JOIN department d ON u.department_id = d.id
         <where>
+            <if test="departmentId != null">
+                u.department_id = #{departmentId}
+            </if>
+        </where>
+        ORDER BY u.id DESC
+    </select>
+
+    <select id="searchUsers" resultMap="UserResultMap">
+        SELECT u.*, r.name as role_name, r.description as role_description,
+        d.name as department_name, d.code as department_code
+        FROM user u
+        LEFT JOIN role r ON u.role_id = r.id
+        LEFT JOIN department d ON u.department_id = d.id
+        <where>
+            <if test="departmentId != null">
+                u.department_id = #{departmentId}
+            </if>
             <if test="keyword != null and keyword != ''">
-                (u.username LIKE CONCAT('%', #{keyword}, '%')
+                AND (u.username LIKE CONCAT('%', #{keyword}, '%')
                 OR u.real_name LIKE CONCAT('%', #{keyword}, '%')
                 OR u.email LIKE CONCAT('%', #{keyword}, '%')
                 OR r.name LIKE CONCAT('%', #{keyword}, '%')
@@ -72,15 +80,18 @@
         ORDER BY u.id DESC
         LIMIT #{limit} OFFSET #{offset}
     </select>
-    
+
     <select id="countUsers" resultType="int">
         SELECT COUNT(*)
         FROM user u
         LEFT JOIN role r ON u.role_id = r.id
         LEFT JOIN department d ON u.department_id = d.id
         <where>
+            <if test="departmentId != null">
+                u.department_id = #{departmentId}
+            </if>
             <if test="keyword != null and keyword != ''">
-                (u.username LIKE CONCAT('%', #{keyword}, '%')
+                AND (u.username LIKE CONCAT('%', #{keyword}, '%')
                 OR u.real_name LIKE CONCAT('%', #{keyword}, '%')
                 OR u.email LIKE CONCAT('%', #{keyword}, '%')
                 OR r.name LIKE CONCAT('%', #{keyword}, '%')

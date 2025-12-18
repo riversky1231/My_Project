@@ -122,4 +122,19 @@ public class StudentServiceImpl implements StudentService {
             return studentMapper.update(student) > 0;
         }
     }
+
+    @Override
+    @Transactional
+    public boolean deleteStudent(Long studentId) {
+        if (studentId == null) return false;
+        return studentMapper.deleteById(studentId) > 0;
+    }
+
+    @Override
+    @Transactional
+    public boolean unassignDefenseGroup(Long studentId) {
+        if (studentId == null) return false;
+        // explicitly set defense_group_id to NULL (XML update won't set null values)
+        return studentMapper.updateDefenseGroupId(studentId, null) > 0;
+    }
 }

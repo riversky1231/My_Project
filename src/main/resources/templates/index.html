@@ -239,6 +239,8 @@
                     class="bi bi-speedometer2"></i> 工作台</a>
             <a class="nav-link" href="javascript:void(0);" onclick="showView('group-management-view', this)"><i
                     class="bi bi-people"></i> 小组管理</a>
+            <a class="nav-link" href="javascript:void(0);" onclick="showView('student-management-view', this)"><i
+                    class="bi bi-person-badge"></i> 学生管理</a>
             <a class="nav-link" href="javascript:void(0);" onclick="showView('user-management-view', this)"><i
                     class="bi bi-person-circle"></i> 用户管理</a>
             <a class="nav-link" href="javascript:void(0);" onclick="showView('score-view', this)"><i
@@ -374,9 +376,46 @@
         <div id="group-management-view" class="view-container" style="display: none;">
             <header class="header">
                 <h1>小组管理</h1>
-                <p class="text-muted">学生信息通过学生管理模块维护，在学生表中指定 defense_group_id 即可关联到小组</p>
             </header>
             <div class="module">
+                <div class="module-header">
+                    <h4><i class="bi bi-person-badge"></i> 小组教师与组长</h4>
+                </div>
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">选择小组</label>
+                        <select class="form-select" id="gt-group-select">
+                            <option th:each="group : ${groups}" th:value="${group.id}" th:text="${group.name}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">选择教师</label>
+                        <select class="form-select" id="gt-teacher-select"></select>
+                    </div>
+                    <div class="col-md-5 d-flex gap-2">
+                        <button class="btn btn-outline-primary" onclick="gtAssignTeacher()">分配到小组</button>
+                        <button class="btn btn-outline-success" onclick="gtSetLeader()">设为组长</button>
+                        <button class="btn btn-outline-secondary" onclick="gtRefresh()">刷新</button>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>教师编号</th>
+                                    <th>姓名</th>
+                                    <th>职称</th>
+                                    <th>角色</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="gt-list"></tbody>
+                        </table>
+                    </div>
+                    <small class="text-muted">提示：导出时组长签名将使用该组“组长教师”的签名（上传签名会自动命名为 teacher_教师ID.*）。</small>
+                </div>
+
                 <div class="accordion" id="groupsAccordion">
                     <div th:each="group, iterStat : ${groups}" class="accordion-item">
                         <h2 class="accordion-header" th:id="'heading' + ${iterStat.index}">
@@ -394,10 +433,12 @@
                                     <li th:each="member : ${group.members}"
                                         class="list-group-item d-flex justify-content-between align-items-start">
                                         <div class="ms-2 me-auto">
-                                            <div class="fw-bold" th:text="${member.name + ' (' + member.studentNo + ')'}">学生姓名(学号)</div>
+                                            <div class="fw-bold"
+                                                th:text="${member.name + ' (' + member.studentNo + ')'}">学生姓名(学号)</div>
                                             <small class="text-muted">
                                                 <span th:text="'项目：' + ${member.title}">项目名称</span>
-                                                <span class="badge bg-info ms-2" th:text="${member.defenseType == 'PAPER' ? '论文' : '设计'}">类型</span>
+                                                <span class="badge bg-info ms-2"
+                                                    th:text="${member.defenseType == 'PAPER' ? '论文' : '设计'}">类型</span>
                                             </small>
                                         </div>
                                     </li>
@@ -409,14 +450,58 @@
             </div>
         </div>
 
+        <!-- Student Management View -->
+        <div id="student-management-view" class="view-container" style="display: none;">
+            <header class="header">
+                <h1>学生管理</h1>
+                <div class="d-flex align-items-center">
+                    <div class="input-group me-3" style="width: 300px;">
+                        <input type="text" id="student-search-input" class="form-control" placeholder="搜索学生..."
+                            onkeypress="if(event.key==='Enter') loadStudents()">
+                        <button class="btn btn-outline-secondary" type="button" onclick="loadStudents()"><i
+                                class="bi bi-search"></i></button>
+                    </div>
+                    <button class="btn btn-primary" onclick="openStudentModal()">
+                        <i class="bi bi-plus-circle"></i> 添加新学生
+                    </button>
+                </div>
+            </header>
+            <div class="module">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>学号</th>
+                                <th>姓名</th>
+                                <th>班级</th>
+                                <th>类型</th>
+                                <th>题目</th>
+                                <th>指导教师</th>
+                                <th>评阅教师</th>
+                                <th>答辩小组</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="student-list">
+                            <tr>
+                                <td colspan="9" class="text-center text-muted">加载中...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <!-- User Management View -->
         <div id="user-management-view" class="view-container" style="display: none;">
             <header class="header">
                 <h1>用户管理</h1>
                 <div class="d-flex align-items-center">
                     <div class="input-group me-3" style="width: 300px;">
-                        <input type="text" id="user-search-input" class="form-control" placeholder="搜索用户..." onkeypress="if(event.key==='Enter') searchUsersWithPagination()">
-                        <button class="btn btn-outline-secondary" type="button" onclick="searchUsersWithPagination()"><i class="bi bi-search"></i></button>
+                        <input type="text" id="user-search-input" class="form-control" placeholder="搜索用户..."
+                            onkeypress="if(event.key==='Enter') searchUsersWithPagination()">
+                        <button class="btn btn-outline-secondary" type="button" onclick="searchUsersWithPagination()"><i
+                                class="bi bi-search"></i></button>
                     </div>
                     <button class="btn btn-primary" onclick="openUserModal()">
                         <i class="bi bi-plus-circle"></i> 添加新用户
@@ -712,36 +797,7 @@
         </div>
     </div>
 
-    <!-- 添加成员模态框 -->
-    <div class="modal fade" id="addMemberModal" tabindex="-1" aria-labelledby="addMemberModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addMemberModalLabel">添加新成员</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="addMemberForm">
-                        <div class="mb-3">
-                            <label for="memberGroupSelect" class="form-label">选择小组</label>
-                            <select class="form-select" id="memberGroupSelect" required>
-                                <option th:each="group : ${groups}" th:value="${group.id}" th:text="${group.name}">
-                                </option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="memberName" class="form-label">成员姓名</label>
-                            <input type="text" class="form-control" id="memberName" required>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-primary" onclick="addMember()">添加</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- addMemberModal removed: members are derived from Student records (t_student.defense_group_id) -->
 
     <!-- 添加小组模态框 -->
     <div class="modal fade" id="addGroupModal" tabindex="-1" aria-labelledby="addGroupModalLabel" aria-hidden="true">
@@ -766,7 +822,7 @@
                             <label for="groupMembers" class="form-label">小组成员</label>
                             <textarea class="form-control" id="groupMembers" rows="3"
                                 placeholder="请输入成员姓名，每行一个"></textarea>
-                            <div class="form-text">每行输入一个成员姓名</div>
+                            <div class="form-text">已废弃：成员来自学生管理（通过学生的 defense_group_id 关联），此处输入会被忽略</div>
                         </div>
                     </form>
                 </div>
@@ -792,7 +848,8 @@
                         <div class="col-md-6">
                             <label for="username" class="form-label">用户名</label>
                             <input type="text" class="form-control" id="username" required>
-                            <small class="text-muted" id="username-hint" style="display: none;">提示：只有超级管理员可以修改用户名</small>
+                            <small class="text-muted" id="username-hint"
+                                style="display: none;">提示：只有超级管理员可以修改用户名</small>
                         </div>
                         <div class="col-md-6">
                             <label for="realName" class="form-label">真实姓名</label>
@@ -832,6 +889,78 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                     <button type="button" class="btn btn-primary" onclick="saveUser()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Management Modal -->
+    <div class="modal fade" id="addStudentModal" tabindex="-1" aria-labelledby="addStudentModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addStudentModalLabel">添加新学生</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addStudentForm" class="row g-3">
+                        <input type="hidden" id="studentId">
+                        <div class="col-md-6">
+                            <label for="studentNo" class="form-label">学号 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="studentNo" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="studentName" class="form-label">姓名 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="studentName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="classInfo" class="form-label">班级</label>
+                            <input type="text" class="form-control" id="classInfo">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="defenseType" class="form-label">答辩类型 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="defenseType" required>
+                                <option value="">请选择</option>
+                                <option value="PAPER">论文</option>
+                                <option value="DESIGN">设计</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label for="title" class="form-label">题目</label>
+                            <input type="text" class="form-control" id="title">
+                        </div>
+                        <div class="col-12">
+                            <label for="summary" class="form-label">摘要</label>
+                            <textarea class="form-control" id="summary" rows="3"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="advisorTeacher" class="form-label">指导教师</label>
+                            <select class="form-select" id="advisorTeacher">
+                                <option value="">未分配</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="reviewerTeacher" class="form-label">评阅教师</label>
+                            <select class="form-select" id="reviewerTeacher">
+                                <option value="">未分配</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="defenseGroup" class="form-label">答辩小组</label>
+                            <select class="form-select" id="defenseGroup">
+                                <option value="">未分配</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="defenseYear" class="form-label">答辩年份 <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="defenseYear" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="saveStudent()">保存</button>
                 </div>
             </div>
         </div>
@@ -1033,6 +1162,12 @@
             clickedLink.classList.add('active');
 
             // Load specific view data
+            if (viewId === 'group-management-view') {
+                gtInit();
+            }
+            if (viewId === 'student-management-view') {
+                loadStudents();
+            }
             if (viewId === 'user-management-view') {
                 searchUsersWithPagination(1);
             }
@@ -1041,19 +1176,116 @@
             }
         }
 
+        // --- Group Teacher Management (Dept Admin) ---
+        let gtTeachers = [];
+
+        async function gtInit() {
+            try {
+                // load department teachers
+                const resp = await fetch('/department/group/teachers');
+                if (!resp.ok) throw new Error('加载教师列表失败');
+                gtTeachers = await resp.json();
+
+                const sel = document.getElementById('gt-teacher-select');
+                sel.innerHTML = '';
+                gtTeachers.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.textContent = `${t.teacherNo} - ${t.name}`;
+                    sel.appendChild(opt);
+                });
+
+                const groupSel = document.getElementById('gt-group-select');
+                groupSel.addEventListener('change', gtRefresh);
+
+                await gtRefresh();
+            } catch (e) {
+                console.error(e);
+                showAlert('error', e.message || '加载小组教师模块失败');
+            }
+        }
+
+        async function gtRefresh() {
+            const groupId = document.getElementById('gt-group-select').value;
+            if (!groupId) return;
+            const tbody = document.getElementById('gt-list');
+            tbody.innerHTML = '<tr><td colspan="5" class="text-muted text-center">加载中...</td></tr>';
+            try {
+                const resp = await fetch(`/department/group/${groupId}/teachers`);
+                if (!resp.ok) throw new Error('加载小组教师失败');
+                const list = await resp.json();
+                if (!list || list.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-muted text-center">暂无分配教师</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = '';
+                list.forEach(row => {
+                    const t = row.teacher || {};
+                    const role = row.isLeader === 1 ? '<span class="badge bg-success">组长</span>' : '<span class="badge bg-secondary">教师</span>';
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${t.teacherNo || ''}</td>
+                        <td>${t.name || ''}</td>
+                        <td>${t.title || ''}</td>
+                        <td>${role}</td>
+                        <td class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-success" onclick="gtSetLeader(${t.id})">设为组长</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="gtRemoveTeacher(${t.id})">移除</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (e) {
+                console.error(e);
+                tbody.innerHTML = '<tr><td colspan="5" class="text-danger text-center">加载失败</td></tr>';
+            }
+        }
+
+        async function gtAssignTeacher() {
+            const groupId = document.getElementById('gt-group-select').value;
+            const teacherId = document.getElementById('gt-teacher-select').value;
+            if (!groupId || !teacherId) return;
+            await postForm(`/department/group/${groupId}/teacher/assign`, { teacherId });
+            await gtRefresh();
+        }
+
+        async function gtRemoveTeacher(teacherId) {
+            const groupId = document.getElementById('gt-group-select').value;
+            if (!groupId || !teacherId) return;
+            toggleLoading(true);
+            try {
+                const resp = await fetch(`/department/group/${groupId}/teacher/${teacherId}`, { method: 'DELETE' });
+                const text = await resp.text();
+                showAlert(text === 'success' ? 'success' : 'error', text);
+                await gtRefresh();
+            } catch (e) {
+                showAlert('error', '请求失败');
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        async function gtSetLeader(teacherId = null) {
+            const groupId = document.getElementById('gt-group-select').value;
+            if (!teacherId) teacherId = document.getElementById('gt-teacher-select').value;
+            if (!groupId || !teacherId) return;
+            await postForm(`/department/group/${groupId}/leader/set`, { teacherId });
+            await gtRefresh();
+        }
+
         // --- User Management Functions ---
         let currentUserPage = 1;
         const userPageSize = 8;
-        
+
         async function searchUsersWithPagination(page = 1) {
             currentUserPage = page;
             const keyword = document.getElementById('user-search-input').value.trim();
-            
+
             try {
                 const response = await fetch(`/admin/users/search?keyword=${encodeURIComponent(keyword)}&page=${page}&pageSize=${userPageSize}`);
                 if (!response.ok) throw new Error('获取用户列表失败');
                 const data = await response.json();
-                
+
                 renderUserTable(data.users);
                 renderUserPagination(data.currentPage, data.totalPages, data.total);
             } catch (error) {
@@ -1061,23 +1293,23 @@
                 showAlert('error', error.message || '获取用户列表失败');
             }
         }
-        
+
         function renderUserTable(users) {
             const userListBody = document.getElementById('user-list');
             userListBody.innerHTML = '';
-            
+
             if (users.length === 0) {
                 userListBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">暂无数据</td></tr>';
                 return;
             }
-            
+
             const userInfoDiv = document.querySelector('.user-info');
             const currentUserRole = userInfoDiv.dataset.userRole;
             const currentUserDept = userInfoDiv.dataset.userDept;
-            
+
             users.forEach(user => {
                 const canEdit = canCurrentUserEdit(currentUserRole, currentUserDept, user);
-                
+
                 const actionButtons = canEdit ? `
                     <button class="btn btn-sm btn-outline-primary" onclick='openUserModal(${JSON.stringify(user)})'><i class="bi bi-pencil-square"></i></button>
                     <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteUser(${user.id})"><i class="bi bi-trash"></i></button>
@@ -1085,7 +1317,7 @@
                         <i class="bi ${user.status === 1 ? 'bi-toggle-on' : 'bi-toggle-off'}"></i>
                     </button>
                 ` : '<span class="text-muted">无权限</span>';
-                
+
                 const row = `
                     <tr>
                         <td><input class="form-check-input" type="checkbox" value="${user.id}"></td>
@@ -1105,41 +1337,41 @@
                 userListBody.innerHTML += row;
             });
         }
-        
+
         function renderUserPagination(currentPage, totalPages, total) {
             const paginationInfo = document.getElementById('user-pagination-info');
             const pagination = document.getElementById('user-pagination');
-            
+
             // 更新信息
             const start = (currentPage - 1) * userPageSize + 1;
             const end = Math.min(currentPage * userPageSize, total);
             paginationInfo.textContent = `显示 ${start}-${end} 条，共 ${total} 条`;
-            
+
             // 生成分页按钮
             pagination.innerHTML = '';
-            
+
             // 上一页
             const prevLi = document.createElement('li');
             prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
             prevLi.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="searchUsersWithPagination(${currentPage - 1})">上一页</a>`;
             pagination.appendChild(prevLi);
-            
+
             // 页码按钮
             const maxButtons = 5;
             let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
             let endPage = Math.min(totalPages, startPage + maxButtons - 1);
-            
+
             if (endPage - startPage < maxButtons - 1) {
                 startPage = Math.max(1, endPage - maxButtons + 1);
             }
-            
+
             for (let i = startPage; i <= endPage; i++) {
                 const li = document.createElement('li');
                 li.className = `page-item ${i === currentPage ? 'active' : ''}`;
                 li.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="searchUsersWithPagination(${i})">${i}</a>`;
                 pagination.appendChild(li);
             }
-            
+
             // 下一页
             const nextLi = document.createElement('li');
             nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
@@ -1182,37 +1414,45 @@
             const modalLabel = document.getElementById('addUserModalLabel');
             const usernameInput = document.getElementById('username');
             const usernameHint = document.getElementById('username-hint');
-            
-            // 获取当前用户角色
+            const roleSelect = document.getElementById('role');
+            const departmentSelect = document.getElementById('department');
+
+            // 获取当前用户角色和院系
             const userInfoDiv = document.querySelector('.user-info');
             const currentUserRole = userInfoDiv.dataset.userRole;
-            
+            const currentUserDept = userInfoDiv.dataset.userDept;
+
             console.log('DEBUG: 当前用户角色:', currentUserRole);
+            console.log('DEBUG: 当前用户院系ID:', currentUserDept);
             console.log('DEBUG: 是否为超级管理员:', currentUserRole === 'SUPER_ADMIN');
 
             // 先重置表单
             form.reset();
-            
+
             // 清空所有字段
             document.getElementById('userId').value = '';
             usernameInput.value = '';
             document.getElementById('realName').value = '';
             document.getElementById('email').value = '';
             document.getElementById('password').value = '';
-            
+
             // 重置用户名字段状态
             usernameInput.readOnly = false;
             usernameInput.removeAttribute('readonly');
             usernameHint.style.display = 'none';
+
+            // 重置下拉框状态
+            roleSelect.disabled = false;
+            departmentSelect.disabled = false;
 
             if (user) {
                 // 编辑模式
                 modalLabel.textContent = '编辑用户';
                 document.getElementById('userId').value = user.id;
                 usernameInput.value = user.username;
-                
+
                 console.log('DEBUG: 编辑模式 - 用户名:', user.username);
-                
+
                 // 只有超级管理员才能修改用户名
                 if (currentUserRole !== 'SUPER_ADMIN') {
                     console.log('DEBUG: 非超级管理员，锁定用户名');
@@ -1221,7 +1461,7 @@
                 } else {
                     console.log('DEBUG: 超级管理员，允许修改用户名');
                 }
-                
+
                 document.getElementById('realName').value = user.realName || '';
                 document.getElementById('email').value = user.email || '';
                 document.getElementById('role').value = user.roleId;
@@ -1229,17 +1469,55 @@
                 document.getElementById('userStatus').checked = user.status === 1;
                 // 编辑模式下密码为可选
                 document.getElementById('password').placeholder = '留空表示不修改密码';
+
+                // 院系管理员编辑用户时，院系字段只读（只能管理自己院系的用户）
+                if (currentUserRole === 'DEPT_ADMIN') {
+                    departmentSelect.disabled = true;
+                }
             } else {
                 // 新增模式
                 console.log('DEBUG: 新增模式');
                 modalLabel.textContent = '添加新用户';
                 document.getElementById('userStatus').checked = true; // 默认启用
                 document.getElementById('password').placeholder = '请输入密码';
+
+                // 院系管理员新增用户时的限制
+                if (currentUserRole === 'DEPT_ADMIN') {
+                    // 院系固定为当前院系管理员的院系，且只读
+                    departmentSelect.disabled = true;
+                    departmentSelect.value = currentUserDept || '';
+                }
             }
 
             // Populate dropdowns
-            await populateSelect('/admin/departments/list', 'department');
+            // 院系下拉框：院系管理员新增时只显示自己的院系且只读
+            if (currentUserRole === 'DEPT_ADMIN' && !user) {
+                // 新增模式：只显示当前院系，且设置为只读
+                await populateSelect('/admin/departments/list', 'department', function (depts) {
+                    // 只保留当前院系管理员的院系
+                    return depts.filter(d => String(d.id) === String(currentUserDept));
+                });
+                departmentSelect.disabled = true;
+                departmentSelect.value = currentUserDept || '';
+            } else {
+                // 编辑模式或超级管理员：显示所有院系
+                await populateSelect('/admin/departments/list', 'department');
+            }
+
+            // 角色下拉框：后端已经根据权限过滤，直接使用即可
             await populateSelect('/admin/roles/list', 'role');
+
+            // 院系管理员新增用户时，默认选中 TEACHER 角色
+            if (currentUserRole === 'DEPT_ADMIN' && !user) {
+                // 查找 TEACHER 角色（description 为"教师"或 name 为"TEACHER"）
+                const teacherOption = Array.from(roleSelect.options).find(opt => {
+                    const text = opt.textContent.trim();
+                    return text === '教师' || text.includes('教师') || opt.value === '4';
+                });
+                if (teacherOption) {
+                    roleSelect.value = teacherOption.value;
+                }
+            }
 
             modal.show();
         }
@@ -1279,13 +1557,13 @@
 
         async function deleteUser(userId) {
             if (!confirm('确定要删除这个用户吗？')) return;
-            
+
             try {
                 const response = await fetch(`/admin/user/${userId}`, {
                     method: 'DELETE'
                 });
                 const result = await response.text();
-                
+
                 if (result === 'success') {
                     showAlert('success', '用户删除成功！');
                     searchUsersWithPagination(currentUserPage); // 使用当前页刷新
@@ -1301,15 +1579,15 @@
         async function toggleUserStatus(userId, currentStatus) {
             const newStatus = currentStatus === 1 ? 0 : 1;
             const statusText = newStatus === 1 ? '启用' : '禁用';
-            
+
             if (!confirm(`确定要${statusText}该用户吗？`)) return;
-            
+
             try {
                 const response = await fetch(`/admin/user/${userId}/status?status=${newStatus}`, {
                     method: 'POST'
                 });
                 const result = await response.text();
-                
+
                 if (result === 'success') {
                     showAlert('success', `用户${statusText}成功！`);
                     searchUsersWithPagination(currentUserPage); // 使用当前页刷新
@@ -1322,45 +1600,295 @@
             }
         }
 
-        async function populateSelect(url, selectId) {
+        async function populateSelect(url, selectId, filterFn = null) {
             try {
                 const response = await fetch(url);
                 const data = await response.json();
                 const select = document.getElementById(selectId);
                 const currentValue = select.value;
                 select.innerHTML = '';
-                data.forEach(item => {
-                    const option = new Option(item.name, item.id);
+
+                // 如果提供了过滤函数，先过滤数据
+                const filteredData = filterFn ? filterFn(data) : data;
+
+                filteredData.forEach(item => {
+                    // 对于角色，使用 description 作为显示文本（如果有），否则使用 name
+                    const displayText = (selectId === 'role' && item.description) ? item.description : item.name;
+                    const option = new Option(displayText, item.id);
                     select.add(option);
                 });
-                select.value = currentValue;
+
+                // 如果当前值存在且在下拉框中，保持选中；否则保持第一个选项或空
+                if (currentValue && Array.from(select.options).some(opt => opt.value === currentValue)) {
+                    select.value = currentValue;
+                } else if (select.options.length > 0 && !currentValue) {
+                    // 如果没有当前值，保持第一个选项（可能是默认值）
+                }
             } catch (error) {
                 console.error(`Failed to populate ${selectId}:`, error);
                 showAlert('error', `加载${selectId === 'role' ? '角色' : '院系'}列表失败`);
             }
         }
 
-        function addMember() {
-            const groupId = document.getElementById('memberGroupSelect').value;
-            const memberName = document.getElementById('memberName').value;
+        // --- Student Management Functions ---
+        async function loadStudents() {
+            const keyword = document.getElementById('student-search-input')?.value.trim() || '';
+            try {
+                const response = await fetch(`/department/student/list`);
+                if (!response.ok) {
+                    let errorText = '获取学生列表失败';
+                    try {
+                        const errorJson = await response.json();
+                        errorText = errorJson.message || errorJson.error || errorText;
+                    } catch (e) {
+                        errorText = await response.text() || errorText;
+                    }
+                    throw new Error(errorText);
+                }
+                const students = await response.json();
+                console.log('Loaded students:', students);
+                renderStudentTable(students, keyword);
+            } catch (error) {
+                console.error('Load students error:', error);
+                showAlert('error', error.message || '获取学生列表失败');
+                document.getElementById('student-list').innerHTML =
+                    '<tr><td colspan="9" class="text-center text-danger">加载失败: ' + (error.message || '未知错误') + '</td></tr>';
+            }
+        }
 
-            if (!memberName.trim()) {
-                showAlert('warning', '请输入成员姓名');
+        function renderStudentTable(students, keyword) {
+            const tbody = document.getElementById('student-list');
+            tbody.innerHTML = '';
+
+            if (!students || students.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">暂无学生数据</td></tr>';
                 return;
             }
 
-            fetch('/member/add', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ groupId: groupId, name: memberName })
-            }).then(response => {
-                if (response.ok) {
-                    location.reload(); // 刷新页面
-                } else {
-                    showAlert('error', '添加成员失败');
-                }
+            // 简单过滤（如果有关键词）
+            let filtered = students;
+            if (keyword) {
+                const kw = keyword.toLowerCase();
+                filtered = students.filter(s =>
+                    (s.studentNo && s.studentNo.toLowerCase().includes(kw)) ||
+                    (s.name && s.name.toLowerCase().includes(kw)) ||
+                    (s.title && s.title.toLowerCase().includes(kw))
+                );
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">未找到匹配的学生</td></tr>';
+                return;
+            }
+
+            filtered.forEach(student => {
+                const row = `
+                    <tr>
+                        <td>${student.studentNo || 'N/A'}</td>
+                        <td><strong>${student.name || 'N/A'}</strong></td>
+                        <td>${student.classInfo || 'N/A'}</td>
+                        <td><span class="badge ${student.defenseType === 'PAPER' ? 'bg-info' : 'bg-warning'}">
+                            ${student.defenseType === 'PAPER' ? '论文' : (student.defenseType === 'DESIGN' ? '设计' : 'N/A')}
+                        </span></td>
+                        <td>${student.title || 'N/A'}</td>
+                        <td>${student.advisorTeacherId ? 'ID: ' + student.advisorTeacherId : '未分配'}</td>
+                        <td>${student.reviewerTeacherId ? 'ID: ' + student.reviewerTeacherId : '未分配'}</td>
+                        <td>${student.defenseGroupId ? '组ID: ' + student.defenseGroupId : '未分配'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick='openStudentModal(${JSON.stringify(student)})'>
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteStudent(${student.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
             });
         }
+
+        async function openStudentModal(student = null) {
+            const modal = new bootstrap.Modal(document.getElementById('addStudentModal'));
+            const form = document.getElementById('addStudentForm');
+            const modalLabel = document.getElementById('addStudentModalLabel');
+
+            // 重置表单
+            form.reset();
+            document.getElementById('studentId').value = '';
+
+            // 获取当前用户信息
+            const userInfoDiv = document.querySelector('.user-info');
+            const currentUserDept = userInfoDiv.dataset.userDept;
+
+            // 加载当前年份
+            try {
+                const yearResp = await fetch('/department/student/currentYear');
+                if (yearResp.ok) {
+                    const currentYear = await yearResp.json();
+                    document.getElementById('defenseYear').value = currentYear || new Date().getFullYear();
+                }
+            } catch (e) {
+                console.error('Failed to load current year:', e);
+                document.getElementById('defenseYear').value = new Date().getFullYear();
+            }
+
+            // 加载教师列表
+            try {
+                const teacherResp = await fetch('/department/group/teachers');
+                if (teacherResp.ok) {
+                    const teachers = await teacherResp.json();
+                    const advisorSelect = document.getElementById('advisorTeacher');
+                    const reviewerSelect = document.getElementById('reviewerTeacher');
+
+                    advisorSelect.innerHTML = '<option value="">未分配</option>';
+                    reviewerSelect.innerHTML = '<option value="">未分配</option>';
+
+                    teachers.forEach(t => {
+                        const opt1 = document.createElement('option');
+                        opt1.value = t.id;
+                        opt1.textContent = `${t.teacherNo} - ${t.name}`;
+                        advisorSelect.appendChild(opt1);
+
+                        const opt2 = document.createElement('option');
+                        opt2.value = t.id;
+                        opt2.textContent = `${t.teacherNo} - ${t.name}`;
+                        reviewerSelect.appendChild(opt2);
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to load teachers:', e);
+            }
+
+            // 加载答辩小组列表
+            try {
+                const groupResp = await fetch('/department/student/groups');
+                if (groupResp.ok) {
+                    const groups = await groupResp.json();
+                    const groupSelect = document.getElementById('defenseGroup');
+                    groupSelect.innerHTML = '<option value="">未分配</option>';
+
+                    groups.forEach(g => {
+                        const opt = document.createElement('option');
+                        opt.value = g.id;
+                        opt.textContent = g.name || `小组 ${g.id}`;
+                        groupSelect.appendChild(opt);
+                    });
+                } else {
+                    // 如果API失败，尝试从页面中获取小组列表
+                    const groupItems = document.querySelectorAll('.group-item');
+                    const groupSelect = document.getElementById('defenseGroup');
+                    groupSelect.innerHTML = '<option value="">未分配</option>';
+
+                    groupItems.forEach(item => {
+                        const opt = document.createElement('option');
+                        opt.value = item.dataset.id;
+                        opt.textContent = item.dataset.name || `小组 ${item.dataset.id}`;
+                        groupSelect.appendChild(opt);
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to load groups:', e);
+            }
+
+            if (student) {
+                // 编辑模式
+                modalLabel.textContent = '编辑学生';
+                document.getElementById('studentId').value = student.id || '';
+                document.getElementById('studentNo').value = student.studentNo || '';
+                document.getElementById('studentName').value = student.name || '';
+                document.getElementById('classInfo').value = student.classInfo || '';
+                document.getElementById('defenseType').value = student.defenseType || '';
+                document.getElementById('title').value = student.title || '';
+                document.getElementById('summary').value = student.summary || '';
+                document.getElementById('advisorTeacher').value = student.advisorTeacherId || '';
+                document.getElementById('reviewerTeacher').value = student.reviewerTeacherId || '';
+                document.getElementById('defenseGroup').value = student.defenseGroupId || '';
+                document.getElementById('defenseYear').value = student.defenseYear || '';
+            } else {
+                // 新增模式
+                modalLabel.textContent = '添加新学生';
+            }
+
+            modal.show();
+        }
+
+        async function saveStudent() {
+            const form = document.getElementById('addStudentForm');
+            const studentId = document.getElementById('studentId').value;
+            const studentNo = document.getElementById('studentNo').value;
+            const studentName = document.getElementById('studentName').value;
+            const defenseYear = document.getElementById('defenseYear').value;
+
+            // 基本验证
+            if (!studentNo || !studentName || !defenseYear) {
+                showAlert('warning', '请填写必填项：学号、姓名、答辩年份');
+                return;
+            }
+
+            // 获取当前用户信息
+            const userInfoDiv = document.querySelector('.user-info');
+            const currentUserDept = userInfoDiv.dataset.userDept;
+
+            const studentData = {
+                id: studentId || null,
+                studentNo: studentNo,
+                name: studentName,
+                classInfo: document.getElementById('classInfo').value || null,
+                defenseType: document.getElementById('defenseType').value || null,
+                title: document.getElementById('title').value || null,
+                summary: document.getElementById('summary').value || null,
+                advisorTeacherId: document.getElementById('advisorTeacher').value ?
+                    parseInt(document.getElementById('advisorTeacher').value) : null,
+                reviewerTeacherId: document.getElementById('reviewerTeacher').value ?
+                    parseInt(document.getElementById('reviewerTeacher').value) : null,
+                defenseGroupId: document.getElementById('defenseGroup').value ?
+                    parseInt(document.getElementById('defenseGroup').value) : null,
+                defenseYear: parseInt(defenseYear),
+                departmentId: currentUserDept ? parseInt(currentUserDept) : null
+            };
+
+            try {
+                const response = await fetch('/department/student/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(studentData)
+                });
+
+                const result = await response.text();
+                if (result === 'success') {
+                    showAlert('success', studentId ? '学生信息更新成功！' : '学生添加成功！');
+                    bootstrap.Modal.getInstance(document.getElementById('addStudentModal')).hide();
+                    loadStudents();
+                } else {
+                    showAlert('error', '保存失败: ' + result);
+                }
+            } catch (error) {
+                console.error('Save student error:', error);
+                showAlert('error', '保存失败，请检查网络连接');
+            }
+        }
+
+        async function deleteStudent(studentId) {
+            if (!confirm('确定要删除这个学生吗？')) return;
+            try {
+                const response = await fetch(`/department/student/${studentId}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.text();
+                if (result === 'success') {
+                    showAlert('success', '学生删除成功！');
+                    loadStudents();
+                } else {
+                    showAlert('error', '删除失败: ' + result);
+                }
+            } catch (error) {
+                console.error(error);
+                showAlert('error', '删除失败，请检查网络连接');
+            }
+        }
+
+        // addMember() removed: members are derived from Student records (t_student.defense_group_id)
 
         // --- Score & Evaluate ---
         async function saveTeacherScore() {
@@ -1596,33 +2124,18 @@
             }
         }
 
-        function deleteMember(memberId) {
-            if (confirm('确定要删除这个成员吗？')) {
-                fetch(`/member/${memberId}`, {
-                    method: 'DELETE'
-                }).then(response => {
-                    if (response.ok) {
-                        location.reload();
-                    } else {
-                        showAlert('error', '删除失败');
-                    }
-                });
-            }
-        }
+        // deleteMember() removed: group members are now derived from Student records (t_student.defense_group_id)
 
         // Archive functions are now removed.
 
         function addGroup() {
             const groupName = document.getElementById('groupName').value;
             const groupScore = document.getElementById('groupScore').value;
-            const groupMembers = document.getElementById('groupMembers').value;
 
             if (!groupName.trim()) {
                 showAlert('warning', '请输入小组名称');
                 return;
             }
-
-            const memberList = groupMembers.trim() ? groupMembers.split('\n').filter(name => name.trim()) : [];
 
             fetch('/group/add', {
                 method: 'POST',
@@ -1630,7 +2143,7 @@
                 body: JSON.stringify({
                     name: groupName,
                     score: parseInt(groupScore),
-                    members: memberList
+                    members: [] // kept for backward compatibility; backend ignores it
                 })
             }).then(response => {
                 if (response.ok) {

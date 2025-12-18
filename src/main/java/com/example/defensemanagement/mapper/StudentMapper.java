@@ -12,6 +12,12 @@ public interface StudentMapper {
     Student findById(Long id);
     int insert(Student student);
     int update(Student student);
+    int deleteById(@Param("id") Long id);
+
+    /**
+     * 仅更新 defense_group_id，允许置空
+     */
+    int updateDefenseGroupId(@Param("id") Long id, @Param("groupId") Long groupId);
 
     // 查询学生列表
     List<Student> findAll(); // 【补充】Controller中调用，需要获取所有学生列表

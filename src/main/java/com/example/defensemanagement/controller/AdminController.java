@@ -4,13 +4,18 @@ import com.example.defensemanagement.entity.User;
 import com.example.defensemanagement.entity.Department;
 import com.example.defensemanagement.service.UserService;
 import com.example.defensemanagement.service.AuthService;
+import com.example.defensemanagement.service.PermissionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpSession;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 @Controller
 @RequestMapping("/admin")
@@ -18,9 +23,12 @@ public class AdminController {
 
     @Autowired
     private UserService userService;
-    
+
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private PermissionService permissionService;
 
     @GetMapping("/departments")
     public String departmentManagement(Model model, HttpSession session) {
@@ -28,7 +36,7 @@ public class AdminController {
         if (currentUser == null || !authService.hasPermission(currentUser, "CREATE_DEPARTMENT")) {
             return "redirect:/";
         }
-        
+
         List<Department> departments = userService.getAllDepartments();
         model.addAttribute("departments", departments);
         return "admin/departments";
@@ -37,15 +45,15 @@ public class AdminController {
     @PostMapping("/department/create")
     @ResponseBody
     public String createDepartment(@RequestParam String name,
-                                  @RequestParam String code,
-                                  @RequestParam String description,
-                                  HttpSession session) {
-        
+                                   @RequestParam String code,
+                                   @RequestParam String description,
+                                   HttpSession session) {
+
         User currentUser = (User) session.getAttribute("currentUser");
         if (currentUser == null || !authService.hasPermission(currentUser, "CREATE_DEPARTMENT")) {
             return "error:权限不足";
         }
-        
+
         try {
             userService.createDepartment(name, code, description);
             return "success";
@@ -54,46 +62,52 @@ public class AdminController {
         }
     }
 
+    // 修改：传入 departmentId
     @GetMapping("/users/list")
     @ResponseBody
     public List<User> getUserList(HttpSession session) {
         Object userObject = session.getAttribute("currentUser");
         if (userObject == null) {
-             userObject = session.getAttribute("currentTeacher");
+            userObject = session.getAttribute("currentTeacher");
         }
         if (userObject == null) {
-            return null; 
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "未登录");
         }
-        return userService.getAllUsers();
+
+        Long departmentId = getDepartmentIdIfDeptAdmin(userObject);
+        return userService.getAllUsers(departmentId);
     }
-    
+
+    // 修改：传入 departmentId
     @GetMapping("/users/search")
     @ResponseBody
-    public java.util.Map<String, Object> searchUsers(
+    public Map<String, Object> searchUsers(
             @RequestParam(required = false, defaultValue = "") String keyword,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "8") int pageSize,
             HttpSession session) {
-        
+
         Object userObject = session.getAttribute("currentUser");
         if (userObject == null) {
             userObject = session.getAttribute("currentTeacher");
         }
         if (userObject == null) {
-            return null;
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "未登录");
         }
-        
-        List<User> users = userService.searchUsers(keyword, page, pageSize);
-        int total = userService.countUsers(keyword);
+
+        Long departmentId = getDepartmentIdIfDeptAdmin(userObject);
+
+        List<User> users = userService.searchUsers(keyword, page, pageSize, departmentId);
+        int total = userService.countUsers(keyword, departmentId);
         int totalPages = (int) Math.ceil((double) total / pageSize);
-        
-        java.util.Map<String, Object> result = new java.util.HashMap<>();
+
+        Map<String, Object> result = new HashMap<>();
         result.put("users", users);
         result.put("total", total);
         result.put("currentPage", page);
         result.put("pageSize", pageSize);
         result.put("totalPages", totalPages);
-        
+
         return result;
     }
 
@@ -101,7 +115,9 @@ public class AdminController {
     @ResponseBody
     public List<Department> getDepartmentList(HttpSession session) {
         User currentUser = (User) session.getAttribute("currentUser");
-        if (currentUser == null) return null;
+        if (currentUser == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "未登录");
+        }
         return userService.getAllDepartments();
     }
 
@@ -109,12 +125,11 @@ public class AdminController {
     @ResponseBody
     public List<com.example.defensemanagement.entity.Role> getRoleList(HttpSession session) {
         User currentUser = (User) session.getAttribute("currentUser");
-        if (currentUser == null) return null;
+        if (currentUser == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "未登录");
+        }
         return userService.getManagableRoles(currentUser);
     }
-
-    @Autowired
-    private com.example.defensemanagement.service.PermissionService permissionService;
 
     @PostMapping("/users/save")
     @ResponseBody
@@ -133,7 +148,6 @@ public class AdminController {
                 return "error:权限不足，无法创建该角色的用户";
             }
         } else { // For updates, check permission
-            // 加载完整的目标用户信息（包括角色和院系信息）
             User targetUser = userService.findById(user.getId());
             if (targetUser == null) {
                 return "error:目标用户不存在";
@@ -142,7 +156,7 @@ public class AdminController {
                 return "error:权限不足";
             }
         }
-        
+
         try {
             userService.saveUser(user);
             return "success";
@@ -154,9 +168,9 @@ public class AdminController {
     @PostMapping("/user/{id}/status")
     @ResponseBody
     public String updateUserStatus(@PathVariable Long id,
-                                  @RequestParam Integer status,
-                                  HttpSession session) {
-        
+                                   @RequestParam Integer status,
+                                   HttpSession session) {
+
         Object currentUserObj = session.getAttribute("currentUser");
         if (currentUserObj == null) {
             currentUserObj = session.getAttribute("currentTeacher");
@@ -164,24 +178,23 @@ public class AdminController {
         if (currentUserObj == null) {
             return "error:未登录";
         }
-        
-        // 检查权限：需要能够编辑目标用户
+
         User targetUser = userService.findById(id);
         if (targetUser == null) {
             return "error:目标用户不存在";
         }
-        
+
         if (!permissionService.canEditUser(currentUserObj, targetUser)) {
             return "error:权限不足";
         }
-        
+
         if (userService.updateUserStatus(id, status)) {
             return "success";
         } else {
             return "error:更新失败";
         }
     }
-    
+
     @DeleteMapping("/user/{id}")
     @ResponseBody
     public String deleteUser(@PathVariable Long id, HttpSession session) {
@@ -192,17 +205,16 @@ public class AdminController {
         if (currentUserObj == null) {
             return "error:未登录";
         }
-        
-        // 检查权限：需要能够编辑目标用户
+
         User targetUser = userService.findById(id);
         if (targetUser == null) {
             return "error:目标用户不存在";
         }
-        
+
         if (!permissionService.canEditUser(currentUserObj, targetUser)) {
             return "error:权限不足";
         }
-        
+
         // 防止删除自己
         if (currentUserObj instanceof User) {
             User currentUser = (User) currentUserObj;
@@ -210,7 +222,7 @@ public class AdminController {
                 return "error:不能删除自己";
             }
         }
-        
+
         try {
             if (userService.deleteUser(id)) {
                 return "success";
@@ -220,5 +232,16 @@ public class AdminController {
         } catch (Exception e) {
             return "error:" + e.getMessage();
         }
+    }
+
+    // 辅助方法：如果是院系管理员，返回其院系ID；否则返回null
+    private Long getDepartmentIdIfDeptAdmin(Object userObj) {
+        if (userObj instanceof User) {
+            User user = (User) userObj;
+            if (user.getRole() != null && "DEPT_ADMIN".equals(user.getRole().getName())) {
+                return user.getDepartmentId();
+            }
+        }
+        return null;
     }
 }

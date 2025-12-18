@@ -41,6 +41,16 @@ public interface StudentService {
     boolean saveStudent(Student student);
 
     /**
+     * 删除学生
+     */
+    boolean deleteStudent(Long studentId);
+
+    /**
+     * 取消学生的小组分配（将 defense_group_id 置空）
+     */
+    boolean unassignDefenseGroup(Long studentId);
+
+    /**
      * 获取所有学生列表
      */
     List<Student> findAll();

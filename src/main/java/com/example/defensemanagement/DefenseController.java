@@ -3,6 +3,7 @@ package com.example.defensemanagement;
 import com.example.defensemanagement.service.DefenseService;
 import com.example.defensemanagement.entity.ArchiveSession;
 import com.example.defensemanagement.entity.ArchiveDetail;
+import com.example.defensemanagement.entity.DefenseGroup;
 import com.example.defensemanagement.entity.User;
 import com.example.defensemanagement.entity.Teacher;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,13 +65,17 @@ public class DefenseController {
     @PostMapping("/member/add")
     @ResponseBody
     public void addMember(@RequestBody GroupMemberRequest request) {
-        defenseService.addMember(request.getGroupId(), request.getName());
+        // Historical endpoint kept for backward compatibility with old UI.
+        // Member management is now based on Student records (t_student.defense_group_id).
+        throw new UnsupportedOperationException("成员维护已迁移到学生管理：请在学生管理中分配/移除学生的小组");
     }
 
     @DeleteMapping("/member/{id}")
     @ResponseBody
     public void deleteMember(@PathVariable Long id) {
-        defenseService.deleteMember(id);
+        // Historical endpoint kept for backward compatibility with old UI.
+        // Member management is now based on Student records (t_student.defense_group_id).
+        throw new UnsupportedOperationException("成员维护已迁移到学生管理：请在学生管理中分配/移除学生的小组");
     }
 
     @PostMapping("/archive/current")
@@ -100,7 +105,13 @@ public class DefenseController {
     @PostMapping("/group/add")
     @ResponseBody
     public void addGroup(@RequestBody AddGroupRequest request) {
-        defenseService.addGroupWithMembers(request);
+        DefenseGroup g = new DefenseGroup();
+        g.setName(request.getName());
+        g.setScore(request.getScore());
+        // Put it at the end by default; user can reorder via updateOrder.
+        int order = defenseService.getAllGroups() != null ? defenseService.getAllGroups().size() : 0;
+        g.setDisplayOrder(order);
+        defenseService.addGroup(g);
     }
 
     // 内部类用于接收请求参数
