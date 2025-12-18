@@ -8,6 +8,7 @@ import com.example.defensemanagement.service.AuthService;
 import com.example.defensemanagement.service.StudentService;
 import com.example.defensemanagement.service.ConfigService;
 import com.example.defensemanagement.mapper.DefenseGroupMapper;
+import com.example.defensemanagement.mapper.TeacherMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +30,9 @@ public class StudentController {
     
     @Autowired
     private DefenseGroupMapper defenseGroupMapper;
+    
+    @Autowired
+    private TeacherMapper teacherMapper;
 
     // 检查院系管理员或超级管理员权限的辅助方法
     private String checkDeptAdmin(HttpSession session) {
@@ -42,6 +46,14 @@ public class StudentController {
             return null; // 权限通过
         }
         return "error:权限不足";
+    }
+    
+    /**
+     * 通过 user_id 查找对应的 teacher_id
+     */
+    private Long findTeacherIdByUserId(Long userId) {
+        Teacher teacher = teacherMapper.findByUserId(userId);
+        return teacher != null ? teacher.getId() : null;
     }
 
     /**
@@ -97,6 +109,20 @@ public class StudentController {
                 // 院系管理员管理自己系的学生
                 List<Student> students = studentService.findByDepartmentAndYear(departmentId, currentYear);
                 return students != null ? students : new java.util.ArrayList<>();
+            }
+            
+            // 教师角色：查看自己指导的学生
+            if ("TEACHER".equals(roleName)) {
+                Integer currentYear = configService.getCurrentDefenseYear();
+                if (currentYear == null) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "请先设置当前答辩年份");
+                }
+                // 通过 user_id 关联查找对应的 teacher 记录
+                Long teacherId = findTeacherIdByUserId(currentUser.getId());
+                if (teacherId == null) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "未找到关联的教师信息");
+                }
+                return studentService.getStudentsByAdvisor(teacherId, currentYear);
             }
         }
         

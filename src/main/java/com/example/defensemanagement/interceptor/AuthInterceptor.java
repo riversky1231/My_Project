@@ -100,7 +100,21 @@ public class AuthInterceptor implements HandlerInterceptor {
                         response.sendError(HttpServletResponse.SC_FORBIDDEN, "权限不足");
                         return false;
                     }
-                } else if (currentUser == null || !authService.hasPermission(currentUser, "MANAGE_STUDENTS")) {
+                } else if (currentUser != null) {
+                    String roleName = currentUser.getRole() != null ? currentUser.getRole().getName() : null;
+                    // 教师角色（TEACHER）也可以查看学生列表
+                    if ("TEACHER".equals(roleName) && 
+                        (path.equals("/department/student/list")
+                            || path.equals("/department/student/currentYear")
+                            || path.equals("/department/student/groups"))) {
+                        return true;
+                    }
+                    // 管理员可以管理学生
+                    if (!authService.hasPermission(currentUser, "MANAGE_STUDENTS")) {
+                        response.sendError(HttpServletResponse.SC_FORBIDDEN, "权限不足");
+                        return false;
+                    }
+                } else {
                     response.sendError(HttpServletResponse.SC_FORBIDDEN, "权限不足");
                     return false;
                 }
