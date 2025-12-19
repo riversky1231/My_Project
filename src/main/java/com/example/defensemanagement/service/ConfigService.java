@@ -11,13 +11,15 @@ public interface ConfigService {
 
     /**
      * 保存或更新某一类型（论文/设计）的所有评分指标及其权值。
+     * 
      * @param defenseType 毕业考核类型: PAPER 或 DESIGN
-     * @param items 评分指标列表
+     * @param items       评分指标列表
      */
     void saveEvaluationItems(String defenseType, List<EvaluationItem> items);
 
     /**
      * 获取某一类型（论文/设计）的评分指标列表。
+     * 
      * @param defenseType 毕业考核类型: PAPER 或 DESIGN
      * @return 评分指标列表
      */
@@ -25,6 +27,7 @@ public interface ConfigService {
 
     /**
      * 根据类型获取评分指标及其权值映射，方便计算。
+     * 
      * @param defenseType 毕业考核类型
      * @return Map<itemName, weight>
      */
@@ -80,4 +83,9 @@ public interface ConfigService {
      * 获取评语提示词模板
      */
     String getPromptTemplate(String templateKey);
+
+    /**
+     * 获取所有年份列表（从学生表中提取）
+     */
+    List<Integer> getAllYears();
 }

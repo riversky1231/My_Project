@@ -4,6 +4,7 @@ import com.example.defensemanagement.entity.EvaluationItem;
 import com.example.defensemanagement.entity.SystemConfig;
 import com.example.defensemanagement.mapper.EvaluationItemMapper;
 import com.example.defensemanagement.mapper.SystemConfigMapper;
+import com.example.defensemanagement.mapper.StudentMapper;
 import com.example.defensemanagement.service.ConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,9 @@ public class ConfigServiceImpl implements ConfigService {
 
     @Autowired
     private SystemConfigMapper systemConfigMapper;
+
+    @Autowired
+    private StudentMapper studentMapper;
 
     @Override
     @Transactional
@@ -87,7 +91,8 @@ public class ConfigServiceImpl implements ConfigService {
     @Override
     public Integer getCurrentDefenseYear() {
         String yearStr = getConfigValue(KEY_CURRENT_YEAR);
-        if (yearStr == null) return null;
+        if (yearStr == null)
+            return null;
         try {
             return Integer.parseInt(yearStr);
         } catch (NumberFormatException e) {
@@ -127,19 +132,23 @@ public class ConfigServiceImpl implements ConfigService {
     @Transactional
     public void setPromptTemplate(String templateKey, String templateContent) {
         // 根据传入的模板Key判断是论文还是设计
-        String configKey = templateKey.toUpperCase().contains("PAPER") ?
-                KEY_PAPER_PROMPT_TEMPLATE : KEY_DESIGN_PROMPT_TEMPLATE;
+        String configKey = templateKey.toUpperCase().contains("PAPER") ? KEY_PAPER_PROMPT_TEMPLATE
+                : KEY_DESIGN_PROMPT_TEMPLATE;
 
-        String description = templateKey.toUpperCase().contains("PAPER") ?
-                "本科毕业论文答辩小组评语提示词模板" : "本科毕业设计答辩小组评语提示词模板";
+        String description = templateKey.toUpperCase().contains("PAPER") ? "本科毕业论文答辩小组评语提示词模板" : "本科毕业设计答辩小组评语提示词模板";
 
         saveConfig(configKey, templateContent, description);
     }
 
     @Override
     public String getPromptTemplate(String templateKey) {
-        String configKey = templateKey.toUpperCase().contains("PAPER") ?
-                KEY_PAPER_PROMPT_TEMPLATE : KEY_DESIGN_PROMPT_TEMPLATE;
+        String configKey = templateKey.toUpperCase().contains("PAPER") ? KEY_PAPER_PROMPT_TEMPLATE
+                : KEY_DESIGN_PROMPT_TEMPLATE;
         return getConfigValue(configKey);
+    }
+
+    @Override
+    public List<Integer> getAllYears() {
+        return studentMapper.findAllYears();
     }
 }

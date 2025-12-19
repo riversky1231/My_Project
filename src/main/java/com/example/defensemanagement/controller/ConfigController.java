@@ -55,8 +55,8 @@ public class ConfigController {
     @PostMapping("/evaluation/save")
     @ResponseBody
     public String saveEvaluationItems(@RequestParam String type,
-                                      @RequestBody List<EvaluationItem> items,
-                                      HttpSession session) {
+            @RequestBody List<EvaluationItem> items,
+            HttpSession session) {
         String permissionError = checkSuperAdmin(session);
         if (permissionError != null) {
             return permissionError;
@@ -102,9 +102,21 @@ public class ConfigController {
     }
 
     /**
+     * 获取所有年份列表（从学生表中提取）
+     * GET /admin/config/years/list
+     */
+    @GetMapping("/years/list")
+    @ResponseBody
+    public List<Integer> getAllYears(HttpSession session) {
+        // 允许所有已登录用户获取年份列表
+        return configService.getAllYears();
+    }
+
+    /**
      * 设置答辩成绩表/成绩评定表的年、月、日
      * POST /admin/config/date/set
-     * request body: { "dateKeyPrefix": "DEFENSE_DATE", "year": 2025, "month": 6, "day": 30 }
+     * request body: { "dateKeyPrefix": "DEFENSE_DATE", "year": 2025, "month": 6,
+     * "day": 30 }
      */
     @PostMapping("/date/set")
     @ResponseBody
@@ -154,7 +166,8 @@ public class ConfigController {
     /**
      * 保存评语提示词模板
      * POST /admin/config/ai/template/save
-     * request body: { "templateKey": "PAPER_PROMPT", "templateContent": "基于摘要，请..." }
+     * request body: { "templateKey": "PAPER_PROMPT", "templateContent": "基于摘要，请..."
+     * }
      */
     @PostMapping("/ai/template/save")
     @ResponseBody
@@ -176,6 +189,66 @@ public class ConfigController {
             return "success";
         } catch (Exception e) {
             return "error:保存提示词模板失败, " + e.getMessage();
+        }
+    }
+
+    /**
+     * 获取评语提示词模板
+     * GET /admin/config/ai/template/get?templateKey=PAPER_PROMPT
+     */
+    @GetMapping("/ai/template/get")
+    @ResponseBody
+    public String getPromptTemplate(@RequestParam String templateKey, HttpSession session) {
+        String permissionError = checkSuperAdmin(session);
+        if (permissionError != null) {
+            return permissionError;
+        }
+
+        try {
+            String template = configService.getPromptTemplate(templateKey);
+            return template != null ? template : "";
+        } catch (Exception e) {
+            return "error:获取提示词模板失败, " + e.getMessage();
+        }
+    }
+
+    /**
+     * 获取日期配置
+     * GET /admin/config/date/get?key=DEFENSE_DATE_YEAR
+     */
+    @GetMapping("/date/get")
+    @ResponseBody
+    public String getDefenseDatePart(@RequestParam String key, HttpSession session) {
+        String permissionError = checkSuperAdmin(session);
+        if (permissionError != null) {
+            return permissionError;
+        }
+
+        try {
+            String value = configService.getDefenseDatePart(key);
+            return value != null ? value : "";
+        } catch (Exception e) {
+            return "error:获取日期配置失败, " + e.getMessage();
+        }
+    }
+
+    /**
+     * 获取QWEN API Key
+     * GET /admin/config/ai/key/get
+     */
+    @GetMapping("/ai/key/get")
+    @ResponseBody
+    public String getQwenApiKey(HttpSession session) {
+        String permissionError = checkSuperAdmin(session);
+        if (permissionError != null) {
+            return permissionError;
+        }
+
+        try {
+            String apiKey = configService.getConfigValue("QWEN_API_KEY");
+            return apiKey != null ? apiKey : "";
+        } catch (Exception e) {
+            return "error:获取API Key失败, " + e.getMessage();
         }
     }
 }

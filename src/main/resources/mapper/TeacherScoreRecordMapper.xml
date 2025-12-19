@@ -17,6 +17,17 @@
         <result property="item6Score" column="item6_score"/>
         <result property="totalScore" column="total_score"/>
         <result property="submitTime" column="submit_time"/>
+        <association property="student" javaType="com.example.defensemanagement.entity.Student">
+            <id property="id" column="student_id"/>
+            <result property="studentNo" column="student_no"/>
+            <result property="name" column="student_name"/>
+            <result property="defenseType" column="defense_type"/>
+        </association>
+        <association property="teacher" javaType="com.example.defensemanagement.entity.Teacher">
+            <id property="id" column="teacher_id"/>
+            <result property="teacherNo" column="teacher_no"/>
+            <result property="name" column="teacher_name"/>
+        </association>
     </resultMap>
 
     <select id="findByStudentIdAndTeacherId" resultMap="TeacherScoreRecordMap">
@@ -58,6 +69,37 @@
          #{totalScore}, #{submitTime})
     </insert>
 
+    <select id="findAll" resultMap="TeacherScoreRecordMap">
+        SELECT tsr.*,
+               s.name as student_name, s.student_no, s.defense_type,
+               t.name as teacher_name, t.teacher_no
+        FROM teacher_score_record tsr
+        LEFT JOIN t_student s ON tsr.student_id = s.id
+        LEFT JOIN teacher t ON tsr.teacher_id = t.id
+        ORDER BY tsr.submit_time DESC
+    </select>
+
+    <select id="findByYear" resultMap="TeacherScoreRecordMap">
+        SELECT tsr.*,
+               s.name as student_name, s.student_no, s.defense_type,
+               t.name as teacher_name, t.teacher_no
+        FROM teacher_score_record tsr
+        LEFT JOIN t_student s ON tsr.student_id = s.id
+        LEFT JOIN teacher t ON tsr.teacher_id = t.id
+        WHERE tsr.year = #{year}
+        ORDER BY tsr.submit_time DESC
+    </select>
+
+    <select id="findById" resultMap="TeacherScoreRecordMap">
+        SELECT tsr.*,
+               s.name as student_name, s.student_no, s.defense_type,
+               t.name as teacher_name, t.teacher_no
+        FROM teacher_score_record tsr
+        LEFT JOIN t_student s ON tsr.student_id = s.id
+        LEFT JOIN teacher t ON tsr.teacher_id = t.id
+        WHERE tsr.id = #{id}
+    </select>
+
     <update id="update" parameterType="com.example.defensemanagement.entity.TeacherScoreRecord">
         UPDATE teacher_score_record
         <set>
@@ -74,6 +116,10 @@
         </set>
         WHERE id = #{id}
     </update>
+
+    <delete id="deleteById">
+        DELETE FROM teacher_score_record WHERE id = #{id}
+    </delete>
 
 </mapper>
 

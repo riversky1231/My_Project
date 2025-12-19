@@ -10,8 +10,11 @@ public interface StudentMapper {
 
     // 基础 CRUD
     Student findById(Long id);
+
     int insert(Student student);
+
     int update(Student student);
+
     int deleteById(@Param("id") Long id);
 
     /**
@@ -35,8 +38,11 @@ public interface StudentMapper {
     List<Student> findByReviewerIdAndYear(@Param("reviewerId") Long reviewerId, @Param("year") Integer year);
 
     // 根据答辩小组ID查找
-    List<Student> findByDefenseGroupId(Long groupId);
-    
+    List<Student> findByDefenseGroupId(@Param("groupId") Long groupId);
+
     // 根据年份查找所有学生（超级管理员使用）
     List<Student> findByYear(@Param("year") Integer year);
+
+    // 获取所有年份列表（去重，用于年份管理）
+    List<Integer> findAllYears();
 }

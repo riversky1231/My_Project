@@ -150,4 +150,8 @@
         DELETE FROM t_student WHERE id = #{id}
     </delete>
 
+    <select id="findAllYears" resultType="java.lang.Integer">
+        SELECT DISTINCT defense_year FROM t_student WHERE defense_year IS NOT NULL ORDER BY defense_year DESC
+    </select>
+
 </mapper>

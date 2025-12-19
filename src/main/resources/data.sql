@@ -89,8 +89,13 @@ CREATE TABLE `defense_group_teacher`  (
 -- ----------------------------
 -- Records of defense_group_teacher
 -- ----------------------------
-INSERT INTO `defense_group_teacher` VALUES (2, 1, 1, 1, '2025-12-18 19:04:27');
-INSERT INTO `defense_group_teacher` VALUES (4, 1, 2, 0, '2025-12-18 19:07:28');
+INSERT INTO `defense_group_teacher` VALUES (1, 1, 1, 1, '2025-12-18 12:38:58');
+INSERT INTO `defense_group_teacher` VALUES (2, 1, 2, 0, '2025-12-18 12:38:58');
+INSERT INTO `defense_group_teacher` VALUES (3, 2, 3, 1, '2025-12-18 12:38:58');
+INSERT INTO `defense_group_teacher` VALUES (4, 2, 4, 0, '2025-12-18 12:38:58');
+INSERT INTO `defense_group_teacher` VALUES (5, 3, 5, 1, '2025-12-18 12:38:58');
+INSERT INTO `defense_group_teacher` VALUES (6, 4, 6, 1, '2025-12-18 12:38:58');
+INSERT INTO `defense_group_teacher` VALUES (7, 5, 7, 1, '2025-12-18 12:38:58');
 
 -- ----------------------------
 -- Table structure for defense_leader
@@ -118,6 +123,8 @@ INSERT INTO `defense_leader` VALUES (2, 1, 2025, 1, '2025-12-18 12:38:58');
 INSERT INTO `defense_leader` VALUES (3, 3, 2024, 2, '2025-12-18 12:38:58');
 INSERT INTO `defense_leader` VALUES (4, 5, 2024, 3, '2025-12-18 12:38:58');
 INSERT INTO `defense_leader` VALUES (5, 6, 2025, 4, '2025-12-18 12:38:58');
+INSERT INTO `defense_leader` VALUES (6, 7, 2024, 4, '2025-12-18 12:38:58');
+INSERT INTO `defense_leader` VALUES (7, 8, 2025, 1, '2025-12-18 12:38:58');
 
 -- ----------------------------
 -- Table structure for department
@@ -141,6 +148,7 @@ INSERT INTO `department` VALUES (1, '计算机科学与技术学院', 'CS', '计
 INSERT INTO `department` VALUES (2, '软件学院', 'SE', '软件学院', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 INSERT INTO `department` VALUES (3, '信息与通信工程学院', 'ICE', '信息与通信工程', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 INSERT INTO `department` VALUES (4, '人工智能学院', 'AI', '人工智能学院', '2025-12-18 12:38:58', '2025-12-18 19:49:01');
+INSERT INTO `department` VALUES (5, '网络空间安全学院', 'NSC', '网络空间安全学院', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 
 -- ----------------------------
 -- Table structure for evaluation_item
@@ -223,6 +231,9 @@ INSERT INTO `student_final_score` VALUES (5, 5, 2024, 90, 90, 82.00, 86.00, 1.00
 INSERT INTO `student_final_score` VALUES (6, 6, 2024, 84, 82, 78.00, 80.80, 0.950, 82, 78, '2025-12-18 12:38:58');
 INSERT INTO `student_final_score` VALUES (7, 7, 2025, 95, 94, 96.00, 95.60, 1.030, 93, 96, '2025-12-18 12:38:58');
 INSERT INTO `student_final_score` VALUES (8, 8, 2025, 90, 89, 85.00, 87.20, 0.980, 87, 85, '2025-12-18 12:38:58');
+INSERT INTO `student_final_score` VALUES (9, 9, 2024, 87, 85, 88.00, 86.60, 1.010, 87, 88, '2025-12-18 12:38:58');
+INSERT INTO `student_final_score` VALUES (10, 10, 2024, 89, 88, 86.00, 87.50, 0.990, 87, 86, '2025-12-18 12:38:58');
+INSERT INTO `student_final_score` VALUES (11, 11, 2024, 91, 89, 90.00, 90.20, 1.020, 88, 90, '2025-12-18 12:38:58');
 
 -- ----------------------------
 -- Table structure for system_config
@@ -293,7 +304,9 @@ INSERT INTO `t_student` VALUES (5, '20210005', '李怡然', '信通2001', 3, 5, 
 INSERT INTO `t_student` VALUES (6, '20210006', '赵梓涵', '信通2002', 3, 5, 2, 'DESIGN', '低功耗传感网关', '面向智慧城市的边缘采集。', 4, 2024, '13800000005', 'zhaozh@example.com', '2025-06-20', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 INSERT INTO `t_student` VALUES (7, '20210007', '吴昊', 'AI2101', 4, 6, 7, 'PAPER', '大模型蒸馏与压缩', '蒸馏策略与结构化剪枝。', 5, 2025, '13800000006', 'wuhao@example.com', '2025-06-20', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 INSERT INTO `t_student` VALUES (8, '20210008', '张可欣', 'AI2102', 4, 7, 6, 'DESIGN', '视觉导航小车', '目标检测与路径规划集成。', 5, 2025, '13800000007', 'zhangkx@example.com', '2025-06-20', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-INSERT INTO `t_student` VALUES (9, '20230003', '王志远', '计科2003', NULL, NULL, NULL, 'PAPER', 'RAG的性能提升', '这是一篇专属于提升模型RAG性能的文章，专注于利用XXX方法提高性能', NULL, 2024, NULL, NULL, NULL, '2025-12-18 19:04:07', '2025-12-18 19:04:07');
+INSERT INTO `t_student` VALUES (9, '20210009', '刘明', '计科2001', 1, 1, 2, 'PAPER', '区块链共识算法优化', '提升共识效率与安全性。', 1, 2024, '13800000008', 'liuming@example.com', '2025-06-20', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `t_student` VALUES (10, '20210010', '陈静', '软工2002', 2, 3, 4, 'DESIGN', '在线教育平台设计', '支持多终端实时互动。', 2, 2024, '13800000009', 'chenjing@example.com', '2025-06-20', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `t_student` VALUES (11, '20210011', '杨帆', '信通2003', 3, 5, 8, 'PAPER', '物联网安全协议研究', '轻量级加密与认证机制。', 3, 2024, '13800000010', 'yangfan@example.com', '2025-06-20', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 
 -- ----------------------------
 -- Table structure for teacher
@@ -323,6 +336,7 @@ CREATE TABLE `teacher`  (
 
 -- ----------------------------
 -- Records of teacher
+-- 注意：teacher_no 和 user 表的 username 应该一致，用于统一登录管理
 -- ----------------------------
 INSERT INTO `teacher` VALUES (1, 'T001', '张教授', 1, '教授', 'zhang@example.com', '13900010001', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 1, 5, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 INSERT INTO `teacher` VALUES (2, 'T002', '李副教授', 1, '副教授', 'li@example.com', '13900010002', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 1, 6, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
@@ -330,9 +344,10 @@ INSERT INTO `teacher` VALUES (3, 'T003', '王讲师', 2, '讲师', 'wang@example
 INSERT INTO `teacher` VALUES (4, 'T004', '赵老师', 2, '副教授', 'zhao@example.com', '13900020004', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 1, 8, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 INSERT INTO `teacher` VALUES (5, 'T005', '钱博士', 3, '讲师', 'qian@example.com', '13900030005', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 1, 9, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 INSERT INTO `teacher` VALUES (6, 'T006', '孙博士', 4, '副教授', 'sun@example.com', '13900040006', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 1, 10, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-INSERT INTO `teacher` VALUES (7, 'T007', '郑老师', 4, '讲师', 'zhou@example.com', NULL, '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 1, NULL, '2025-12-18 12:38:58', '2025-12-18 19:00:42');
-INSERT INTO `teacher` VALUES (8, 'ZHENG', '郑老师', 4, NULL, '', NULL, '$2a$10$PcHzbZWaSWxhzu9a7aRO4O5EHYC7GjBLpCBdekzlTIkkEQYmMaK/C', 1, 12, '2025-12-18 19:01:18', '2025-12-18 19:01:18');
-INSERT INTO `teacher` VALUES (9, 'ZHONG', '钟诗滢', 1, NULL, '', NULL, '$2a$10$etLAQaRXAlZPT6Bfjvwev./nqvGDvHZNM.rb3muV15kxlVmzP1PcO', 1, 13, '2025-12-18 19:10:10', '2025-12-18 19:10:30');
+INSERT INTO `teacher` VALUES (7, 'T007', '郑老师', 4, '讲师', 'zheng@example.com', '13900040007', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 1, 11, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `teacher` VALUES (8, 'T008', '周老师', 1, '讲师', 'zhou@example.com', '13900010008', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 1, 12, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `teacher` VALUES (9, 'T009', '吴老师', 2, '副教授', 'wu@example.com', '13900020009', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 1, 13, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `teacher` VALUES (10, 'T010', '徐老师', 3, '讲师', 'xu@example.com', '13900030010', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 1, 14, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 
 -- ----------------------------
 -- Table structure for teacher_score_record
@@ -400,19 +415,22 @@ CREATE TABLE `user`  (
 
 -- ----------------------------
 -- Records of user
+-- 注意：对于教师用户，username 应该与 teacher 表的 teacher_no 一致
 -- ----------------------------
 INSERT INTO `user` VALUES (1, 'admin', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '超级管理员', NULL, NULL, 1, 1, NULL, '2025-12-18 12:38:58', '2025-12-18 12:39:58');
 INSERT INTO `user` VALUES (2, 'cs_admin', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '计院管理员', 'cs_admin@example.com', '13800000001', 1, 2, 1, '2025-12-18 12:38:58', '2025-12-18 12:40:00');
 INSERT INTO `user` VALUES (3, 'se_admin', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '软院管理员', 'se_admin@example.com', '13800000002', 1, 2, 2, '2025-12-18 12:38:58', '2025-12-18 12:40:03');
 INSERT INTO `user` VALUES (4, 'ice_admin', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '信通管理员', 'ice_admin@example.com', '13800000003', 1, 2, 3, '2025-12-18 12:38:58', '2025-12-18 12:40:06');
-INSERT INTO `user` VALUES (5, 'teacher_zhang', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '张教授', 'zhang@example.com', '13900010001', 1, 4, 1, '2025-12-18 12:38:58', '2025-12-18 19:09:39');
-INSERT INTO `user` VALUES (6, 'teacher_li', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '李副教授', 'li@example.com', '13900010002', 1, 4, 1, '2025-12-18 12:38:58', '2025-12-18 12:40:12');
-INSERT INTO `user` VALUES (7, 'teacher_wang', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '王讲师', 'wang@example.com', '13900020003', 1, 4, 2, '2025-12-18 12:38:58', '2025-12-18 12:40:15');
-INSERT INTO `user` VALUES (8, 'teacher_zhao', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '赵老师', 'zhao@example.com', '13900020004', 1, 4, 2, '2025-12-18 12:38:58', '2025-12-18 12:40:17');
-INSERT INTO `user` VALUES (9, 'teacher_qian', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '钱博士', 'qian@example.com', '13900030005', 1, 4, 3, '2025-12-18 12:38:58', '2025-12-18 12:40:20');
-INSERT INTO `user` VALUES (10, 'teacher_sun', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '孙博士', 'sun@example.com', '13900040006', 1, 4, 4, '2025-12-18 12:38:58', '2025-12-18 12:40:23');
-INSERT INTO `user` VALUES (12, 'teacher_zheng', '$2a$10$PcHzbZWaSWxhzu9a7aRO4O5EHYC7GjBLpCBdekzlTIkkEQYmMaK/C', '郑老师', '', NULL, 1, 4, 4, '2025-12-18 19:01:18', '2025-12-18 19:01:18');
-INSERT INTO `user` VALUES (13, 'teacher_zhong', '$2a$10$etLAQaRXAlZPT6Bfjvwev./nqvGDvHZNM.rb3muV15kxlVmzP1PcO', '钟诗滢', '', NULL, 1, 4, 1, '2025-12-18 19:10:10', '2025-12-18 19:10:30');
+INSERT INTO `user` VALUES (5, 'T001', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '张教授', 'zhang@example.com', '13900010001', 1, 4, 1, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `user` VALUES (6, 'T002', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '李副教授', 'li@example.com', '13900010002', 1, 4, 1, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `user` VALUES (7, 'T003', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '王讲师', 'wang@example.com', '13900020003', 1, 4, 2, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `user` VALUES (8, 'T004', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '赵老师', 'zhao@example.com', '13900020004', 1, 4, 2, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `user` VALUES (9, 'T005', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '钱博士', 'qian@example.com', '13900030005', 1, 4, 3, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `user` VALUES (10, 'T006', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '孙博士', 'sun@example.com', '13900040006', 1, 4, 4, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `user` VALUES (11, 'T007', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '郑老师', 'zheng@example.com', '13900040007', 1, 4, 4, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `user` VALUES (12, 'T008', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '周老师', 'zhou@example.com', '13900010008', 1, 4, 1, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `user` VALUES (13, 'T009', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '吴老师', 'wu@example.com', '13900020009', 1, 4, 2, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `user` VALUES (14, 'T010', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '徐老师', 'xu@example.com', '13900030010', 1, 4, 3, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 
 -- ----------------------------
 -- Table structure for large_group_score
@@ -437,6 +455,11 @@ CREATE TABLE `large_group_score`  (
 -- ----------------------------
 -- Records of large_group_score
 -- ----------------------------
+INSERT INTO `large_group_score` VALUES (1, 2, 1, 2024, 83, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `large_group_score` VALUES (2, 3, 2, 2024, 93, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `large_group_score` VALUES (3, 7, 3, 2025, 96, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `large_group_score` VALUES (4, 9, 1, 2024, 88, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `large_group_score` VALUES (5, 11, 2, 2024, 90, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 
 -- ----------------------------
 -- Table structure for student_comment
@@ -458,6 +481,11 @@ CREATE TABLE `student_comment`  (
 -- ----------------------------
 -- Records of student_comment
 -- ----------------------------
+INSERT INTO `student_comment` VALUES (1, 2, 2024, '该生设计思路清晰，实现方案合理，演示效果良好，答辩表现优秀。', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `student_comment` VALUES (2, 3, 2024, '论文选题具有实际意义，研究方法科学，数据分析充分，答辩表达清晰。', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `student_comment` VALUES (3, 4, 2024, '设计作品功能完整，技术实现到位，用户体验良好，答辩回答问题准确。', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `student_comment` VALUES (4, 5, 2024, '论文研究深入，理论分析透彻，实验验证充分，答辩表现优秀。', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `student_comment` VALUES (5, 6, 2024, '设计创新性强，技术方案合理，实现效果良好，答辩回答问题准确。', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 
 -- ----------------------------
 -- Table structure for department_head_signature

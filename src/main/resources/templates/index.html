@@ -245,14 +245,16 @@
                 onclick="showView('user-management-view', this)"><i class="bi bi-person-circle"></i> 用户管理</a>
             <a class="nav-link" id="nav-department-management" href="javascript:void(0);"
                 onclick="showView('department-management-view', this)"><i class="bi bi-building"></i> 院系管理</a>
-            <a class="nav-link" href="javascript:void(0);" onclick="showView('score-view', this)"><i
+            <a class="nav-link" id="nav-score-view" href="javascript:void(0);" onclick="showView('score-view', this)"><i
                     class="bi bi-clipboard-check"></i> 打分/评阅</a>
+            <a class="nav-link" id="nav-score-management" href="javascript:void(0);"
+                onclick="showView('score-management-view', this)"><i class="bi bi-table"></i> 成绩数据管理</a>
             <a class="nav-link" href="javascript:void(0);" onclick="showView('export-view', this)"><i
                     class="bi bi-download"></i> 导出/打包</a>
             <a class="nav-link" id="nav-signature-management" href="javascript:void(0);"
                 onclick="showView('signature-view', this)"><i class="bi bi-pen"></i> 签名管理</a>
-            <a class="nav-link" href="javascript:void(0);" onclick="showView('settings-view', this)"><i
-                    class="bi bi-gear"></i> 系统设置</a>
+            <a class="nav-link" id="nav-settings" href="javascript:void(0);"
+                onclick="showView('settings-view', this)"><i class="bi bi-gear"></i> 系统设置</a>
         </nav>
 
         <!-- 用户信息显示区域 -->
@@ -335,7 +337,7 @@
                             <div class="group-info">
                                 <h6 th:text="${group.name}"></h6>
                                 <small class="text-muted"
-                                    th:text="${group.comment != null ? '评语: ' + group.comment.content : '评语: 暂无评语'}"></small>
+                                    th:text="${'学生数: ' + (group.members != null ? group.members.size() : 0)}"></small>
                             </div>
                             <div class="d-flex align-items-center">
                                 <div class="input-group input-group-sm" style="width: 130px;">
@@ -360,17 +362,20 @@
                     </div>
                     <div class="module">
                         <div class="module-header">
-                            <h4><i class="bi bi-chat-left-text"></i> 添加评语</h4>
+                            <h4><i class="bi bi-chat-left-text"></i> 学生评语管理</h4>
                         </div>
-                        <form th:action="@{/comment}" method="post">
-                            <div class="mb-2"><select class="form-select" name="groupId">
-                                    <option th:each="group : ${groups}" th:value="${group.id}" th:text="${group.name}">
-                                    </option>
-                                </select></div>
-                            <div class="mb-2"><input type="text" class="form-control" name="comment"
-                                    placeholder="输入评语内容..."></div>
-                            <button class="btn btn-primary w-100" type="submit">提交评语</button>
-                        </form>
+                        <div class="mb-2">
+                            <label class="form-label">选择小组</label>
+                            <select class="form-select" id="dashboard-group-select"
+                                onchange="loadGroupStudentsForComment(this.value)">
+                                <option value="">请选择小组</option>
+                                <option th:each="group : ${groups}" th:value="${group.id}" th:text="${group.name}">
+                                </option>
+                            </select>
+                        </div>
+                        <div id="dashboard-student-comments" class="mt-3">
+                            <small class="text-muted">请选择小组查看学生评语</small>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -650,22 +655,35 @@
                     <h4><i class="bi bi-pen"></i> 教师打分</h4>
                 </div>
                 <div class="row g-2">
-                    <div class="col-md-2"><input class="form-control" id="score-student-id" placeholder="学生ID"></div>
-                    <div class="col-md-2"><input class="form-control" id="score-teacher-id" placeholder="教师ID"></div>
+                    <div class="col-md-2">
+                        <input class="form-control" id="score-student-id" placeholder="学生ID"
+                            onchange="loadStudentForScore(this.value)">
+                    </div>
+                    <div class="col-md-2">
+                        <input class="form-control" id="score-teacher-id" placeholder="教师ID" readonly>
+                        <small class="text-muted">当前登录教师</small>
+                    </div>
                     <div class="col-md-2"><input class="form-control" id="score-year" placeholder="年份"></div>
                     <div class="col-md-2"><input class="form-control" id="score-total" placeholder="总分(整数)"></div>
                     <div class="col-md-2"><input class="form-control" id="score-group-id" placeholder="小组ID(可选)"></div>
                     <div class="col-md-2">
-                        <button class="btn btn-outline-primary w-100" onclick="autoSplitDesign()">设计类一键拆分</button>
+                        <button class="btn btn-outline-primary w-100" id="auto-split-btn" onclick="autoSplitDesign()"
+                            style="display: none;">设计类一键拆分</button>
                     </div>
                 </div>
-                <div class="mt-2 row g-2">
+                <div class="mt-2 row g-2" id="score-items-container">
                     <div class="col-md-2"><input class="form-control" id="item1" placeholder="项1"></div>
                     <div class="col-md-2"><input class="form-control" id="item2" placeholder="项2"></div>
                     <div class="col-md-2"><input class="form-control" id="item3" placeholder="项3"></div>
-                    <div class="col-md-2"><input class="form-control" id="item4" placeholder="项4"></div>
-                    <div class="col-md-2"><input class="form-control" id="item5" placeholder="项5"></div>
-                    <div class="col-md-2"><input class="form-control" id="item6" placeholder="项6"></div>
+                    <div class="col-md-2"><input class="form-control" id="item4" placeholder="项4"
+                            style="display: none;"></div>
+                    <div class="col-md-2"><input class="form-control" id="item5" placeholder="项5"
+                            style="display: none;"></div>
+                    <div class="col-md-2"><input class="form-control" id="item6" placeholder="项6"
+                            style="display: none;"></div>
+                </div>
+                <div class="mt-2">
+                    <small class="text-muted">提示：请先选择学生，系统会根据论文/设计类型自动调整评分项</small>
                 </div>
                 <div class="mt-2">
                     <button class="btn btn-primary" onclick="saveTeacherScore()">提交打分</button>
@@ -706,6 +724,101 @@
                     <div class="col-md-2">
                         <button class="btn btn-primary w-100" onclick="finalizeGroup()">计算汇总</button>
                     </div>
+                </div>
+            </div>
+
+            <div class="module">
+                <div class="module-header">
+                    <h4><i class="bi bi-chat-left-text"></i> 评语生成与修改（答辩组长）</h4>
+                </div>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> 为小组内每位学生生成《本科毕业论文答辩成绩表》或《本科毕业设计答辩成绩表》中的"答辩小组评语"
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label">选择学生</label>
+                        <select class="form-select" id="comment-student-select">
+                            <option value="">请选择学生</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-outline-primary w-100" onclick="loadStudentForComment()">加载学生</button>
+                    </div>
+                </div>
+                <div id="comment-student-info" style="display: none;">
+                    <div class="mb-2">
+                        <strong>学生信息：</strong>
+                        <span id="comment-student-name"></span>（<span id="comment-student-no"></span>）
+                        - <span id="comment-student-type"></span>
+                    </div>
+                    <div class="mb-2">
+                        <strong>题目：</strong><span id="comment-student-title"></span>
+                    </div>
+                    <div class="mb-2">
+                        <strong>摘要：</strong><span id="comment-student-summary"></span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">评语内容</label>
+                    <textarea class="form-control" id="comment-content" rows="5" placeholder="评语内容..."></textarea>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary" onclick="generateStudentComment()">
+                        <i class="bi bi-magic"></i> AI生成评语
+                    </button>
+                    <button class="btn btn-success" onclick="saveStudentComment()">
+                        <i class="bi bi-save"></i> 保存评语
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Score Management View (Super Admin Only) -->
+        <div id="score-management-view" class="view-container" style="display: none;">
+            <header class="header">
+                <h1>成绩数据管理</h1>
+                <div class="d-flex align-items-center">
+                    <div class="input-group me-3" style="width: 300px;">
+                        <input type="text" id="score-search-input" class="form-control" placeholder="根据学生姓名搜索..."
+                            onkeypress="if(event.key==='Enter') loadScoreRecords()">
+                        <button class="btn btn-outline-secondary" type="button" onclick="loadScoreRecords()"><i
+                                class="bi bi-search"></i></button>
+                    </div>
+                    <select class="form-select me-3" id="score-filter-year" style="width: 150px;"
+                        onchange="loadScoreRecords()">
+                        <option value="">所有年份</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="openScoreRecordModal()">
+                        <i class="bi bi-plus-circle"></i> 添加成绩记录
+                    </button>
+                </div>
+            </header>
+            <div class="module">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>学生</th>
+                                <th>教师</th>
+                                <th>年份</th>
+                                <th>分项1</th>
+                                <th>分项2</th>
+                                <th>分项3</th>
+                                <th>分项4</th>
+                                <th>分项5</th>
+                                <th>分项6</th>
+                                <th>总分</th>
+                                <th>提交时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="score-record-list">
+                            <tr>
+                                <td colspan="13" class="text-center text-muted">加载中...</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -758,24 +871,95 @@
                 <div class="module-header">
                     <h4><i class="bi bi-calendar"></i> 年份与日期</h4>
                 </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label">当前答辩年份</label>
+                        <input class="form-control" id="cfg-year" placeholder="请输入答辩年份（留空则不修改）">
+                        <small class="text-muted">
+                            <strong>设置当前答辩年份的作用：</strong><br>
+                            1. 数据隔离：设置年份后，除超级管理员外的其他用户（教师、答辩组长、院系管理员）在查看学生、成绩、评语等数据时，系统会自动筛选出该年份的数据，实现不同年份数据的隔离管理。<br>
+                            2. 默认筛选：登录后，系统会根据当前设置的年份自动过滤显示相关数据，避免跨年份数据混淆。<br>
+                            3. 超级管理员不受限制：超级管理员可以查看所有年份的数据，不受当前年份设置的限制。
+                        </small>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-outline-secondary w-100" onclick="showCurrentYear()">查看当前值</button>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-outline-primary w-100" onclick="setDefenseYear()">保存年份</button>
+                    </div>
+                </div>
                 <div class="row g-2">
-                    <div class="col-md-3"><input class="form-control" id="cfg-year" placeholder="当前答辩年份"></div>
-                    <div class="col-md-2"><button class="btn btn-outline-primary w-100"
-                            onclick="setDefenseYear()">保存年份</button></div>
+                    <div class="col-md-12">
+                        <label class="form-label">答辩年份管理（从学生数据中提取）</label>
+                        <div class="d-flex align-items-center">
+                            <select class="form-select me-2" id="year-select" style="width: 200px;"
+                                onchange="selectYear(this.value)">
+                                <option value="">请选择年份</option>
+                            </select>
+                            <button class="btn btn-outline-primary" onclick="loadAllYears()">
+                                <i class="bi bi-arrow-clockwise"></i> 刷新年份列表
+                            </button>
+                        </div>
+                        <small class="text-muted">提示：年份从学生数据中自动提取，选择年份后会自动设置为当前答辩年份</small>
+                    </div>
                 </div>
                 <div class="row g-2 mt-2">
-                    <div class="col-md-2"><input class="form-control" id="cfg-def-year" placeholder="成绩表年"></div>
-                    <div class="col-md-2"><input class="form-control" id="cfg-def-month" placeholder="月"></div>
-                    <div class="col-md-2"><input class="form-control" id="cfg-def-day" placeholder="日"></div>
-                    <div class="col-md-3"><button class="btn btn-outline-primary w-100"
+                    <div class="col-md-2"><input class="form-control" id="cfg-def-year" placeholder="成绩表年（留空不修改）"></div>
+                    <div class="col-md-2"><input class="form-control" id="cfg-def-month" placeholder="月（留空不修改）"></div>
+                    <div class="col-md-2"><input class="form-control" id="cfg-def-day" placeholder="日（留空不修改）"></div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-outline-secondary w-100"
+                            onclick="showCurrentDate('DEFENSE_DATE')">查看当前值</button>
+                    </div>
+                    <div class="col-md-2"><button class="btn btn-outline-primary w-100"
                             onclick="setDate('DEFENSE_DATE')">保存答辩日期</button></div>
                 </div>
                 <div class="row g-2 mt-2">
-                    <div class="col-md-2"><input class="form-control" id="cfg-grade-year" placeholder="评定表年"></div>
-                    <div class="col-md-2"><input class="form-control" id="cfg-grade-month" placeholder="月"></div>
-                    <div class="col-md-2"><input class="form-control" id="cfg-grade-day" placeholder="日"></div>
-                    <div class="col-md-3"><button class="btn btn-outline-primary w-100"
+                    <div class="col-md-2"><input class="form-control" id="cfg-grade-year" placeholder="评定表年（留空不修改）">
+                    </div>
+                    <div class="col-md-2"><input class="form-control" id="cfg-grade-month" placeholder="月（留空不修改）"></div>
+                    <div class="col-md-2"><input class="form-control" id="cfg-grade-day" placeholder="日（留空不修改）"></div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-outline-secondary w-100"
+                            onclick="showCurrentDate('GRADE_DATE')">查看当前值</button>
+                    </div>
+                    <div class="col-md-2"><button class="btn btn-outline-primary w-100"
                             onclick="setDate('GRADE_DATE')">保存评定日期</button></div>
+                </div>
+            </div>
+
+            <div class="module mb-3">
+                <div class="module-header">
+                    <h4><i class="bi bi-clipboard-check"></i> 本科毕业论文答辩成绩表配置</h4>
+                </div>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> 设置3个评价指标的具体描述内容及对应的评分权值
+                </div>
+                <div id="paper-evaluation-items">
+                    <!-- 动态加载论文评价指标 -->
+                </div>
+                <div class="mt-3">
+                    <button class="btn btn-primary" onclick="saveEvaluationItems('PAPER')">
+                        <i class="bi bi-save"></i> 保存论文评价指标配置
+                    </button>
+                </div>
+            </div>
+
+            <div class="module mb-3">
+                <div class="module-header">
+                    <h4><i class="bi bi-clipboard-check"></i> 本科毕业设计答辩成绩表配置</h4>
+                </div>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> 设置3个评价指标的具体描述内容及对应的评分权值
+                </div>
+                <div id="design-evaluation-items">
+                    <!-- 动态加载设计评价指标 -->
+                </div>
+                <div class="mt-3">
+                    <button class="btn btn-primary" onclick="saveEvaluationItems('DESIGN')">
+                        <i class="bi bi-save"></i> 保存设计评价指标配置
+                    </button>
                 </div>
             </div>
 
@@ -784,55 +968,46 @@
                     <h4><i class="bi bi-cpu"></i> 大模型配置</h4>
                 </div>
                 <div class="row g-2">
-                    <div class="col-md-6"><input class="form-control" id="cfg-api-key" placeholder="QWEN API KEY"></div>
-                    <div class="col-md-2"><button class="btn btn-outline-primary w-100"
-                            onclick="saveApiKey()">保存</button></div>
-                </div>
-                <div class="row g-2 mt-2">
-                    <div class="col-md-6"><textarea class="form-control" id="cfg-paper-prompt" rows="3"
-                            placeholder="论文提示词模板"></textarea></div>
-                    <div class="col-md-2"><button class="btn btn-outline-primary w-100"
-                            onclick="savePrompt('PAPER_PROMPT_TEMPLATE', 'cfg-paper-prompt')">保存论文模板</button></div>
-                </div>
-                <div class="row g-2 mt-2">
-                    <div class="col-md-6"><textarea class="form-control" id="cfg-design-prompt" rows="3"
-                            placeholder="设计提示词模板"></textarea></div>
-                    <div class="col-md-2"><button class="btn btn-outline-primary w-100"
-                            onclick="savePrompt('DESIGN_PROMPT_TEMPLATE', 'cfg-design-prompt')">保存设计模板</button></div>
-                </div>
-            </div>
-
-            <div class="module mb-3">
-                <div class="module-header">
-                    <h4><i class="bi bi-upload"></i> 模板与签名上传</h4>
-                </div>
-                <div class="row g-2">
-                    <div class="col-md-4">
-                        <label class="form-label">上传 Word 模板 (key: paper-score / design-score / paper-grade /
-                            design-grade / paper-process / design-process)</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="tpl-key" placeholder="模板key">
-                            <input type="file" class="form-control" id="tpl-file" accept=".docx">
-                            <button class="btn btn-outline-primary" onclick="uploadTemplate()">上传</button>
-                        </div>
+                    <div class="col-md-6">
+                        <label class="form-label">QWEN API KEY</label>
+                        <input class="form-control" id="cfg-api-key" placeholder="请输入QWEN API KEY（留空则不修改）"
+                            type="password">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-outline-secondary w-100" onclick="showCurrentApiKey()">查看当前值</button>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-outline-primary w-100" onclick="saveApiKey()">保存</button>
                     </div>
                 </div>
-                <div class="row g-2 mt-3">
+                <div class="row g-2 mt-2">
                     <div class="col-md-6">
-                        <label class="form-label">
-                            <i class="bi bi-pen"></i> 上传个人签名图片
-                            <small class="text-muted">(支持 JPG、PNG 等图片格式，自动命名为 user_用户ID 或 teacher_教师ID)</small>
-                        </label>
-                        <div class="input-group">
-                            <input type="file" class="form-control" id="sign-file" accept="image/*">
-                            <button class="btn btn-primary" onclick="uploadSign()">
-                                <i class="bi bi-upload"></i> 上传签名
-                            </button>
-                        </div>
-                        <small class="text-muted d-block mt-2">
-                            <i class="bi bi-info-circle"></i>
-                            教师签名将用于导出成绩表时的评委签名位置；系主任签名将用于导出成绩评定表。
-                        </small>
+                        <label class="form-label">论文提示词模板</label>
+                        <textarea class="form-control" id="cfg-paper-prompt" rows="3"
+                            placeholder="请输入论文提示词模板（留空则不修改）"></textarea>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-outline-secondary w-100"
+                            onclick="showCurrentPrompt('PAPER_PROMPT_TEMPLATE', 'cfg-paper-prompt')">查看当前值</button>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-outline-primary w-100"
+                            onclick="savePrompt('PAPER_PROMPT_TEMPLATE', 'cfg-paper-prompt')">保存论文模板</button>
+                    </div>
+                </div>
+                <div class="row g-2 mt-2">
+                    <div class="col-md-6">
+                        <label class="form-label">设计提示词模板</label>
+                        <textarea class="form-control" id="cfg-design-prompt" rows="3"
+                            placeholder="请输入设计提示词模板（留空则不修改）"></textarea>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-outline-secondary w-100"
+                            onclick="showCurrentPrompt('DESIGN_PROMPT_TEMPLATE', 'cfg-design-prompt')">查看当前值</button>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-outline-primary w-100"
+                            onclick="savePrompt('DESIGN_PROMPT_TEMPLATE', 'cfg-design-prompt')">保存设计模板</button>
                     </div>
                 </div>
             </div>
@@ -1077,6 +1252,79 @@
         </div>
     </div>
 
+    <!-- Score Record Management Modal -->
+    <div class="modal fade" id="addScoreRecordModal" tabindex="-1" aria-labelledby="addScoreRecordModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addScoreRecordModalLabel">添加成绩记录</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addScoreRecordForm" class="row g-3">
+                        <input type="hidden" id="scoreRecordId">
+                        <div class="col-md-4">
+                            <label for="scoreRecordStudentId" class="form-label">学生ID <span
+                                    class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="scoreRecordStudentId" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="scoreRecordTeacherId" class="form-label">教师ID <span
+                                    class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="scoreRecordTeacherId" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="scoreRecordYear" class="form-label">年份 <span
+                                    class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="scoreRecordYear" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="scoreRecordGroupId" class="form-label">小组ID（可选）</label>
+                            <input type="number" class="form-control" id="scoreRecordGroupId">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="scoreRecordTotal" class="form-label">总分</label>
+                            <input type="number" class="form-control" id="scoreRecordTotal">
+                        </div>
+                        <div class="col-12">
+                            <hr>
+                            <h6>分项成绩</h6>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="scoreRecordItem1" class="form-label">分项1</label>
+                            <input type="number" class="form-control" id="scoreRecordItem1">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="scoreRecordItem2" class="form-label">分项2</label>
+                            <input type="number" class="form-control" id="scoreRecordItem2">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="scoreRecordItem3" class="form-label">分项3</label>
+                            <input type="number" class="form-control" id="scoreRecordItem3">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="scoreRecordItem4" class="form-label">分项4</label>
+                            <input type="number" class="form-control" id="scoreRecordItem4">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="scoreRecordItem5" class="form-label">分项5</label>
+                            <input type="number" class="form-control" id="scoreRecordItem5">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="scoreRecordItem6" class="form-label">分项6</label>
+                            <input type="number" class="form-control" id="scoreRecordItem6">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="saveScoreRecord()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Department Management Modal -->
     <div class="modal fade" id="addDepartmentModal" tabindex="-1" aria-labelledby="addDepartmentModalLabel"
         aria-hidden="true">
@@ -1151,6 +1399,31 @@
                     }
                     if (navUserManagement) {
                         navUserManagement.style.display = 'none';
+                    }
+                }
+
+                // 打分/评阅菜单：只有教师和答辩组长可以看到
+                const navScoreView = document.getElementById('nav-score-view');
+                if (navScoreView) {
+                    const isTeacher = userType === 'TEACHER' || userRole === 'TEACHER' || userRole === 'DEFENSE_LEADER';
+                    if (!isTeacher) {
+                        navScoreView.style.display = 'none';
+                    }
+                }
+
+                // 成绩数据管理菜单：只有超级管理员可以看到
+                const navScoreManagement = document.getElementById('nav-score-management');
+                if (navScoreManagement) {
+                    if (userRole !== 'SUPER_ADMIN') {
+                        navScoreManagement.style.display = 'none';
+                    }
+                }
+
+                // 系统设置菜单：只有超级管理员可以看到
+                const navSettings = document.getElementById('nav-settings');
+                if (navSettings) {
+                    if (userRole !== 'SUPER_ADMIN') {
+                        navSettings.style.display = 'none';
                     }
                 }
 
@@ -1375,7 +1648,8 @@
                 loadDepartments();
             }
             if (viewId === 'settings-view') {
-                // 可在此预加载当前配置
+                // 预加载当前配置
+                loadSettingsConfig();
             }
             if (viewId === 'signature-view') {
                 // 签名管理页面加载时的处理
@@ -1389,6 +1663,20 @@
                 if (previewArea) {
                     previewArea.style.display = 'none';
                 }
+            }
+            if (viewId === 'score-management-view') {
+                // 成绩数据管理页面加载
+                loadScoreRecords();
+            }
+            if (viewId === 'score-view') {
+                // 打分/评阅页面加载（教师和答辩组长）
+                // 可以在这里预加载当前年份等信息
+                loadCurrentYearForScore();
+            }
+            if (viewId === 'dashboard-view') {
+                // 工作台页面加载
+                // 可以在这里加载当前年份
+                loadCurrentYearForDashboard();
             }
         }
 
@@ -2459,30 +2747,324 @@
         }
 
         // --- Settings ---
+        async function loadSettingsConfig() {
+            // 不自动填充值，让输入框保持placeholder效果
+            // 用户需要查看当前值时，可以通过点击输入框或查看按钮来获取
+
+            // 加载年份列表
+            loadAllYears();
+
+            // 加载评价指标配置
+            loadEvaluationItems('PAPER');
+            loadEvaluationItems('DESIGN');
+        }
+
+        async function loadEvaluationItems(defenseType) {
+            try {
+                const response = await fetch(`/admin/config/evaluation/list?type=${defenseType}`);
+                if (!response.ok) {
+                    throw new Error('获取评价指标失败');
+                }
+                const items = await response.json();
+                renderEvaluationItems(defenseType, items);
+            } catch (error) {
+                console.error('Load evaluation items error:', error);
+                // 如果失败，显示默认的3个指标
+                const defaultItems = defenseType === 'PAPER' ? [
+                    { id: null, itemName: '论文质量', weight: 0.5 },
+                    { id: null, itemName: '答辩的自述报告', weight: 0.25 },
+                    { id: null, itemName: '回答问题的情况', weight: 0.25 }
+                ] : [
+                    { id: null, itemName: '设计质量', weight: 0.5 },
+                    { id: null, itemName: '答辩的自述报告成绩', weight: 0.25 },
+                    { id: null, itemName: '回答问题的情况', weight: 0.25 }
+                ];
+                renderEvaluationItems(defenseType, defaultItems);
+            }
+        }
+
+        function renderEvaluationItems(defenseType, items) {
+            const container = document.getElementById(`${defenseType.toLowerCase()}-evaluation-items`);
+            if (!container) return;
+
+            // 确保只有3个指标
+            const displayItems = items.slice(0, 3);
+            while (displayItems.length < 3) {
+                displayItems.push({ id: null, itemName: '', weight: 0 });
+            }
+
+            container.innerHTML = '';
+            displayItems.forEach((item, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'row g-2 mb-2';
+                itemDiv.innerHTML = `
+                    <div class="col-md-6">
+                        <label class="form-label">指标${index + 1}描述</label>
+                        <input type="text" class="form-control eval-item-name" data-type="${defenseType}" data-index="${index}" 
+                               value="${item.itemName || ''}" placeholder="请输入指标描述">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">评分权值 (0-1)</label>
+                        <input type="number" step="0.01" min="0" max="1" class="form-control eval-item-weight" 
+                               data-type="${defenseType}" data-index="${index}" 
+                               value="${item.weight || 0}" placeholder="0.00">
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <div class="form-control-plaintext">
+                            <small class="text-muted">满分: <span class="max-score-${defenseType}-${index}">${item.weight ? (item.weight * 100).toFixed(0) : 0}</span> 分</small>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(itemDiv);
+            });
+
+            // 添加权值变化监听，自动计算满分
+            container.querySelectorAll('.eval-item-weight').forEach(input => {
+                input.addEventListener('input', function () {
+                    const weight = parseFloat(this.value) || 0;
+                    const index = this.dataset.index;
+                    const maxScoreSpan = container.querySelector(`.max-score-${defenseType}-${index}`);
+                    if (maxScoreSpan) {
+                        maxScoreSpan.textContent = (weight * 100).toFixed(0);
+                    }
+                });
+            });
+        }
+
+        async function saveEvaluationItems(defenseType) {
+            const container = document.getElementById(`${defenseType.toLowerCase()}-evaluation-items`);
+            if (!container) return;
+
+            const items = [];
+            for (let i = 0; i < 3; i++) {
+                const nameInput = container.querySelector(`.eval-item-name[data-type="${defenseType}"][data-index="${i}"]`);
+                const weightInput = container.querySelector(`.eval-item-weight[data-type="${defenseType}"][data-index="${i}"]`);
+
+                if (!nameInput || !weightInput) continue;
+
+                const itemName = nameInput.value.trim();
+                const weight = parseFloat(weightInput.value);
+
+                if (!itemName) {
+                    showAlert('warning', `请填写指标${i + 1}的描述`);
+                    return;
+                }
+
+                if (isNaN(weight) || weight < 0 || weight > 1) {
+                    showAlert('warning', `指标${i + 1}的权值必须在0-1之间`);
+                    return;
+                }
+
+                items.push({
+                    itemName: itemName,
+                    weight: weight
+                });
+            }
+
+            // 检查权值总和是否为1
+            const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
+            if (Math.abs(totalWeight - 1.0) > 0.01) {
+                if (!confirm(`权值总和为 ${totalWeight.toFixed(2)}，不等于1.0，是否继续保存？`)) {
+                    return;
+                }
+            }
+
+            toggleLoading(true);
+            try {
+                const response = await fetch(`/admin/config/evaluation/save?type=${defenseType}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(items)
+                });
+                const result = await response.text();
+
+                if (result === 'success') {
+                    showAlert('success', `${defenseType === 'PAPER' ? '论文' : '设计'}评价指标配置保存成功`);
+                } else {
+                    showAlert('error', result.startsWith('error:') ? result.substring(6) : '保存失败');
+                }
+            } catch (error) {
+                console.error(error);
+                showAlert('error', '保存失败，请检查网络连接');
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        async function loadAllYears() {
+            try {
+                const response = await fetch('/admin/config/years/list');
+                if (!response.ok) {
+                    throw new Error('获取年份列表失败');
+                }
+                const years = await response.json();
+                const select = document.getElementById('year-select');
+                select.innerHTML = '<option value="">请选择年份</option>';
+                years.forEach(year => {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Load years error:', error);
+                showAlert('error', '获取年份列表失败');
+            }
+        }
+
+        async function selectYear(year) {
+            if (!year) return;
+            if (confirm(`确定要将 ${year} 设置为当前答辩年份吗？`)) {
+                document.getElementById('cfg-year').value = year;
+                await setDefenseYear();
+            }
+        }
+
+        async function showCurrentYear() {
+            try {
+                const yearResp = await fetch('/admin/config/year/current');
+                if (yearResp.ok) {
+                    const currentYear = await yearResp.json();
+                    if (currentYear) {
+                        document.getElementById('cfg-year').value = currentYear;
+                        showAlert('info', '已显示当前年份，修改后点击保存');
+                    } else {
+                        showAlert('info', '当前未设置年份');
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load current year:', e);
+                showAlert('error', '获取当前年份失败');
+            }
+        }
+
+        async function showCurrentDate(prefix) {
+            try {
+                const year = await fetch(`/admin/config/date/get?key=${prefix}_YEAR`).then(r => r.ok ? r.text() : null);
+                const month = await fetch(`/admin/config/date/get?key=${prefix}_MONTH`).then(r => r.ok ? r.text() : null);
+                const day = await fetch(`/admin/config/date/get?key=${prefix}_DAY`).then(r => r.ok ? r.text() : null);
+
+                if (prefix === 'DEFENSE_DATE') {
+                    if (year) document.getElementById('cfg-def-year').value = year;
+                    if (month) document.getElementById('cfg-def-month').value = month;
+                    if (day) document.getElementById('cfg-def-day').value = day;
+                } else {
+                    if (year) document.getElementById('cfg-grade-year').value = year;
+                    if (month) document.getElementById('cfg-grade-month').value = month;
+                    if (day) document.getElementById('cfg-grade-day').value = day;
+                }
+
+                if (year || month || day) {
+                    showAlert('info', '已显示当前日期，修改后点击保存');
+                } else {
+                    showAlert('info', '当前未设置日期');
+                }
+            } catch (e) {
+                console.error('Failed to load date config:', e);
+                showAlert('error', '获取当前日期失败');
+            }
+        }
+
         async function setDefenseYear() {
-            const year = document.getElementById('cfg-year').value;
-            if (!year) return showAlert('warning', '请输入年份');
+            const year = document.getElementById('cfg-year').value.trim();
+            if (!year) {
+                showAlert('warning', '请输入年份或留空不修改');
+                return;
+            }
             await postForm('/admin/config/year/set', { year });
+            // 保存后清空输入框，恢复placeholder效果
+            document.getElementById('cfg-year').value = '';
         }
 
         async function setDate(prefix) {
-            const y = document.getElementById(prefix === 'DEFENSE_DATE' ? 'cfg-def-year' : 'cfg-grade-year').value;
-            const m = document.getElementById(prefix === 'DEFENSE_DATE' ? 'cfg-def-month' : 'cfg-grade-month').value;
-            const d = document.getElementById(prefix === 'DEFENSE_DATE' ? 'cfg-def-day' : 'cfg-grade-day').value;
-            if (!y || !m || !d) return showAlert('warning', '请填写完整日期');
-            await postJson('/admin/config/date/set', { dateKeyPrefix: prefix, year: parseInt(y), month: parseInt(m), day: parseInt(d) });
+            const y = document.getElementById(prefix === 'DEFENSE_DATE' ? 'cfg-def-year' : 'cfg-grade-year').value.trim();
+            const m = document.getElementById(prefix === 'DEFENSE_DATE' ? 'cfg-def-month' : 'cfg-grade-month').value.trim();
+            const d = document.getElementById(prefix === 'DEFENSE_DATE' ? 'cfg-def-day' : 'cfg-grade-day').value.trim();
+
+            // 如果所有字段都为空，则不修改
+            if (!y && !m && !d) {
+                showAlert('warning', '请至少填写一个日期字段或留空不修改');
+                return;
+            }
+
+            // 如果部分字段为空，使用当前值或默认值
+            const year = y ? parseInt(y) : null;
+            const month = m ? parseInt(m) : null;
+            const day = d ? parseInt(d) : null;
+
+            await postJson('/admin/config/date/set', { dateKeyPrefix: prefix, year, month, day });
+
+            // 保存后清空输入框，恢复placeholder效果
+            if (prefix === 'DEFENSE_DATE') {
+                document.getElementById('cfg-def-year').value = '';
+                document.getElementById('cfg-def-month').value = '';
+                document.getElementById('cfg-def-day').value = '';
+            } else {
+                document.getElementById('cfg-grade-year').value = '';
+                document.getElementById('cfg-grade-month').value = '';
+                document.getElementById('cfg-grade-day').value = '';
+            }
+        }
+
+        async function showCurrentApiKey() {
+            try {
+                const apiKeyResp = await fetch('/admin/config/ai/key/get');
+                if (apiKeyResp.ok) {
+                    const apiKey = await apiKeyResp.text();
+                    if (apiKey && !apiKey.startsWith('error')) {
+                        const input = document.getElementById('cfg-api-key');
+                        input.type = 'text';
+                        input.value = apiKey;
+                        showAlert('info', '已显示当前API Key，修改后点击保存');
+                    } else {
+                        showAlert('info', '当前未设置API Key');
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load API key:', e);
+                showAlert('error', '获取当前API Key失败');
+            }
+        }
+
+        async function showCurrentPrompt(templateKey, textareaId) {
+            try {
+                const promptResp = await fetch(`/admin/config/ai/template/get?templateKey=${templateKey}`);
+                if (promptResp.ok) {
+                    const prompt = await promptResp.text();
+                    if (prompt && !prompt.startsWith('error')) {
+                        document.getElementById(textareaId).value = prompt;
+                        showAlert('info', '已显示当前模板，修改后点击保存');
+                    } else {
+                        showAlert('info', '当前未设置模板');
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load prompt:', e);
+                showAlert('error', '获取当前模板失败');
+            }
         }
 
         async function saveApiKey() {
-            const key = document.getElementById('cfg-api-key').value;
-            if (!key) return showAlert('warning', '请输入 API Key');
+            const key = document.getElementById('cfg-api-key').value.trim();
+            if (!key) {
+                showAlert('warning', '请输入 API Key 或留空不修改');
+                return;
+            }
             await postForm('/admin/config/ai/key/save', { apiKey: key });
+            // 保存后清空输入框，恢复placeholder效果
+            document.getElementById('cfg-api-key').value = '';
+            document.getElementById('cfg-api-key').type = 'password';
         }
 
         async function savePrompt(templateKey, textareaId) {
-            const content = document.getElementById(textareaId).value;
-            if (!content) return showAlert('warning', '请输入模板内容');
+            const content = document.getElementById(textareaId).value.trim();
+            if (!content) {
+                showAlert('warning', '请输入模板内容或留空不修改');
+                return;
+            }
             await postJson('/admin/config/ai/template/save', { templateKey, templateContent: content });
+            // 保存后清空输入框，恢复placeholder效果
+            document.getElementById(textareaId).value = '';
         }
 
         async function uploadTemplate() {
@@ -2539,6 +3121,559 @@
                 showAlert('error', '上传失败：' + e.message);
             } finally {
                 toggleLoading(false);
+            }
+        }
+
+        // --- Score Management Functions (Super Admin) ---
+        async function loadScoreRecords() {
+            const keyword = document.getElementById('score-search-input')?.value.trim() || '';
+            const year = document.getElementById('score-filter-year')?.value || '';
+
+            // 加载年份列表
+            try {
+                const yearsResp = await fetch('/admin/config/years/list');
+                if (yearsResp.ok) {
+                    const years = await yearsResp.json();
+                    const yearSelect = document.getElementById('score-filter-year');
+                    const currentValue = yearSelect.value;
+                    yearSelect.innerHTML = '<option value="">所有年份</option>';
+                    years.forEach(y => {
+                        const option = document.createElement('option');
+                        option.value = y;
+                        option.textContent = y;
+                        if (y == currentValue) option.selected = true;
+                        yearSelect.appendChild(option);
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to load years:', e);
+            }
+
+            try {
+                let url = '/defense/score/records/list';
+                if (year) {
+                    url += '?year=' + year;
+                }
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error('获取成绩记录失败');
+                }
+                const records = await response.json();
+                renderScoreRecordTable(records, keyword);
+            } catch (error) {
+                console.error('Load score records error:', error);
+                showAlert('error', error.message || '获取成绩记录失败');
+                document.getElementById('score-record-list').innerHTML =
+                    '<tr><td colspan="13" class="text-center text-danger">加载失败: ' + (error.message || '未知错误') + '</td></tr>';
+            }
+        }
+
+        function renderScoreRecordTable(records, keyword) {
+            const tbody = document.getElementById('score-record-list');
+            tbody.innerHTML = '';
+
+            if (!records || records.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="13" class="text-center text-muted">暂无成绩记录</td></tr>';
+                return;
+            }
+
+            // 搜索过滤 - 只根据学生名称搜索
+            let filtered = records;
+            if (keyword) {
+                const kw = keyword.toLowerCase();
+                filtered = records.filter(r =>
+                    r.student && r.student.name && r.student.name.toLowerCase().includes(kw)
+                );
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="13" class="text-center text-muted">未找到匹配的记录</td></tr>';
+                return;
+            }
+
+            filtered.forEach(record => {
+                const studentName = record.student ? (record.student.studentNo + ' - ' + record.student.name) : 'ID: ' + record.studentId;
+                const teacherName = record.teacher ? (record.teacher.teacherNo + ' - ' + record.teacher.name) : 'ID: ' + record.teacherId;
+                const defenseType = record.student && record.student.defenseType ? record.student.defenseType : 'N/A';
+
+                const row = `
+                    <tr>
+                        <td>${record.id || 'N/A'}</td>
+                        <td>${studentName}</td>
+                        <td>${teacherName}</td>
+                        <td>${record.year || 'N/A'}</td>
+                        <td>${record.item1Score != null ? record.item1Score : '-'}</td>
+                        <td>${record.item2Score != null ? record.item2Score : '-'}</td>
+                        <td>${record.item3Score != null ? record.item3Score : '-'}</td>
+                        <td>${record.item4Score != null ? record.item4Score : '-'}</td>
+                        <td>${record.item5Score != null ? record.item5Score : '-'}</td>
+                        <td>${record.item6Score != null ? record.item6Score : '-'}</td>
+                        <td><strong>${record.totalScore != null ? record.totalScore : '-'}</strong></td>
+                        <td>${record.submitTime ? new Date(record.submitTime).toLocaleString() : '-'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick='openScoreRecordModal(${JSON.stringify(record)})'>
+                                <i class="bi bi-pencil-square"></i> 编辑
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteScoreRecord(${record.id})">
+                                <i class="bi bi-trash"></i> 删除
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        async function deleteScoreRecord(id) {
+            if (!confirm('确定要删除这条成绩记录吗？')) {
+                return;
+            }
+
+            toggleLoading(true);
+            try {
+                const response = await fetch(`/defense/score/records/${id}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.text();
+
+                if (result === 'success') {
+                    showAlert('success', '成绩记录删除成功');
+                    loadScoreRecords();
+                } else {
+                    showAlert('error', result.startsWith('error:') ? result.substring(6) : '删除失败');
+                }
+            } catch (error) {
+                console.error(error);
+                showAlert('error', '删除失败，请检查网络连接');
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        function openScoreRecordModal(record = null) {
+            const modal = new bootstrap.Modal(document.getElementById('addScoreRecordModal'));
+            const form = document.getElementById('addScoreRecordForm');
+            const modalLabel = document.getElementById('addScoreRecordModalLabel');
+
+            // 重置表单
+            form.reset();
+            document.getElementById('scoreRecordId').value = '';
+
+            if (record) {
+                // 编辑模式
+                modalLabel.textContent = '编辑成绩记录';
+                document.getElementById('scoreRecordId').value = record.id;
+                document.getElementById('scoreRecordStudentId').value = record.studentId || '';
+                document.getElementById('scoreRecordTeacherId').value = record.teacherId || '';
+                document.getElementById('scoreRecordYear').value = record.year || '';
+                document.getElementById('scoreRecordGroupId').value = record.defenseGroupId || '';
+                document.getElementById('scoreRecordItem1').value = record.item1Score || '';
+                document.getElementById('scoreRecordItem2').value = record.item2Score || '';
+                document.getElementById('scoreRecordItem3').value = record.item3Score || '';
+                document.getElementById('scoreRecordItem4').value = record.item4Score || '';
+                document.getElementById('scoreRecordItem5').value = record.item5Score || '';
+                document.getElementById('scoreRecordItem6').value = record.item6Score || '';
+                document.getElementById('scoreRecordTotal').value = record.totalScore || '';
+            } else {
+                // 新增模式
+                modalLabel.textContent = '添加成绩记录';
+            }
+
+            modal.show();
+        }
+
+        async function saveScoreRecord() {
+            const form = document.getElementById('addScoreRecordForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const recordId = document.getElementById('scoreRecordId').value;
+            const record = {
+                id: recordId ? parseInt(recordId) : null,
+                studentId: parseInt(document.getElementById('scoreRecordStudentId').value),
+                teacherId: parseInt(document.getElementById('scoreRecordTeacherId').value),
+                year: parseInt(document.getElementById('scoreRecordYear').value),
+                defenseGroupId: document.getElementById('scoreRecordGroupId').value ? parseInt(document.getElementById('scoreRecordGroupId').value) : null,
+                item1Score: document.getElementById('scoreRecordItem1').value ? parseInt(document.getElementById('scoreRecordItem1').value) : null,
+                item2Score: document.getElementById('scoreRecordItem2').value ? parseInt(document.getElementById('scoreRecordItem2').value) : null,
+                item3Score: document.getElementById('scoreRecordItem3').value ? parseInt(document.getElementById('scoreRecordItem3').value) : null,
+                item4Score: document.getElementById('scoreRecordItem4').value ? parseInt(document.getElementById('scoreRecordItem4').value) : null,
+                item5Score: document.getElementById('scoreRecordItem5').value ? parseInt(document.getElementById('scoreRecordItem5').value) : null,
+                item6Score: document.getElementById('scoreRecordItem6').value ? parseInt(document.getElementById('scoreRecordItem6').value) : null,
+                totalScore: document.getElementById('scoreRecordTotal').value ? parseInt(document.getElementById('scoreRecordTotal').value) : null
+            };
+
+            if (!record.studentId || !record.teacherId || !record.year) {
+                showAlert('warning', '请填写学生ID、教师ID和年份');
+                return;
+            }
+
+            toggleLoading(true);
+            try {
+                let result;
+                if (recordId) {
+                    // 更新
+                    const response = await fetch('/defense/score/records/update', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(record)
+                    });
+                    result = await response.text();
+                } else {
+                    // 创建
+                    const response = await fetch('/defense/score/teacher/save', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(record)
+                    });
+                    result = await response.text();
+                }
+
+                if (result === 'success') {
+                    showAlert('success', recordId ? '成绩记录更新成功' : '成绩记录添加成功');
+                    bootstrap.Modal.getInstance(document.getElementById('addScoreRecordModal')).hide();
+                    loadScoreRecords();
+                } else {
+                    showAlert('error', result.startsWith('error:') ? result.substring(6) : '操作失败');
+                }
+            } catch (error) {
+                console.error(error);
+                showAlert('error', '操作失败，请检查网络连接');
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        // --- Score View Functions (Teacher/Defense Leader) ---
+        async function loadCurrentYearForScore() {
+            try {
+                const yearResp = await fetch('/admin/config/year/current');
+                if (yearResp.ok) {
+                    const currentYear = await yearResp.json();
+                    if (currentYear) {
+                        document.getElementById('score-year').value = currentYear;
+                        document.getElementById('advisor-year').value = currentYear;
+                        document.getElementById('reviewer-year').value = currentYear;
+                        document.getElementById('finalize-year').value = currentYear;
+                        // 加载学生列表供评语生成使用（传入年份）
+                        await loadStudentsForComment(currentYear);
+                    } else {
+                        // 如果没有设置年份，也尝试加载学生列表（不按年份过滤）
+                        await loadStudentsForComment(null);
+                    }
+                } else {
+                    // 如果获取年份失败，也尝试加载学生列表
+                    await loadStudentsForComment(null);
+                }
+            } catch (e) {
+                console.error('Failed to load current year:', e);
+                // 即使获取年份失败，也尝试加载学生列表
+                await loadStudentsForComment(null);
+            }
+        }
+
+        // --- Comment Generation Functions (Defense Leader) ---
+        let currentCommentStudentId = null;
+        let currentCommentYear = null;
+
+        async function loadStudentsForComment(year) {
+            try {
+                const response = await fetch('/department/student/list');
+                if (!response.ok) {
+                    console.error('Failed to load students:', response.status, response.statusText);
+                    return;
+                }
+                const students = await response.json();
+                const select = document.getElementById('comment-student-select');
+                if (!select) {
+                    console.error('comment-student-select element not found');
+                    return;
+                }
+                select.innerHTML = '<option value="">请选择学生</option>';
+
+                if (!students || students.length === 0) {
+                    console.warn('No students found');
+                    return;
+                }
+
+                // 如果没有传入year，尝试从当前年份配置获取
+                if (!year) {
+                    try {
+                        const yearResp = await fetch('/admin/config/year/current');
+                        if (yearResp.ok) {
+                            year = await yearResp.json();
+                        }
+                    } catch (e) {
+                        console.error('Failed to get current year:', e);
+                    }
+                }
+
+                let hasStudents = false;
+                students.forEach(student => {
+                    // 如果year为空，显示所有学生；否则只显示对应年份的学生
+                    if (!year || student.defenseYear == year) {
+                        const option = document.createElement('option');
+                        option.value = student.id;
+                        option.textContent = `${student.studentNo} - ${student.name} (${student.defenseType === 'PAPER' ? '论文' : '设计'})`;
+                        select.appendChild(option);
+                        hasStudents = true;
+                    }
+                });
+
+                if (!hasStudents && year) {
+                    console.warn(`No students found for year ${year}`);
+                }
+            } catch (e) {
+                console.error('Failed to load students for comment:', e);
+                showAlert('error', '加载学生列表失败：' + e.message);
+            }
+        }
+
+        async function loadStudentForComment() {
+            const studentId = document.getElementById('comment-student-select').value;
+            if (!studentId) {
+                document.getElementById('comment-student-info').style.display = 'none';
+                return;
+            }
+
+            const year = document.getElementById('score-year').value || document.getElementById('finalize-year').value;
+            if (!year) {
+                showAlert('warning', '请先设置年份');
+                return;
+            }
+
+            currentCommentStudentId = parseInt(studentId);
+            currentCommentYear = parseInt(year);
+
+            try {
+                const response = await fetch(`/department/student/list`);
+                if (!response.ok) return;
+                const students = await response.json();
+                const student = students.find(s => s.id == studentId);
+
+                if (student) {
+                    document.getElementById('comment-student-name').textContent = student.name;
+                    document.getElementById('comment-student-no').textContent = student.studentNo;
+                    document.getElementById('comment-student-type').textContent = student.defenseType === 'PAPER' ? '论文' : '设计';
+                    document.getElementById('comment-student-title').textContent = student.title || '未填写';
+                    document.getElementById('comment-student-summary').textContent = student.summary || '未填写';
+                    document.getElementById('comment-student-info').style.display = 'block';
+
+                    // 加载已有评语
+                    const commentResp = await fetch(`/defense/comment/student/${studentId}?year=${year}`);
+                    if (commentResp.ok) {
+                        const comment = await commentResp.json();
+                        if (comment && comment.content) {
+                            document.getElementById('comment-content').value = comment.content;
+                        } else {
+                            document.getElementById('comment-content').value = '';
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load student:', e);
+            }
+        }
+
+        async function generateStudentComment() {
+            if (!currentCommentStudentId || !currentCommentYear) {
+                showAlert('warning', '请先选择学生');
+                return;
+            }
+
+            toggleLoading(true);
+            try {
+                const response = await fetch('/defense/comment/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        studentId: currentCommentStudentId,
+                        year: currentCommentYear
+                    })
+                });
+                const result = await response.json();
+
+                if (result.comment) {
+                    document.getElementById('comment-content').value = result.comment;
+                    showAlert('success', '评语生成成功');
+                } else {
+                    showAlert('error', '评语生成失败');
+                }
+            } catch (e) {
+                console.error('Generate comment error:', e);
+                showAlert('error', '评语生成失败：' + e.message);
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        async function saveStudentComment() {
+            if (!currentCommentStudentId || !currentCommentYear) {
+                showAlert('warning', '请先选择学生');
+                return;
+            }
+
+            const content = document.getElementById('comment-content').value.trim();
+            if (!content) {
+                showAlert('warning', '评语内容不能为空');
+                return;
+            }
+
+            toggleLoading(true);
+            try {
+                const response = await fetch('/defense/comment/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        studentId: currentCommentStudentId,
+                        year: currentCommentYear,
+                        content: content
+                    })
+                });
+                const result = await response.text();
+
+                if (result === 'success') {
+                    showAlert('success', '评语保存成功');
+                } else {
+                    showAlert('error', result.startsWith('error:') ? result.substring(6) : '保存失败');
+                }
+            } catch (e) {
+                console.error('Save comment error:', e);
+                showAlert('error', '保存失败：' + e.message);
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        // --- Dashboard Functions ---
+        async function loadCurrentYearForDashboard() {
+            try {
+                const yearResp = await fetch('/admin/config/year/current');
+                if (yearResp.ok) {
+                    const currentYear = await yearResp.json();
+                    window.currentDashboardYear = currentYear;
+                }
+            } catch (e) {
+                console.error('Failed to load current year:', e);
+            }
+        }
+
+        async function loadGroupStudentsForComment(groupId) {
+            if (!groupId) {
+                document.getElementById('dashboard-student-comments').innerHTML = '<small class="text-muted">请选择小组查看学生评语</small>';
+                return;
+            }
+
+            const year = window.currentDashboardYear || new Date().getFullYear();
+            try {
+                const response = await fetch(`/defense/comment/group/${groupId}?year=${year}`);
+                if (!response.ok) {
+                    throw new Error('获取学生评语失败');
+                }
+                const comments = await response.json();
+                renderGroupStudentComments(comments, groupId, year);
+            } catch (error) {
+                console.error('Load group comments error:', error);
+                document.getElementById('dashboard-student-comments').innerHTML =
+                    '<div class="alert alert-danger">加载失败: ' + error.message + '</div>';
+            }
+        }
+
+        function renderGroupStudentComments(comments, groupId, year) {
+            const container = document.getElementById('dashboard-student-comments');
+            container.innerHTML = '';
+
+            if (!comments || comments.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">该小组暂无学生评语</div>';
+                return;
+            }
+
+            comments.forEach(comment => {
+                const student = comment.student;
+                const studentName = student ? `${student.studentNo} - ${student.name}` : `学生ID: ${comment.studentId}`;
+                const commentDiv = document.createElement('div');
+                commentDiv.className = 'mb-3 p-3 border rounded';
+                commentDiv.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <strong>${studentName}</strong>
+                            <small class="text-muted ms-2">${student && student.defenseType ? (student.defenseType === 'PAPER' ? '论文' : '设计') : ''}</small>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary" onclick='editStudentComment(${comment.studentId}, ${year})'>
+                            <i class="bi bi-pencil"></i> 编辑
+                        </button>
+                    </div>
+                    <div class="text-muted" style="white-space: pre-wrap;">${comment.content || '暂无评语'}</div>
+                `;
+                container.appendChild(commentDiv);
+            });
+        }
+
+        function editStudentComment(studentId, year) {
+            // 切换到打分/评阅页面并加载该学生的评语
+            const scoreViewLink = document.querySelector('a[onclick*="score-view"]');
+            if (scoreViewLink) {
+                scoreViewLink.click();
+                // 等待视图切换后加载学生信息
+                setTimeout(() => {
+                    document.getElementById('comment-student-select').value = studentId;
+                    loadStudentForComment();
+                }, 300);
+            }
+        }
+
+        // 根据学生ID加载学生信息，动态显示评分项
+        async function loadStudentForScore(studentId) {
+            if (!studentId) return;
+
+            try {
+                const response = await fetch(`/department/student/list`);
+                if (!response.ok) return;
+                const students = await response.json();
+                const student = students.find(s => s.id == studentId);
+
+                if (student) {
+                    // 根据defenseType显示不同的评分项
+                    updateScoreInputsByType(student.defenseType);
+                }
+            } catch (e) {
+                console.error('Failed to load student:', e);
+            }
+        }
+
+        function updateScoreInputsByType(defenseType) {
+            const item4Input = document.getElementById('item4');
+            const item5Input = document.getElementById('item5');
+            const item6Input = document.getElementById('item6');
+            const autoSplitBtn = document.querySelector('button[onclick="autoSplitDesign()"]');
+
+            if (defenseType === 'PAPER') {
+                // 论文类型：只显示3项
+                if (item4Input) item4Input.style.display = 'none';
+                if (item5Input) item5Input.style.display = 'none';
+                if (item6Input) item6Input.style.display = 'none';
+                if (autoSplitBtn) autoSplitBtn.style.display = 'none';
+
+                // 更新placeholder
+                document.getElementById('item1').placeholder = '论文质量';
+                document.getElementById('item2').placeholder = '自述报告';
+                document.getElementById('item3').placeholder = '回答问题';
+            } else if (defenseType === 'DESIGN') {
+                // 设计类型：显示6项
+                if (item4Input) item4Input.style.display = 'block';
+                if (item5Input) item5Input.style.display = 'block';
+                if (item6Input) item6Input.style.display = 'block';
+                if (autoSplitBtn) autoSplitBtn.style.display = 'block';
+
+                // 更新placeholder
+                document.getElementById('item1').placeholder = '设计质量1';
+                document.getElementById('item2').placeholder = '设计质量2';
+                document.getElementById('item3').placeholder = '设计质量3';
+                document.getElementById('item4').placeholder = '自述报告';
+                document.getElementById('item5').placeholder = '回答问题1';
+                document.getElementById('item6').placeholder = '回答问题2';
             }
         }
 
