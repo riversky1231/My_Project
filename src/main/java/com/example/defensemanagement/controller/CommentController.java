@@ -163,8 +163,6 @@ public class CommentController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "未登录");
         }
 
-        StudentComment comment = studentCommentMapper.findByStudentIdAndYear(studentId, year);
-        // 如果没有评语，返回null，Spring会将其序列化为null JSON，前端需要处理这种情况
-        return comment; // 可能为null
+        return studentCommentMapper.findByStudentIdAndYear(studentId, year);
     }
 }
