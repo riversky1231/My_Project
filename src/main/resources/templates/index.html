@@ -947,28 +947,22 @@
                                 </select>
                             </div>
 
-                            <!-- 模板类型选择 -->
+                            <!-- 答辩类型选择（先选择，用于过滤模板类型） -->
+                            <div class="mb-3">
+                                <label class="form-label">答辩类型</label>
+                                <select class="form-select" id="template-type-select"
+                                    onchange="filterTemplateTypesByDefenseType()">
+                                    <option value="PAPER">论文</option>
+                                    <option value="DESIGN">设计</option>
+                                </select>
+                            </div>
+
+                            <!-- 模板类型选择（根据答辩类型动态过滤） -->
                             <div class="mb-3">
                                 <label class="form-label">模板类型</label>
                                 <select class="form-select" id="template-doc-type-select"
                                     onchange="updateTemplatePreview()">
-                                    <option value="score-paper">1. 本科毕业论文答辩成绩表</option>
-                                    <option value="score-design">2. 本科毕业设计答辩成绩表</option>
-                                    <option value="grade-paper">3. 本科毕业论文成绩评定表</option>
-                                    <option value="grade-design">4. 本科毕业设计成绩评定表</option>
-                                    <option value="group-summary">5. 毕业论文(设计)答辩小组统分表</option>
-                                    <option value="process-paper">6. 毕业论文答辩成绩无评语过程表</option>
-                                    <option value="process-design">7. 毕业设计答辩成绩无评语过程表</option>
-                                </select>
-                            </div>
-
-                            <!-- 答辩类型（仅用于成绩表和过程表） -->
-                            <div class="mb-3" id="template-type-div">
-                                <label class="form-label">答辩类型</label>
-                                <select class="form-select" id="template-type-select"
-                                    onchange="updateTemplatePreview()">
-                                    <option value="PAPER">论文</option>
-                                    <option value="DESIGN">设计</option>
+                                    <!-- 选项将通过JavaScript动态生成 -->
                                 </select>
                             </div>
 
@@ -1938,7 +1932,8 @@
                 // 导出模板页面加载
                 // 延迟一下确保DOM完全加载
                 setTimeout(() => {
-                    updateTemplatePreview();
+                    // 先根据默认答辩类型过滤模板选项
+                    filterTemplateTypesByDefenseType();
                 }, 100);
             }
             if (viewId === 'export-view') {
@@ -4576,6 +4571,53 @@
             }
         };
 
+        // 所有可用的模板类型
+        const allTemplateTypes = [
+            { value: 'score-paper', text: '1. 本科毕业论文答辩成绩表', defenseType: 'PAPER' },
+            { value: 'score-design', text: '2. 本科毕业设计答辩成绩表', defenseType: 'DESIGN' },
+            { value: 'grade-paper', text: '3. 本科毕业论文成绩评定表', defenseType: 'PAPER' },
+            { value: 'grade-design', text: '4. 本科毕业设计成绩评定表', defenseType: 'DESIGN' },
+            { value: 'group-summary', text: '5. 毕业论文(设计)答辩小组统分表', defenseType: 'BOTH' },
+            { value: 'process-paper', text: '6. 毕业论文答辩成绩无评语过程表', defenseType: 'PAPER' },
+            { value: 'process-design', text: '7. 毕业设计答辩成绩无评语过程表', defenseType: 'DESIGN' }
+        ];
+
+        // 根据答辩类型过滤模板类型选项
+        function filterTemplateTypesByDefenseType() {
+            const defenseType = document.getElementById('template-type-select').value;
+            const docTypeSelect = document.getElementById('template-doc-type-select');
+            const currentValue = docTypeSelect.value;
+
+            // 清空现有选项
+            docTypeSelect.innerHTML = '';
+
+            // 根据答辩类型过滤选项
+            const filteredOptions = allTemplateTypes.filter(option => {
+                return option.defenseType === 'BOTH' || option.defenseType === defenseType;
+            });
+
+            // 添加过滤后的选项
+            filteredOptions.forEach(option => {
+                const opt = document.createElement('option');
+                opt.value = option.value;
+                opt.textContent = option.text;
+                docTypeSelect.appendChild(opt);
+            });
+
+            // 如果当前选中的值不在新选项中，选择第一个选项
+            if (!filteredOptions.find(opt => opt.value === currentValue)) {
+                if (filteredOptions.length > 0) {
+                    docTypeSelect.value = filteredOptions[0].value;
+                }
+            } else {
+                // 保持当前选择
+                docTypeSelect.value = currentValue;
+            }
+
+            // 更新预览
+            updateTemplatePreview();
+        }
+
         // 更新模板预览
         function updateTemplatePreview() {
             const studentId = parseInt(document.getElementById('template-student-select').value);
@@ -4589,7 +4631,6 @@
             const scores = templateMockData.scores[studentId];
 
             // 根据模板类型显示/隐藏相关控件
-            const typeDiv = document.getElementById('template-type-div');
             const factorDiv = document.getElementById('template-factor-input').parentElement;
             const commentDiv = document.getElementById('template-comment-source').parentElement;
             const customCommentDiv = document.getElementById('template-custom-comment-div');
@@ -4598,7 +4639,6 @@
             // 更新类型徽章和控件显示
             const badge = document.getElementById('template-doc-type-badge');
             let badgeText = '';
-            let showTypeSelect = false;
             let showFactor = false;
             let showComment = false;
             let showSignaturesControl = false;
@@ -4606,49 +4646,42 @@
             switch (docType) {
                 case 'score-paper':
                     badgeText = '本科毕业论文答辩成绩表';
-                    showTypeSelect = true;
                     showFactor = true;
                     showComment = true;
                     showSignaturesControl = true;
                     break;
                 case 'score-design':
                     badgeText = '本科毕业设计答辩成绩表';
-                    showTypeSelect = true;
                     showFactor = true;
                     showComment = true;
                     showSignaturesControl = true;
                     break;
                 case 'grade-paper':
                     badgeText = '本科毕业论文成绩评定表';
-                    showTypeSelect = false;
                     showFactor = false;
                     showComment = false;
                     showSignaturesControl = true;
                     break;
                 case 'grade-design':
                     badgeText = '本科毕业设计成绩评定表';
-                    showTypeSelect = false;
                     showFactor = false;
                     showComment = false;
                     showSignaturesControl = true;
                     break;
                 case 'group-summary':
                     badgeText = '毕业论文(设计)答辩小组统分表';
-                    showTypeSelect = false;
                     showFactor = true;
                     showComment = false;
                     showSignaturesControl = false;
                     break;
                 case 'process-paper':
                     badgeText = '毕业论文答辩成绩无评语过程表';
-                    showTypeSelect = true;
                     showFactor = false;
                     showComment = false;
                     showSignaturesControl = true;
                     break;
                 case 'process-design':
                     badgeText = '毕业设计答辩成绩无评语过程表';
-                    showTypeSelect = true;
                     showFactor = false;
                     showComment = false;
                     showSignaturesControl = true;
@@ -4656,7 +4689,6 @@
             }
 
             badge.textContent = badgeText;
-            typeDiv.style.display = showTypeSelect ? 'block' : 'none';
             factorDiv.style.display = showFactor ? 'block' : 'none';
             commentDiv.style.display = showComment ? 'block' : 'none';
             customCommentDiv.style.display = (commentSource === 'custom' && showComment) ? 'block' : 'none';
