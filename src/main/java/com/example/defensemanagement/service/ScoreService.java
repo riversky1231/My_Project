@@ -1,6 +1,7 @@
 package com.example.defensemanagement.service;
 
 import com.example.defensemanagement.entity.TeacherScoreRecord;
+import java.util.Map;
 
 public interface ScoreService {
 
@@ -28,5 +29,10 @@ public interface ScoreService {
      * @param largeGroupScore 优答辩得分（小组第一名在优答辩中的得分），可空；空时调节系数=1
      */
     void finalizeGroupScores(Long defenseGroupId, Integer year, Integer largeGroupScore);
+    
+    /**
+     * 获取小组的调节系数
+     */
+    Map<String, Object> getGroupAdjustmentFactor(Long groupId, Integer year);
 }
 

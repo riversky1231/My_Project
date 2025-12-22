@@ -19,6 +19,20 @@ public class FileStorageServiceImpl implements FileStorageService {
     @Value("${app.upload.base-dir:uploads}")
     private String baseDir;
 
+    /**
+     * 获取上传目录的绝对路径
+     */
+    private Path getBasePath() {
+        Path basePath = Paths.get(baseDir);
+        // 如果是相对路径，转换为相对于项目根目录的绝对路径
+        if (!basePath.isAbsolute()) {
+            // 获取项目根目录（通常是工作目录）
+            String userDir = System.getProperty("user.dir");
+            basePath = Paths.get(userDir, baseDir);
+        }
+        return basePath;
+    }
+
     @Override
     @SuppressWarnings("null")
     public String save(MultipartFile file, String subDir, String filename) {
@@ -31,15 +45,37 @@ public class FileStorageServiceImpl implements FileStorageService {
             if (StringUtils.hasText(ext)) {
                 safeName = safeName + "." + ext;
             }
-            Path dirPath = Paths.get(baseDir, subDir == null ? "" : subDir);
+            
+            // 使用绝对路径
+            Path basePath = getBasePath();
+            Path dirPath = subDir == null || subDir.isEmpty() 
+                ? basePath 
+                : basePath.resolve(subDir);
+            
+            // 创建目录（如果不存在）
             Files.createDirectories(dirPath);
+            
             Path target = dirPath.resolve(safeName);
             java.io.File targetFile = target.toFile();
+            
+            // 确保父目录存在
+            java.io.File parentDir = targetFile.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                parentDir.mkdirs();
+            }
+            
             file.transferTo(targetFile);
-            // 返回相对路径
-            return dirPath.relativize(target).toString().replace("\\", "/");
+            
+            // 返回相对路径（相对于baseDir）
+            Path relativePath = basePath.relativize(target);
+            return relativePath.toString().replace("\\", "/");
         } catch (IOException e) {
-            throw new RuntimeException("保存文件失败: " + e.getMessage(), e);
+            Path basePath = getBasePath();
+            Path dirPath = subDir == null || subDir.isEmpty() 
+                ? basePath 
+                : basePath.resolve(subDir);
+            throw new RuntimeException("保存文件失败: " + e.getMessage() + 
+                " (目标目录: " + dirPath.toAbsolutePath() + ")", e);
         }
     }
 }

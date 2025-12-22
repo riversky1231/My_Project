@@ -48,17 +48,29 @@ public class DocTemplateServiceImpl implements DocTemplateService {
 
     @SuppressWarnings("null")
     private InputStream resolve(String path) throws Exception {
-        Resource res;
+        Resource res = null;
         if (path.startsWith("classpath:")) {
             res = new ClassPathResource(path.substring("classpath:".length()));
         } else {
+            // 先尝试作为文件系统路径
             res = new FileSystemResource(path);
             if (!res.exists()) {
+                // 如果文件系统路径不存在，尝试作为classpath资源
                 res = new ClassPathResource(path);
             }
         }
-        if (!res.exists()) {
-            throw new IllegalArgumentException("模板不存在: " + path);
+        if (res == null || !res.exists()) {
+            String templateKey = path.contains("paper-score") ? "paper-score" : 
+                  path.contains("design-score") ? "design-score" :
+                  path.contains("paper-grade") ? "paper-grade" :
+                  path.contains("design-grade") ? "design-grade" :
+                  path.contains("paper-process") ? "paper-process" :
+                  path.contains("design-process") ? "design-process" :
+                  path.contains("group-summary") ? "group-summary" : "未知";
+            String errorMsg = String.format(
+                "模板文件不存在: %s。请以超级管理员身份登录，在\"系统设置\"->\"模板管理\"中上传对应的Word模板文件（模板key: %s.docx）。",
+                path, templateKey);
+            throw new IllegalArgumentException(errorMsg);
         }
         return res.getInputStream();
     }

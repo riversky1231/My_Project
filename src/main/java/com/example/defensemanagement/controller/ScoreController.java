@@ -12,6 +12,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpSession;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/defense/score")
@@ -44,6 +45,16 @@ public class ScoreController {
             @RequestParam(required = false) Integer largeGroupScore) {
         scoreService.finalizeGroupScores(groupId, year, largeGroupScore);
         return "success";
+    }
+
+    /**
+     * 获取小组的调节系数（答辩组长可以查看）
+     * GET /defense/score/group/{groupId}/adjustmentFactor?year=2024
+     */
+    @GetMapping("/group/{groupId}/adjustmentFactor")
+    public Map<String, Object> getAdjustmentFactor(@PathVariable Long groupId,
+                                                    @RequestParam Integer year) {
+        return scoreService.getGroupAdjustmentFactor(groupId, year);
     }
 
     /**

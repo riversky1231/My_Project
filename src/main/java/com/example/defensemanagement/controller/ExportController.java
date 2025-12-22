@@ -11,9 +11,11 @@ import com.example.defensemanagement.mapper.DefenseGroupTeacherMapper;
 import com.example.defensemanagement.service.DocTemplateService;
 import com.example.defensemanagement.service.ConfigService;
 import com.example.defensemanagement.service.AiCommentService;
+import com.example.defensemanagement.service.UserService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -48,6 +50,7 @@ public class ExportController {
     private static final String DESIGN_GRADE_TEMPLATE = "templates/docx/design-grade.docx";
     private static final String PAPER_PROCESS_TEMPLATE = "templates/docx/paper-process.docx";
     private static final String DESIGN_PROCESS_TEMPLATE = "templates/docx/design-process.docx";
+    private static final String GROUP_SUMMARY_TEMPLATE = "templates/docx/group-summary.docx";
 
     @Autowired
     private DocTemplateService docTemplateService;
@@ -69,18 +72,54 @@ public class ExportController {
 
     @Autowired
     private DefenseGroupTeacherMapper defenseGroupTeacherMapper;
+    
+    @Autowired
+    private UserService userService;
 
     @Value("${app.upload.base-dir:uploads}")
     private String uploadBaseDir;
+    
+    /**
+     * 获取上传目录的绝对路径
+     */
+    private java.nio.file.Path getUploadBasePath() {
+        java.nio.file.Path basePath = Paths.get(uploadBaseDir);
+        // 如果是相对路径，转换为相对于项目根目录的绝对路径
+        if (!basePath.isAbsolute()) {
+            String userDir = System.getProperty("user.dir");
+            basePath = Paths.get(userDir, uploadBaseDir);
+        }
+        return basePath;
+    }
 
     @GetMapping("/score/paper/{studentId}")
-    public ResponseEntity<byte[]> exportPaperScore(@PathVariable Long studentId) {
-        return buildScoreDoc(studentId, true);
+    public ResponseEntity<?> exportPaperScore(@PathVariable Long studentId) {
+        try {
+            return buildScoreDoc(studentId, true);
+        } catch (IllegalArgumentException e) {
+            // 模板文件不存在等参数错误，返回JSON错误信息
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", true);
+            error.put("message", e.getMessage());
+            error.put("type", "template_not_found");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        } catch (Exception e) {
+            // 其他错误，返回JSON错误信息
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", true);
+            error.put("message", "导出论文成绩表失败: " + e.getMessage());
+            error.put("type", "export_error");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
     }
 
     @GetMapping("/score/design/{studentId}")
     public ResponseEntity<byte[]> exportDesignScore(@PathVariable Long studentId) {
-        return buildScoreDoc(studentId, false);
+        try {
+            return buildScoreDoc(studentId, false);
+        } catch (Exception e) {
+            throw new RuntimeException("导出设计成绩表失败: " + e.getMessage(), e);
+        }
     }
 
     @GetMapping("/grade/paper/{studentId}")
@@ -106,6 +145,86 @@ public class ExportController {
     /**
      * 打包导出小组全部学生成绩表（按学生 defenseType 选择模板）。
      */
+    /**
+     * 导出答辩小组统分表
+     * GET /export/group/{groupId}/summary
+     */
+    @GetMapping("/group/{groupId}/summary")
+    public ResponseEntity<byte[]> exportGroupSummary(@PathVariable Long groupId) {
+        List<Student> students = studentMapper.findByDefenseGroupId(groupId);
+        if (students == null || students.isEmpty()) {
+            throw new RuntimeException("小组无学生");
+        }
+        
+        // 获取当前年份（从第一个学生）
+        Integer year = students.get(0).getDefenseYear();
+        if (year == null) {
+            throw new RuntimeException("学生未设置答辩年份");
+        }
+        
+        // 构建统分表数据
+        Map<String, String> ph = new HashMap<>();
+        DateParts dp = getDateParts("DEFENSE_DATE");
+        ph.put("{{YEAR}}", dp.year);
+        ph.put("{{MONTH}}", dp.month);
+        ph.put("{{DAY}}", dp.day);
+        ph.put("{{GROUP_ID}}", String.valueOf(groupId));
+        
+        // 构建学生数据行
+        StringBuilder studentRows = new StringBuilder();
+        int rowNum = 1;
+        
+        for (Student stu : students) {
+            List<TeacherScoreRecord> records = teacherScoreRecordMapper.findByStudentIdAndYear(stu.getId(), year);
+            StudentFinalScore fs = studentFinalScoreMapper.findByStudentIdAndYear(stu.getId(), year);
+            
+            // 计算平均分（每个评委的打分）
+            double avgScore = 0.0;
+            int teacherCount = 0;
+            String teacherScores = "";
+            
+            if (records != null && !records.isEmpty()) {
+                for (TeacherScoreRecord record : records) {
+                    if (record.getTotalScore() != null) {
+                        avgScore += record.getTotalScore();
+                        teacherCount++;
+                        if (!teacherScores.isEmpty()) teacherScores += "、";
+                        teacherScores += String.valueOf(record.getTotalScore());
+                    }
+                }
+                if (teacherCount > 0) {
+                    avgScore = avgScore / teacherCount;
+                }
+            }
+            
+            // 获取调节系数和最终得分
+            double factor = fs != null && fs.getAdjustmentFactor() != null ? fs.getAdjustmentFactor() : 1.0;
+            double finalScore = avgScore * factor;
+            
+            // 构建行数据（使用占位符，实际模板中需要替换）
+            studentRows.append("{{ROW_").append(rowNum).append("_NAME}}|")
+                      .append("{{ROW_").append(rowNum).append("_SCORES}}|")
+                      .append("{{ROW_").append(rowNum).append("_AVG}}|")
+                      .append("{{ROW_").append(rowNum).append("_FACTOR}}|")
+                      .append("{{ROW_").append(rowNum).append("_FINAL}}");
+            
+            ph.put("{{ROW_" + rowNum + "_NAME}}", nvl(stu.getName()));
+            ph.put("{{ROW_" + rowNum + "_SCORES}}", teacherScores.isEmpty() ? "-" : teacherScores);
+            ph.put("{{ROW_" + rowNum + "_AVG}}", format1(avgScore));
+            ph.put("{{ROW_" + rowNum + "_FACTOR}}", String.format("%.3f", factor));
+            ph.put("{{ROW_" + rowNum + "_FINAL}}", format1(finalScore));
+            
+            rowNum++;
+        }
+        
+        ph.put("{{TOTAL_ROWS}}", String.valueOf(rowNum - 1));
+        
+        // 渲染文档
+        String filename = encode("毕业论文(设计)答辩小组统分表-小组" + groupId + ".docx");
+        byte[] doc = docTemplateService.renderDoc(resolveTemplate("group-summary", GROUP_SUMMARY_TEMPLATE), ph, new HashMap<>());
+        return attachment(doc, filename);
+    }
+
     @GetMapping("/group/{groupId}/zip")
     public ResponseEntity<byte[]> exportGroupZip(@PathVariable Long groupId) {
         List<Student> list = studentMapper.findByDefenseGroupId(groupId);
@@ -144,27 +263,49 @@ public class ExportController {
     }
 
     private ResponseEntity<byte[]> buildScoreDoc(Long studentId, boolean isPaper) {
-        Student stu = studentMapper.findById(studentId);
-        if (stu == null) throw new RuntimeException("学生不存在");
-        Integer year = stu.getDefenseYear();
-        List<TeacherScoreRecord> records = teacherScoreRecordMapper.findByStudentIdAndYear(studentId, year);
-        StudentFinalScore fs = studentFinalScoreMapper.findByStudentIdAndYear(studentId, year);
-        double factor = fs != null && fs.getAdjustmentFactor() != null ? fs.getAdjustmentFactor() : 1.0;
-        Map<String, String> ph = buildCommonPlaceholders(stu, getDateParts("DEFENSE_DATE"), isPaper);
-        Map<String, byte[]> img = new HashMap<>();
+        try {
+            Student stu = studentMapper.findById(studentId);
+            if (stu == null) throw new RuntimeException("学生不存在，ID: " + studentId);
+            
+            Integer year = stu.getDefenseYear();
+            if (year == null) throw new RuntimeException("学生未设置答辩年份，ID: " + studentId);
+            
+            List<TeacherScoreRecord> records = teacherScoreRecordMapper.findByStudentIdAndYear(studentId, year);
+            StudentFinalScore fs = studentFinalScoreMapper.findByStudentIdAndYear(studentId, year);
+            double factor = fs != null && fs.getAdjustmentFactor() != null ? fs.getAdjustmentFactor() : 1.0;
+            
+            Map<String, String> ph = buildCommonPlaceholders(stu, getDateParts("DEFENSE_DATE"), isPaper);
+            Map<String, byte[]> img = new HashMap<>();
 
-        fillSignatures(img, stu);
+            // 答辩成绩表：需要答辩组长签名（可选，没有签名也能导出）
+            try {
+                fillSignatures(img, stu, false, false);
+            } catch (Exception e) {
+                // 签名加载失败不影响导出，只记录日志
+                System.err.println("警告：加载签名失败: " + e.getMessage());
+            }
 
-        if (isPaper) {
-            fillPaperScores(ph, records, factor, fs, stu);
-            String filename = encode("本科毕业论文答辩成绩表-" + stu.getName() + ".docx");
-            byte[] doc = docTemplateService.renderDoc(resolveTemplate("paper-score", PAPER_SCORE_TEMPLATE), ph, img);
-            return attachment(doc, filename);
-        } else {
-            fillDesignScores(ph, records, factor, fs, stu);
-            String filename = encode("本科毕业设计答辩成绩表-" + stu.getName() + ".docx");
-            byte[] doc = docTemplateService.renderDoc(resolveTemplate("design-score", DESIGN_SCORE_TEMPLATE), ph, img);
-            return attachment(doc, filename);
+            String templatePath = resolveTemplate(isPaper ? "paper-score" : "design-score", 
+                    isPaper ? PAPER_SCORE_TEMPLATE : DESIGN_SCORE_TEMPLATE);
+            
+            if (isPaper) {
+                fillPaperScores(ph, records, factor, fs, stu);
+                String filename = encode("本科毕业论文答辩成绩表-" + stu.getName() + ".docx");
+                byte[] doc = docTemplateService.renderDoc(templatePath, ph, img);
+                return attachment(doc, filename);
+            } else {
+                fillDesignScores(ph, records, factor, fs, stu);
+                String filename = encode("本科毕业设计答辩成绩表-" + stu.getName() + ".docx");
+                byte[] doc = docTemplateService.renderDoc(templatePath, ph, img);
+                return attachment(doc, filename);
+            }
+        } catch (IllegalArgumentException e) {
+            // 模板文件不存在的错误，提供更友好的提示
+            throw new RuntimeException("导出失败: " + e.getMessage() + 
+                "。请以超级管理员身份登录，在\"系统设置\"->\"模板管理\"中上传对应的Word模板文件。", e);
+        } catch (Exception e) {
+            throw new RuntimeException("导出失败: " + e.getMessage() + 
+                " (学生ID: " + studentId + ", 类型: " + (isPaper ? "论文" : "设计") + ")", e);
         }
     }
 
@@ -188,7 +329,8 @@ public class ExportController {
         ph.put("{{DEFENSE_40}}", format1(defenseScore * 0.4));
         ph.put("{{TOTAL_GRADE}}", format1(fs.getTotalGrade() == null ? 0 : fs.getTotalGrade()));
 
-        fillSignatures(img, stu);
+        // 成绩评定表：需要系主任签名
+        fillSignatures(img, stu, true, false);
         String filename = encode((isPaper ? "本科毕业论文成绩评定表-" : "本科毕业设计成绩评定表-") + stu.getName() + ".docx");
         String template = isPaper ? resolveTemplate("paper-grade", PAPER_GRADE_TEMPLATE)
                 : resolveTemplate("design-grade", DESIGN_GRADE_TEMPLATE);
@@ -206,7 +348,8 @@ public class ExportController {
 
         Map<String, String> ph = buildCommonPlaceholders(stu, getDateParts("DEFENSE_DATE"), isPaper);
         Map<String, byte[]> img = new HashMap<>();
-        fillSignatures(img, stu);
+        // 过程表：需要评委签名
+        fillSignatures(img, stu, false, true);
         if (isPaper) {
             fillPaperScores(ph, records, factor, fs, stu);
         } else {
@@ -336,31 +479,105 @@ public class ExportController {
         return resp == null ? "" : resp;
     }
 
-    private void fillSignatures(Map<String, byte[]> img, Student stu) {
+    /**
+     * 填充签名图片
+     * @param img 图片映射
+     * @param stu 学生信息
+     * @param isGradeForm 是否为成绩评定表（需要系主任签名）
+     * @param isProcessForm 是否为过程表（需要评委签名）
+     */
+    private void fillSignatures(Map<String, byte[]> img, Student stu, boolean isGradeForm, boolean isProcessForm) {
+        // 指导教师签名
         if (stu.getAdvisorTeacherId() != null) {
             byte[] bytes = loadSignature("teacher_" + stu.getAdvisorTeacherId());
-            if (bytes != null) img.put("{{SIGN_ADVISOR}}", bytes);
+            if (bytes != null) {
+                img.put("{{SIGN_ADVISOR}}", bytes);
+                img.put("{{SIGN_ADVISOR_TEACHER}}", bytes); // 兼容性占位符
+            }
         }
+        
+        // 评阅教师签名
         if (stu.getReviewerTeacherId() != null) {
             byte[] bytes = loadSignature("teacher_" + stu.getReviewerTeacherId());
-            if (bytes != null) img.put("{{SIGN_REVIEWER}}", bytes);
+            if (bytes != null) {
+                img.put("{{SIGN_REVIEWER}}", bytes);
+                img.put("{{SIGN_REVIEWER_TEACHER}}", bytes); // 兼容性占位符
+            }
         }
+        
+        // 答辩组长签名（用于答辩成绩表）
         if (stu.getDefenseGroupId() != null) {
-            // Leader signature: use assigned group leader teacher's signature (teacher_{id}.png/jpg)
             try {
                 DefenseGroupTeacher leader = defenseGroupTeacherMapper.findLeaderByGroupId(stu.getDefenseGroupId());
                 if (leader != null && leader.getTeacherId() != null) {
                     byte[] bytes = loadSignature("teacher_" + leader.getTeacherId());
-                    if (bytes != null) img.put("{{SIGN_LEADER}}", bytes);
+                    if (bytes != null) {
+                        img.put("{{SIGN_LEADER}}", bytes);
+                        img.put("{{SIGN_GROUP_LEADER}}", bytes); // 兼容性占位符
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+        
+        // 系主任签名（用于成绩评定表）
+        if (isGradeForm && stu.getDepartmentId() != null) {
+            try {
+                // 查找该院系的院系管理员（DEPT_ADMIN角色）作为系主任
+                List<com.example.defensemanagement.entity.User> deptAdmins = 
+                    userService.getUsersByRole("DEPT_ADMIN");
+                for (com.example.defensemanagement.entity.User admin : deptAdmins) {
+                    if (admin.getDepartmentId() != null && 
+                        admin.getDepartmentId().equals(stu.getDepartmentId())) {
+                        byte[] bytes = loadSignature("user_" + admin.getId());
+                        if (bytes != null) {
+                            img.put("{{SIGN_DEPT_HEAD}}", bytes);
+                            img.put("{{SIGN_DEAN}}", bytes); // 兼容性占位符
+                            break; // 只取第一个找到的
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+        
+        // 评委签名（用于过程表，可能需要多个评委的签名）
+        if (isProcessForm && stu.getDefenseGroupId() != null) {
+            try {
+                // 获取该小组的所有教师（评委）
+                List<DefenseGroupTeacher> groupTeachers = 
+                    defenseGroupTeacherMapper.findByGroupId(stu.getDefenseGroupId());
+                int judgeIndex = 1;
+                for (DefenseGroupTeacher groupTeacher : groupTeachers) {
+                    if (groupTeacher.getTeacherId() != null) {
+                        byte[] bytes = loadSignature("teacher_" + groupTeacher.getTeacherId());
+                        if (bytes != null) {
+                            // 支持多个评委签名：{{SIGN_JUDGE_1}}, {{SIGN_JUDGE_2}}, {{SIGN_JUDGE_3}}
+                            img.put("{{SIGN_JUDGE_" + judgeIndex + "}}", bytes);
+                            // 第一个评委也可以使用通用占位符
+                            if (judgeIndex == 1) {
+                                img.put("{{SIGN_JUDGE}}", bytes);
+                            }
+                            judgeIndex++;
+                            // 最多支持3个评委签名
+                            if (judgeIndex > 3) break;
+                        }
+                    }
                 }
             } catch (Exception ignored) {}
         }
     }
+    
+    /**
+     * 兼容旧版本的签名填充方法（默认不是成绩评定表，不是过程表）
+     */
+    private void fillSignatures(Map<String, byte[]> img, Student stu) {
+        fillSignatures(img, stu, false, false);
+    }
 
     private byte[] loadSignature(String namePrefix) {
         String[] exts = {"png", "jpg", "jpeg"};
+        java.nio.file.Path basePath = getUploadBasePath();
         for (String ext : exts) {
-            java.nio.file.Path p = Paths.get(uploadBaseDir, "signatures", namePrefix + "." + ext);
+            java.nio.file.Path p = basePath.resolve("signatures").resolve(namePrefix + "." + ext);
             if (Files.exists(p)) {
                 try {
                     return Files.readAllBytes(p);
@@ -371,10 +588,14 @@ public class ExportController {
     }
 
     private String resolveTemplate(String key, String defaultClasspath) {
-        java.nio.file.Path p = Paths.get(uploadBaseDir, "templates", key + ".docx");
+        // 优先使用上传的模板（使用绝对路径）
+        java.nio.file.Path basePath = getUploadBasePath();
+        java.nio.file.Path p = basePath.resolve("templates").resolve(key + ".docx");
         if (Files.exists(p)) {
-            return p.toString();
+            return p.toAbsolutePath().toString();
         }
+        // 如果上传的模板不存在，尝试使用classpath中的默认模板
+        // 注意：如果默认模板也不存在，会在DocTemplateService中抛出异常
         return defaultClasspath;
     }
 

@@ -18,7 +18,9 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.DoubleSummaryStatistics;
 import java.util.List;
+import java.util.Map;
 import java.util.Comparator;
+import java.util.HashMap;
 
 @Service
 public class ScoreServiceImpl implements ScoreService {
@@ -212,6 +214,33 @@ public class ScoreServiceImpl implements ScoreService {
             }
             studentFinalScoreMapper.update(finalScore);
         }
+    }
+
+    @Override
+    public Map<String, Object> getGroupAdjustmentFactor(Long groupId, Integer year) {
+        Map<String, Object> result = new HashMap<>();
+        List<Student> students = studentMapper.findByDefenseGroupId(groupId);
+        if (students == null || students.isEmpty()) {
+            result.put("adjustmentFactor", 1.0);
+            result.put("message", "小组无学生");
+            return result;
+        }
+        
+        // 获取第一个学生的最终成绩（所有学生应该有相同的调节系数）
+        Student firstStudent = students.get(0);
+        StudentFinalScore fs = studentFinalScoreMapper.findByStudentIdAndYear(firstStudent.getId(), year);
+        
+        if (fs == null || fs.getAdjustmentFactor() == null) {
+            result.put("adjustmentFactor", 1.0);
+            result.put("message", "尚未计算调节系数，请先完成小组汇总");
+            return result;
+        }
+        
+        result.put("adjustmentFactor", fs.getAdjustmentFactor());
+        result.put("groupAvgScore", fs.getGroupAvgScore() != null ? fs.getGroupAvgScore() : 0);
+        result.put("largeGroupScore", fs.getLargeGroupScore() != null ? fs.getLargeGroupScore() : 0);
+        result.put("finalDefenseScore", fs.getFinalDefenseScore() != null ? fs.getFinalDefenseScore() : 0.0);
+        return result;
     }
 
     private double round(double value, int scale) {

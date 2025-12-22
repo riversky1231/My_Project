@@ -249,7 +249,7 @@
                     class="bi bi-clipboard-check"></i> 打分/评阅</a>
             <a class="nav-link" id="nav-score-management" href="javascript:void(0);"
                 onclick="showView('score-management-view', this)"><i class="bi bi-table"></i> 成绩数据管理</a>
-            <a class="nav-link" href="javascript:void(0);" onclick="showView('export-view', this)"><i
+            <a class="nav-link" id="nav-export" href="javascript:void(0);" onclick="showView('export-view', this)"><i
                     class="bi bi-download"></i> 导出/打包</a>
             <a class="nav-link" href="javascript:void(0);" onclick="showView('export-template-view', this)"><i
                     class="bi bi-file-earmark-word"></i> 导出模板</a>
@@ -718,13 +718,30 @@
                 <div class="module-header">
                     <h4><i class="bi bi-diagram-3"></i> 小组汇总/调节系数</h4>
                 </div>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>说明：</strong>每个小组的第一名要参加大组答辩，大组答辩成绩除以小组答辩成绩产生调节系数（精度为小数点后3位），调节系数乘上所有同学在小组内答辩成绩为最终的答辩成绩（精度为小数点后1位）。
+                </div>
                 <div class="row g-2">
                     <div class="col-md-3"><input class="form-control" id="finalize-group-id" placeholder="小组ID"></div>
                     <div class="col-md-2"><input class="form-control" id="finalize-year" placeholder="年份"></div>
-                    <div class="col-md-2"><input class="form-control" id="finalize-large-score" placeholder="优答辩得分(可选)">
+                    <div class="col-md-2"><input class="form-control" id="finalize-large-score"
+                            placeholder="大组答辩得分(可选)">
                     </div>
                     <div class="col-md-2">
                         <button class="btn btn-primary w-100" onclick="finalizeGroup()">计算汇总</button>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-outline-info w-100" onclick="viewAdjustmentFactor()">查看调节系数</button>
+                    </div>
+                </div>
+                <div id="adjustment-factor-result" class="mt-3" style="display: none;">
+                    <div class="alert alert-success">
+                        <h6>调节系数信息：</h6>
+                        <p class="mb-1"><strong>调节系数：</strong><span id="factor-value"></span></p>
+                        <p class="mb-1"><strong>小组平均分：</strong><span id="group-avg-value"></span></p>
+                        <p class="mb-1"><strong>大组答辩得分：</strong><span id="large-group-value"></span></p>
+                        <p class="mb-0"><strong>最终答辩成绩：</strong><span id="final-defense-value"></span></p>
                     </div>
                 </div>
             </div>
@@ -835,7 +852,7 @@
                     <h4><i class="bi bi-file-earmark-word"></i> 单个导出</h4>
                 </div>
                 <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i> 
+                    <i class="bi bi-info-circle"></i>
                     <strong>导出前请确保:</strong>
                     <ul class="mb-0 mt-2">
                         <li>学生已完成答辩打分</li>
@@ -848,12 +865,7 @@
                     <div class="col-md-3"><input class="form-control" id="exp-student-id" placeholder="学生ID"></div>
                     <div class="col-md-3">
                         <select class="form-select" id="exp-type">
-                            <option value="score-paper">论文成绩表</option>
-                            <option value="score-design">设计成绩表</option>
-                            <option value="grade-paper">论文评定表</option>
-                            <option value="grade-design">设计评定表</option>
-                            <option value="process-paper">论文过程表</option>
-                            <option value="process-design">设计过程表</option>
+                            <!-- 选项将根据用户角色动态加载 -->
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -861,14 +873,49 @@
                     </div>
                 </div>
             </div>
-            <div class="module">
+            <!-- 小组打包 (超级管理员和答辩组长) -->
+            <div class="module" id="export-group-zip-module">
                 <div class="module-header">
                     <h4><i class="bi bi-archive"></i> 小组打包</h4>
                 </div>
                 <div class="row g-2">
                     <div class="col-md-3"><input class="form-control" id="exp-group-id" placeholder="小组ID"></div>
                     <div class="col-md-2">
-                        <button class="btn btn-outline-primary w-100" onclick="exportGroupZip()">打包下载</button>
+                        <button class="btn btn-outline-primary w-100" onclick="exportGroupZip()">打包下载成绩表</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 答辩小组统分表导出 (超级管理员和答辩组长) -->
+            <div class="module" id="export-group-summary-module">
+                <div class="module-header">
+                    <h4><i class="bi bi-table"></i> 答辩小组统分表导出</h4>
+                </div>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> 导出本组《毕业论文(设计)答辩小组统分表》，包含答辩人姓名、评委1-3成绩、答辩得分、调节系数、最后得分
+                </div>
+                <div class="row g-2">
+                    <div class="col-md-3"><input class="form-control" id="exp-summary-group-id" placeholder="小组ID">
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-outline-primary w-100" onclick="exportGroupSummary()">导出统分表</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 无评语过程表打包导出 (隐藏，不独立显示) -->
+            <div class="module" id="export-process-zip-module" style="display: none;">
+                <div class="module-header">
+                    <h4><i class="bi bi-file-earmark-zip"></i> 无评语过程表打包导出</h4>
+                </div>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> 批量导出本组所有学生的《毕业论文答辩成绩无评语过程表》或《毕业设计答辩成绩无评语过程表》
+                </div>
+                <div class="row g-2">
+                    <div class="col-md-3"><input class="form-control" id="exp-process-group-id" placeholder="小组ID">
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-outline-primary w-100" onclick="exportGroupProcessZip()">打包下载过程表</button>
                     </div>
                 </div>
             </div>
@@ -892,7 +939,8 @@
                             <!-- 学生选择 -->
                             <div class="mb-3">
                                 <label class="form-label">选择学生</label>
-                                <select class="form-select" id="template-student-select" onchange="updateTemplatePreview()">
+                                <select class="form-select" id="template-student-select"
+                                    onchange="updateTemplatePreview()">
                                     <option value="1">20210101 - 张三 (论文)</option>
                                     <option value="2">20210102 - 李四 (设计)</option>
                                     <option value="3">20210103 - 王五 (论文)</option>
@@ -902,7 +950,8 @@
                             <!-- 类型选择 -->
                             <div class="mb-3">
                                 <label class="form-label">答辩类型</label>
-                                <select class="form-select" id="template-type-select" onchange="updateTemplatePreview()">
+                                <select class="form-select" id="template-type-select"
+                                    onchange="updateTemplatePreview()">
                                     <option value="PAPER">论文</option>
                                     <option value="DESIGN">设计</option>
                                 </select>
@@ -911,15 +960,16 @@
                             <!-- 调节系数 -->
                             <div class="mb-3">
                                 <label class="form-label">调节系数</label>
-                                <input type="number" class="form-control" id="template-factor-input" 
-                                       value="1.0" step="0.1" min="0.5" max="1.5" onchange="updateTemplatePreview()">
+                                <input type="number" class="form-control" id="template-factor-input" value="1.0"
+                                    step="0.1" min="0.5" max="1.5" onchange="updateTemplatePreview()">
                                 <small class="text-muted">范围: 0.5 - 1.5</small>
                             </div>
 
                             <!-- 评语选项 -->
                             <div class="mb-3">
                                 <label class="form-label">评语来源</label>
-                                <select class="form-select" id="template-comment-source" onchange="updateTemplatePreview()">
+                                <select class="form-select" id="template-comment-source"
+                                    onchange="updateTemplatePreview()">
                                     <option value="saved">已保存评语</option>
                                     <option value="ai">AI生成评语</option>
                                     <option value="custom">自定义评语</option>
@@ -928,15 +978,15 @@
 
                             <div class="mb-3" id="template-custom-comment-div" style="display: none;">
                                 <label class="form-label">自定义评语</label>
-                                <textarea class="form-control" id="template-custom-comment" rows="4" 
-                                          onchange="updateTemplatePreview()">请输入自定义评语...</textarea>
+                                <textarea class="form-control" id="template-custom-comment" rows="4"
+                                    onchange="updateTemplatePreview()">请输入自定义评语...</textarea>
                             </div>
 
                             <!-- 签名选项 -->
                             <div class="mb-3">
                                 <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="template-show-signatures" 
-                                           checked onchange="updateTemplatePreview()">
+                                    <input class="form-check-input" type="checkbox" id="template-show-signatures"
+                                        checked onchange="updateTemplatePreview()">
                                     <label class="form-check-label">显示签名</label>
                                 </div>
                             </div>
@@ -944,7 +994,7 @@
                             <!-- 说明 -->
                             <div class="alert alert-info mt-4">
                                 <small>
-                                    <i class="bi bi-info-circle"></i> 
+                                    <i class="bi bi-info-circle"></i>
                                     <strong>说明:</strong><br>
                                     • 这是一个预览页面，使用 Mock 数据<br>
                                     • 实际导出请使用"导出/打包"功能<br>
@@ -963,7 +1013,8 @@
                             <span class="badge bg-primary" id="template-doc-type-badge">论文答辩成绩表</span>
                         </div>
                         <div class="p-3">
-                            <div id="template-doc-preview" style="background: white; border: 2px solid var(--border-color); border-radius: 0.5rem; padding: 2rem; min-height: 600px; box-shadow: 0 0 20px rgba(0,0,0,0.1);">
+                            <div id="template-doc-preview"
+                                style="background: white; border: 2px solid var(--border-color); border-radius: 0.5rem; padding: 2rem; min-height: 600px; box-shadow: 0 0 20px rgba(0,0,0,0.1);">
                                 <!-- 文档内容将通过 JavaScript 动态生成 -->
                             </div>
                         </div>
@@ -1119,6 +1170,80 @@
                         <button class="btn btn-outline-primary w-100"
                             onclick="savePrompt('DESIGN_PROMPT_TEMPLATE', 'cfg-design-prompt')">保存设计模板</button>
                     </div>
+                </div>
+            </div>
+
+            <!-- 模板文档管理 (Super Admin Only) -->
+            <div class="module mb-3">
+                <div class="module-header">
+                    <h4><i class="bi bi-upload"></i> 模板文档管理</h4>
+                </div>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> 上传7类Word模板文档，支持后续系统填入数据并导出
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">1. 本科毕业设计答辩成绩表</label>
+                        <div class="input-group">
+                            <input type="file" class="form-control" id="template-design-score" accept=".docx">
+                            <button class="btn btn-outline-primary" onclick="uploadTemplate('design-score')">上传</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">2. 本科毕业设计成绩评定表</label>
+                        <div class="input-group">
+                            <input type="file" class="form-control" id="template-design-grade" accept=".docx">
+                            <button class="btn btn-outline-primary" onclick="uploadTemplate('design-grade')">上传</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">3. 本科毕业论文答辩成绩表</label>
+                        <div class="input-group">
+                            <input type="file" class="form-control" id="template-paper-score" accept=".docx">
+                            <button class="btn btn-outline-primary" onclick="uploadTemplate('paper-score')">上传</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">4. 本科毕业论文成绩评定表</label>
+                        <div class="input-group">
+                            <input type="file" class="form-control" id="template-paper-grade" accept=".docx">
+                            <button class="btn btn-outline-primary" onclick="uploadTemplate('paper-grade')">上传</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">5. 毕业论文(设计)答辩小组统分表</label>
+                        <div class="input-group">
+                            <input type="file" class="form-control" id="template-group-summary" accept=".docx">
+                            <button class="btn btn-outline-primary"
+                                onclick="uploadTemplate('group-summary')">上传</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">6. 毕业论文答辩成绩无评语过程表</label>
+                        <div class="input-group">
+                            <input type="file" class="form-control" id="template-paper-process" accept=".docx">
+                            <button class="btn btn-outline-primary"
+                                onclick="uploadTemplate('paper-process')">上传</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">7. 毕业设计答辩成绩无评语过程表</label>
+                        <div class="input-group">
+                            <input type="file" class="form-control" id="template-design-process" accept=".docx">
+                            <button class="btn btn-outline-primary"
+                                onclick="uploadTemplate('design-process')">上传</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-warning mt-3">
+                    <small>
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>模板占位符说明：</strong><br>
+                        • 文本占位符：{{NAME}}、{{STUDENT_NO}}、{{TITLE}}、{{SUMMARY}}、{{YEAR}}、{{MONTH}}、{{DAY}}<br>
+                        • 成绩占位符：{{ITEM1}}~{{ITEM6}}、{{TOTAL}}、{{COMMENT}}<br>
+                        • 签名占位符：{{SIGN_ADVISOR}}、{{SIGN_REVIEWER}}、{{SIGN_LEADER}}<br>
+                        • 统分表占位符：{{ROW_1_NAME}}、{{ROW_1_SCORES}}、{{ROW_1_AVG}}、{{ROW_1_FACTOR}}、{{ROW_1_FINAL}}等
+                    </small>
                 </div>
             </div>
         </div>
@@ -1544,6 +1669,12 @@
                     }
                 }
 
+                // 隐藏院系管理员的导出界面
+                const navExport = document.getElementById('nav-export');
+                if (navExport && userRole === 'DEPT_ADMIN') {
+                    navExport.style.display = 'none';
+                }
+
                 // 签名管理：只有教师（包括答辩组长）可以看到
                 const navSignatureManagement = document.getElementById('nav-signature-management');
                 if (navSignatureManagement) {
@@ -1791,6 +1922,10 @@
             if (viewId === 'export-template-view') {
                 // 导出模板页面加载
                 updateTemplatePreview();
+            }
+            if (viewId === 'export-view') {
+                // 导出页面加载时，根据用户角色设置导出选项
+                setupExportOptionsByRole();
             }
         }
 
@@ -2652,7 +2787,13 @@
                     body: params.toString()
                 });
                 const text = await resp.text();
-                showAlert(text === 'success' ? 'success' : 'error', text);
+                if (text === 'success') {
+                    showAlert('success', '小组汇总计算成功！');
+                    // 自动显示调节系数
+                    await viewAdjustmentFactor();
+                } else {
+                    showAlert('error', text);
+                }
             } catch (e) {
                 showAlert('error', '汇总失败');
             } finally {
@@ -2681,6 +2822,161 @@
             const groupId = document.getElementById('exp-group-id').value;
             if (!groupId) return showAlert('warning', '请输入小组ID');
             window.location.href = `/export/group/${groupId}/zip`;
+        }
+
+        function exportGroupSummary() {
+            const groupId = document.getElementById('exp-summary-group-id').value;
+            if (!groupId) {
+                showAlert('warning', '请输入小组ID');
+                return;
+            }
+            window.location.href = `/export/group/${groupId}/summary`;
+        }
+
+        function exportGroupProcessZip() {
+            const groupId = document.getElementById('exp-process-group-id').value;
+            if (!groupId) {
+                showAlert('warning', '请输入小组ID');
+                return;
+            }
+            window.location.href = `/export/group/${groupId}/process/zip`;
+        }
+
+        /**
+         * 根据用户角色设置导出选项
+         */
+        function setupExportOptionsByRole() {
+            // user-info 使用的是 class，不是 id
+            const userInfoDiv = document.querySelector('.user-info');
+
+            if (!userInfoDiv) {
+                console.error('setupExportOptionsByRole: Cannot find .user-info element');
+                // 即使找不到用户信息，也尝试设置默认选项（作为后备方案）
+                const expTypeSelect = document.getElementById('exp-type');
+                if (expTypeSelect) {
+                    const defaultOptions = [
+                        { value: 'score-paper', text: '论文成绩表' },
+                        { value: 'score-design', text: '设计成绩表' },
+                        { value: 'grade-paper', text: '论文评定表' },
+                        { value: 'grade-design', text: '设计评定表' },
+                        { value: 'process-paper', text: '论文过程表' },
+                        { value: 'process-design', text: '设计过程表' }
+                    ];
+                    expTypeSelect.innerHTML = '';
+                    defaultOptions.forEach(option => {
+                        const opt = document.createElement('option');
+                        opt.value = option.value;
+                        opt.textContent = option.text;
+                        expTypeSelect.appendChild(opt);
+                    });
+                }
+                return;
+            }
+
+            const userRole = userInfoDiv.dataset.userRole;
+            const userType = userInfoDiv.dataset.userType;
+            const expTypeSelect = document.getElementById('exp-type');
+
+            console.log('setupExportOptionsByRole - userRole:', userRole, 'userType:', userType);
+
+            if (!expTypeSelect) {
+                console.warn('setupExportOptionsByRole: exp-type select not found');
+                return;
+            }
+
+            // 清空现有选项
+            expTypeSelect.innerHTML = '';
+
+            // 根据角色设置可导出的选项
+            let allowedOptions = [];
+
+            if (userRole === 'SUPER_ADMIN') {
+                // 超级管理员：所有选项
+                allowedOptions = [
+                    { value: 'score-paper', text: '论文成绩表' },
+                    { value: 'score-design', text: '设计成绩表' },
+                    { value: 'grade-paper', text: '论文评定表' },
+                    { value: 'grade-design', text: '设计评定表' },
+                    { value: 'process-paper', text: '论文过程表' },
+                    { value: 'process-design', text: '设计过程表' }
+                ];
+                // 显示小组打包和统分表导出，隐藏过程表打包（不独立显示）
+                const groupZipModule = document.getElementById('export-group-zip-module');
+                const groupSummaryModule = document.getElementById('export-group-summary-module');
+                const processZipModule = document.getElementById('export-process-zip-module');
+                if (groupZipModule) groupZipModule.style.display = 'block';
+                if (groupSummaryModule) groupSummaryModule.style.display = 'block';
+                if (processZipModule) processZipModule.style.display = 'none';
+            } else if (userRole === 'DEFENSE_LEADER') {
+                // 答辩组长：成绩表、评定表、统分表（不包括过程表）
+                allowedOptions = [
+                    { value: 'score-paper', text: '论文成绩表' },
+                    { value: 'score-design', text: '设计成绩表' },
+                    { value: 'grade-paper', text: '论文评定表' },
+                    { value: 'grade-design', text: '设计评定表' }
+                ];
+                // 显示小组打包和统分表导出，隐藏过程表打包
+                const groupZipModule = document.getElementById('export-group-zip-module');
+                const groupSummaryModule = document.getElementById('export-group-summary-module');
+                const processZipModule = document.getElementById('export-process-zip-module');
+                if (groupZipModule) groupZipModule.style.display = 'block';
+                if (groupSummaryModule) groupSummaryModule.style.display = 'block';
+                if (processZipModule) processZipModule.style.display = 'none';
+            } else if (userRole === 'TEACHER' || userType === 'TEACHER') {
+                // 教师：过程表和评定表
+                console.log('Setting up export options for TEACHER');
+                allowedOptions = [
+                    { value: 'process-paper', text: '论文过程表' },
+                    { value: 'process-design', text: '设计过程表' },
+                    { value: 'grade-paper', text: '论文评定表' },
+                    { value: 'grade-design', text: '设计评定表' }
+                ];
+                // 隐藏小组打包和统分表导出，隐藏过程表打包（不独立显示）
+                const groupZipModule = document.getElementById('export-group-zip-module');
+                const groupSummaryModule = document.getElementById('export-group-summary-module');
+                const processZipModule = document.getElementById('export-process-zip-module');
+                if (groupZipModule) groupZipModule.style.display = 'none';
+                if (groupSummaryModule) groupSummaryModule.style.display = 'none';
+                if (processZipModule) processZipModule.style.display = 'none';
+            } else {
+                // 其他角色（如院系管理员）：不显示导出界面
+                // 这个在导航栏隐藏时已经处理了
+                console.log('No export options for role:', userRole, 'type:', userType);
+                allowedOptions = [];
+            }
+
+            console.log('Allowed options:', allowedOptions);
+
+            // 添加选项到下拉框
+            if (allowedOptions.length === 0) {
+                // 如果没有匹配的角色，尝试默认设置为教师选项（作为后备方案）
+                if (userType === 'TEACHER' || (userRole && userRole.includes('TEACHER'))) {
+                    console.log('Fallback: Setting TEACHER options');
+                    allowedOptions = [
+                        { value: 'process-paper', text: '论文过程表' },
+                        { value: 'process-design', text: '设计过程表' },
+                        { value: 'grade-paper', text: '论文评定表' },
+                        { value: 'grade-design', text: '设计评定表' }
+                    ];
+                } else {
+                    const opt = document.createElement('option');
+                    opt.value = '';
+                    opt.textContent = '无可用选项';
+                    opt.disabled = true;
+                    expTypeSelect.appendChild(opt);
+                    return;
+                }
+            }
+
+            // 添加选项到下拉框
+            allowedOptions.forEach(option => {
+                const opt = document.createElement('option');
+                opt.value = option.value;
+                opt.textContent = option.text;
+                expTypeSelect.appendChild(opt);
+            });
+
+            console.log('Added', allowedOptions.length, 'options to export type select');
         }
 
         // --- Department Management Functions ---
@@ -3181,12 +3477,15 @@
             document.getElementById(textareaId).value = '';
         }
 
-        async function uploadTemplate() {
-            const key = document.getElementById('tpl-key').value;
-            const file = document.getElementById('tpl-file').files[0];
-            if (!key || !file) return showAlert('warning', '请填写模板key并选择文件');
+        async function uploadTemplate(templateKey) {
+            const fileInputId = 'template-' + templateKey;
+            const file = document.getElementById(fileInputId)?.files[0];
+            if (!file) {
+                showAlert('warning', '请选择文件');
+                return;
+            }
             const fd = new FormData();
-            fd.append('templateKey', key);
+            fd.append('templateKey', templateKey);
             fd.append('file', file);
             toggleLoading(true);
             try {
@@ -4196,7 +4495,7 @@
         }
 
         // ==================== 导出模板预览功能 ====================
-        
+
         // Mock 数据
         const templateMockData = {
             students: {
@@ -4276,7 +4575,7 @@
 
             // 生成文档内容
             const preview = document.getElementById('template-doc-preview');
-            
+
             if (type === 'PAPER') {
                 preview.innerHTML = generateTemplatePaperDoc(student, scores, factor, commentSource, showSignatures);
             } else {
