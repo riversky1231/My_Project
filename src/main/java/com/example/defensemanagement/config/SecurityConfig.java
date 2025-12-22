@@ -20,15 +20,26 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                // 禁用 CSRF
+                .csrf().disable()
+                // 禁用 X-Frame-Options（允许iframe嵌入）
+                .headers().frameOptions().disable()
+                .and()
+                // 放行所有请求，权限由应用内 Session 逻辑控制
                 .authorizeHttpRequests(authz -> authz
-                        // 交由应用内的 Session 逻辑控制权限，Spring Security 放行所有路径
-                        .antMatchers("/**").permitAll())
+                        .antMatchers("/**").permitAll()
+                        .anyRequest().permitAll())
+                // 允许匿名访问
+                .anonymous().and()
+                // 禁用表单登录
                 .formLogin().disable()
+                // 禁用 HTTP Basic 认证
+                .httpBasic().disable()
+                // 配置登出
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout=true")
-                        .permitAll())
-                .csrf().disable();
+                        .permitAll());
 
         return http.build();
     }

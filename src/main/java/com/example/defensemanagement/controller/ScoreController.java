@@ -2,9 +2,13 @@ package com.example.defensemanagement.controller;
 
 import com.example.defensemanagement.entity.TeacherScoreRecord;
 import com.example.defensemanagement.entity.User;
+import com.example.defensemanagement.entity.Teacher;
 import com.example.defensemanagement.service.ScoreService;
 import com.example.defensemanagement.service.AuthService;
+import com.example.defensemanagement.service.ConfigService;
 import com.example.defensemanagement.mapper.TeacherScoreRecordMapper;
+import com.example.defensemanagement.mapper.TeacherMapper;
+import com.example.defensemanagement.mapper.StudentMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
@@ -13,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 import javax.servlet.http.HttpSession;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/defense/score")
@@ -27,6 +32,15 @@ public class ScoreController {
     @Autowired
     private TeacherScoreRecordMapper teacherScoreRecordMapper;
 
+    @Autowired
+    private TeacherMapper teacherMapper;
+
+    @Autowired
+    private StudentMapper studentMapper;
+
+    @Autowired
+    private ConfigService configService;
+
     /**
      * 教师提交/更新打分。
      */
@@ -34,6 +48,56 @@ public class ScoreController {
     public String saveTeacherScore(@RequestBody TeacherScoreRecord record) {
         scoreService.saveTeacherScore(record);
         return "success";
+    }
+
+    /**
+     * 教师小组打分（表单提交）
+     * POST /defense/score/teacher/group/score
+     */
+    @PostMapping("/teacher/group/score")
+    @ResponseBody
+    public String saveTeacherGroupScore(
+            @RequestParam Long studentId,
+            @RequestParam Integer totalScore,
+            @RequestParam(required = false) Integer item1,
+            @RequestParam(required = false) Integer item2,
+            @RequestParam(required = false) Integer item3,
+            @RequestParam(required = false) Integer item4,
+            @RequestParam(required = false) Integer item5,
+            @RequestParam(required = false) Integer item6,
+            HttpSession session) {
+        
+        Teacher teacher = getTeacherFromSession(session);
+        if (teacher == null) {
+            return "error:请先登录教师账号";
+        }
+        
+        Integer year = getCurrentDefenseYear();
+        
+        try {
+            TeacherScoreRecord record = new TeacherScoreRecord();
+            record.setStudentId(studentId);
+            record.setTeacherId(teacher.getId());
+            record.setYear(year);
+            record.setItem1Score(item1);
+            record.setItem2Score(item2);
+            record.setItem3Score(item3);
+            record.setItem4Score(item4);
+            record.setItem5Score(item5);
+            record.setItem6Score(item6);
+            record.setTotalScore(totalScore);
+            
+            // 查找学生所在小组
+            com.example.defensemanagement.entity.Student student = studentMapper.findById(studentId);
+            if (student != null && student.getDefenseGroupId() != null) {
+                record.setDefenseGroupId(student.getDefenseGroupId());
+            }
+            
+            scoreService.saveTeacherScore(record);
+            return "success";
+        } catch (Exception e) {
+            return "error:" + e.getMessage();
+        }
     }
 
     /**
@@ -170,5 +234,167 @@ public class ScoreController {
         } catch (Exception e) {
             return "error:" + e.getMessage();
         }
+    }
+
+    // ======================= 教师小组打分相关 API =======================
+
+    /**
+     * 获取当前教师所在小组的学生列表（含打分状态）
+     * GET /defense/score/teacher/group/students
+     */
+    @GetMapping("/teacher/group/students")
+    @ResponseBody
+    public Map<String, Object> getTeacherGroupStudents(HttpSession session) {
+        Teacher teacher = getTeacherFromSession(session);
+        if (teacher == null) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "请先登录教师账号");
+            return error;
+        }
+        
+        // 获取当前答辩年份
+        Integer year = getCurrentDefenseYear();
+        
+        Map<String, Object> result = scoreService.getTeacherGroupStudents(teacher.getId(), year);
+        result.put("teacherId", teacher.getId());
+        result.put("teacherName", teacher.getName());
+        result.put("year", year);
+        return result;
+    }
+
+    /**
+     * 获取当前教师ID
+     * GET /defense/score/teacher/current
+     */
+    @GetMapping("/teacher/current")
+    @ResponseBody
+    public Map<String, Object> getCurrentTeacher(HttpSession session) {
+        Map<String, Object> result = new HashMap<>();
+        Teacher teacher = getTeacherFromSession(session);
+        if (teacher != null) {
+            result.put("teacherId", teacher.getId());
+            result.put("teacherNo", teacher.getTeacherNo());
+            result.put("teacherName", teacher.getName());
+        } else {
+            result.put("teacherId", null);
+        }
+        return result;
+    }
+
+    // ======================= 大组答辩相关 API =======================
+
+    /**
+     * 获取大组答辩候选人列表（每个小组最高分学生）
+     * GET /defense/score/largegroup/candidates
+     */
+    @GetMapping("/largegroup/candidates")
+    @ResponseBody
+    public Map<String, Object> getLargeGroupCandidates(HttpSession session) {
+        Teacher teacher = getTeacherFromSession(session);
+        if (teacher == null) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "请先登录教师账号");
+            return error;
+        }
+        
+        Integer year = getCurrentDefenseYear();
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("candidates", scoreService.getLargeGroupCandidates(year, teacher.getId()));
+        result.put("teacherId", teacher.getId());
+        result.put("teacherName", teacher.getName());
+        result.put("year", year);
+        return result;
+    }
+
+    /**
+     * 保存大组答辩打分
+     * POST /defense/score/largegroup/save
+     */
+    @PostMapping("/largegroup/save")
+    @ResponseBody
+    public String saveLargeGroupScore(@RequestParam Long studentId,
+                                       @RequestParam Integer score,
+                                       HttpSession session) {
+        Teacher teacher = getTeacherFromSession(session);
+        if (teacher == null) {
+            return "error:请先登录教师账号";
+        }
+        
+        Integer year = getCurrentDefenseYear();
+        
+        try {
+            scoreService.saveLargeGroupScore(studentId, teacher.getId(), year, score);
+            return "success";
+        } catch (Exception e) {
+            return "error:" + e.getMessage();
+        }
+    }
+
+    /**
+     * 获取大组答辩学生的所有打分及平均分
+     * GET /defense/score/largegroup/student/{studentId}/scores
+     */
+    @GetMapping("/largegroup/student/{studentId}/scores")
+    @ResponseBody
+    public Map<String, Object> getLargeGroupStudentScores(@PathVariable Long studentId, HttpSession session) {
+        Teacher teacher = getTeacherFromSession(session);
+        if (teacher == null) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "请先登录教师账号");
+            return error;
+        }
+        
+        Integer year = getCurrentDefenseYear();
+        return scoreService.getLargeGroupStudentScores(studentId, year);
+    }
+
+    // ======================= 辅助方法 =======================
+
+    /**
+     * 从 Session 中获取当前教师
+     */
+    private Teacher getTeacherFromSession(HttpSession session) {
+        // 先尝试从 session 获取教师
+        Teacher teacher = (Teacher) session.getAttribute("currentTeacher");
+        if (teacher != null) {
+            System.out.println("[小组打分] 从 session 获取到 currentTeacher: " + teacher.getName());
+            return teacher;
+        }
+        
+        // 如果是 User 登录，检查是否是教师角色
+        User user = (User) session.getAttribute("currentUser");
+        System.out.println("[小组打分] currentUser: " + (user != null ? user.getUsername() : "null"));
+        if (user != null) {
+            System.out.println("[小组打分] user.getRole(): " + user.getRole());
+            if (user.getRole() != null) {
+                String roleName = user.getRole().getName();
+                System.out.println("[小组打分] roleName: " + roleName);
+                if ("TEACHER".equals(roleName) || "DEFENSE_LEADER".equals(roleName)) {
+                    // 根据 username 查找对应的教师
+                    teacher = teacherMapper.findByTeacherNo(user.getUsername());
+                    System.out.println("[小组打分] 根据 username " + user.getUsername() + " 查找到教师: " + (teacher != null ? teacher.getName() : "null"));
+                    return teacher;
+                }
+            }
+        }
+        
+        System.out.println("[小组打分] 无法获取教师信息");
+        return null;
+    }
+
+    /**
+     * 获取当前答辩年份
+     */
+    private Integer getCurrentDefenseYear() {
+        String yearStr = configService.getConfigValue("CURRENT_DEFENSE_YEAR");
+        if (yearStr != null && !yearStr.isEmpty()) {
+            try {
+                return Integer.parseInt(yearStr);
+            } catch (NumberFormatException e) {
+                // ignore
+            }
+        }
+        return java.time.LocalDate.now().getYear();
     }
 }

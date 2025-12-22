@@ -55,6 +55,23 @@
         UPDATE defense_group_teacher SET is_leader = 1 WHERE group_id = #{groupId} AND teacher_id = #{teacherId}
     </update>
 
+    <select id="findByTeacherId" resultMap="DefenseGroupTeacherMap">
+        SELECT dgt.*, 
+               t.id as t_id, t.teacher_no, t.name as t_name, t.department_id, t.title, t.email, t.phone, t.status
+        FROM defense_group_teacher dgt
+        LEFT JOIN teacher t ON dgt.teacher_id = t.id
+        WHERE dgt.teacher_id = #{teacherId}
+        LIMIT 1
+    </select>
+
+    <select id="findAll" resultMap="DefenseGroupTeacherMap">
+        SELECT dgt.*, 
+               t.id as t_id, t.teacher_no, t.name as t_name, t.department_id, t.title, t.email, t.phone, t.status
+        FROM defense_group_teacher dgt
+        LEFT JOIN teacher t ON dgt.teacher_id = t.id
+        ORDER BY dgt.group_id, dgt.is_leader DESC
+    </select>
+
 </mapper>
 
 

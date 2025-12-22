@@ -20,6 +20,16 @@ public interface DefenseGroupTeacherMapper {
     int clearLeader(@Param("groupId") Long groupId);
 
     int setLeader(@Param("groupId") Long groupId, @Param("teacherId") Long teacherId);
+
+    /**
+     * 根据教师ID查找该教师所属的小组信息
+     */
+    DefenseGroupTeacher findByTeacherId(@Param("teacherId") Long teacherId);
+
+    /**
+     * 获取所有小组的教师关联（用于大组答辩时所有教师打分）
+     */
+    List<DefenseGroupTeacher> findAll();
 }
 
 

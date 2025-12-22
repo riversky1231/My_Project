@@ -4,9 +4,15 @@ import com.example.defensemanagement.entity.Student;
 import com.example.defensemanagement.entity.StudentFinalScore;
 import com.example.defensemanagement.entity.TeacherScoreRecord;
 import com.example.defensemanagement.entity.EvaluationItem;
+import com.example.defensemanagement.entity.LargeGroupScore;
+import com.example.defensemanagement.entity.DefenseGroup;
+import com.example.defensemanagement.entity.DefenseGroupTeacher;
 import com.example.defensemanagement.mapper.StudentFinalScoreMapper;
 import com.example.defensemanagement.mapper.StudentMapper;
 import com.example.defensemanagement.mapper.TeacherScoreRecordMapper;
+import com.example.defensemanagement.mapper.LargeGroupScoreMapper;
+import com.example.defensemanagement.mapper.DefenseGroupMapper;
+import com.example.defensemanagement.mapper.DefenseGroupTeacherMapper;
 import com.example.defensemanagement.service.ConfigService;
 import com.example.defensemanagement.service.ScoreService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +42,15 @@ public class ScoreServiceImpl implements ScoreService {
 
     @Autowired
     private ConfigService configService;
+
+    @Autowired
+    private LargeGroupScoreMapper largeGroupScoreMapper;
+
+    @Autowired
+    private DefenseGroupMapper defenseGroupMapper;
+
+    @Autowired
+    private DefenseGroupTeacherMapper defenseGroupTeacherMapper;
 
     @Override
     @Transactional
@@ -241,6 +256,269 @@ public class ScoreServiceImpl implements ScoreService {
         result.put("largeGroupScore", fs.getLargeGroupScore() != null ? fs.getLargeGroupScore() : 0);
         result.put("finalDefenseScore", fs.getFinalDefenseScore() != null ? fs.getFinalDefenseScore() : 0.0);
         return result;
+    }
+
+    @Override
+    public Map<String, Object> getTeacherGroupStudents(Long teacherId, Integer year) {
+        Map<String, Object> result = new HashMap<>();
+        
+        // 查找教师所在的小组
+        DefenseGroupTeacher dgt = defenseGroupTeacherMapper.findByTeacherId(teacherId);
+        if (dgt == null) {
+            result.put("groupId", null);
+            result.put("groupName", "");
+            result.put("students", java.util.Collections.emptyList());
+            result.put("message", "教师未分配到任何小组");
+            return result;
+        }
+        
+        Long groupId = dgt.getGroupId();
+        DefenseGroup group = defenseGroupMapper.findById(groupId);
+        
+        result.put("groupId", groupId);
+        result.put("groupName", group != null ? group.getName() : "");
+        result.put("isLeader", dgt.getIsLeader() != null && dgt.getIsLeader() == 1);
+        
+        // 获取小组内的所有学生
+        List<Student> students = studentMapper.findByDefenseGroupId(groupId);
+        if (students == null) {
+            students = new java.util.ArrayList<>();
+        }
+        
+        // 过滤年份
+        if (year != null) {
+            students = students.stream()
+                    .filter(s -> s.getDefenseYear() != null && s.getDefenseYear().equals(year))
+                    .collect(java.util.stream.Collectors.toList());
+        }
+        
+        // 获取小组内的教师列表
+        List<DefenseGroupTeacher> groupTeachers = defenseGroupTeacherMapper.findByGroupId(groupId);
+        int totalTeachers = groupTeachers != null ? groupTeachers.size() : 0;
+        
+        // 为每个学生获取打分状态
+        List<Map<String, Object>> studentList = new java.util.ArrayList<>();
+        for (Student s : students) {
+            Map<String, Object> studentInfo = new HashMap<>();
+            studentInfo.put("id", s.getId());
+            studentInfo.put("studentNo", s.getStudentNo());
+            studentInfo.put("name", s.getName());
+            studentInfo.put("classInfo", s.getClassInfo());
+            studentInfo.put("defenseType", s.getDefenseType());
+            studentInfo.put("title", s.getTitle());
+            studentInfo.put("defenseYear", s.getDefenseYear());
+            
+            // 获取该学生的所有打分记录
+            List<TeacherScoreRecord> records = teacherScoreRecordMapper.findByStudentIdAndYear(s.getId(), year);
+            studentInfo.put("scoredTeachersCount", records != null ? records.size() : 0);
+            studentInfo.put("totalTeachersCount", totalTeachers);
+            
+            // 检查当前教师是否已打分
+            boolean hasScored = false;
+            TeacherScoreRecord myScore = null;
+            if (records != null) {
+                for (TeacherScoreRecord r : records) {
+                    if (r.getTeacherId() != null && r.getTeacherId().equals(teacherId)) {
+                        hasScored = true;
+                        myScore = r;
+                        break;
+                    }
+                }
+            }
+            studentInfo.put("hasScored", hasScored);
+            studentInfo.put("myScore", myScore);
+            
+            // 计算平均分（如果所有教师都已打分）
+            if (records != null && records.size() == totalTeachers && totalTeachers > 0) {
+                double avgScore = records.stream()
+                        .filter(r -> r.getTotalScore() != null)
+                        .mapToInt(TeacherScoreRecord::getTotalScore)
+                        .average()
+                        .orElse(0.0);
+                studentInfo.put("avgScore", round(avgScore, 1));
+                studentInfo.put("allScored", true);
+            } else {
+                studentInfo.put("avgScore", null);
+                studentInfo.put("allScored", false);
+            }
+            
+            studentList.add(studentInfo);
+        }
+        
+        result.put("students", studentList);
+        return result;
+    }
+
+    @Override
+    public List<Map<String, Object>> getLargeGroupCandidates(Integer year, Long currentTeacherId) {
+        List<Map<String, Object>> candidates = new java.util.ArrayList<>();
+        
+        // 获取所有小组
+        List<DefenseGroup> groups = defenseGroupMapper.findAllByOrderByDisplayOrderAsc();
+        if (groups == null || groups.isEmpty()) {
+            return candidates;
+        }
+        
+        // 获取所有教师数量（用于判断是否所有教师都已打分）
+        List<DefenseGroupTeacher> allTeachers = defenseGroupTeacherMapper.findAll();
+        int totalTeachers = 0;
+        if (allTeachers != null) {
+            totalTeachers = (int) allTeachers.stream()
+                    .map(DefenseGroupTeacher::getTeacherId)
+                    .distinct()
+                    .count();
+        }
+        
+        for (DefenseGroup group : groups) {
+            // 获取小组内的学生
+            List<Student> students = studentMapper.findByDefenseGroupId(group.getId());
+            if (students == null || students.isEmpty()) {
+                continue;
+            }
+            
+            // 过滤年份
+            if (year != null) {
+                students = students.stream()
+                        .filter(s -> s.getDefenseYear() != null && s.getDefenseYear().equals(year))
+                        .collect(java.util.stream.Collectors.toList());
+            }
+            
+            if (students.isEmpty()) {
+                continue;
+            }
+            
+            // 获取小组内教师数量
+            List<DefenseGroupTeacher> groupTeachers = defenseGroupTeacherMapper.findByGroupId(group.getId());
+            int groupTeacherCount = groupTeachers != null ? groupTeachers.size() : 0;
+            
+            // 找到小组内平均分最高的学生
+            Student topStudent = null;
+            double topAvgScore = -1;
+            
+            for (Student s : students) {
+                List<TeacherScoreRecord> records = teacherScoreRecordMapper.findByStudentIdAndYear(s.getId(), year);
+                if (records == null || records.isEmpty()) {
+                    continue;
+                }
+                
+                // 检查是否所有小组内教师都已打分
+                if (records.size() < groupTeacherCount) {
+                    continue;
+                }
+                
+                double avgScore = records.stream()
+                        .filter(r -> r.getTotalScore() != null)
+                        .mapToInt(TeacherScoreRecord::getTotalScore)
+                        .average()
+                        .orElse(0.0);
+                
+                if (avgScore > topAvgScore) {
+                    topAvgScore = avgScore;
+                    topStudent = s;
+                }
+            }
+            
+            if (topStudent != null) {
+                Map<String, Object> candidate = new HashMap<>();
+                candidate.put("groupId", group.getId());
+                candidate.put("groupName", group.getName());
+                candidate.put("studentId", topStudent.getId());
+                candidate.put("studentNo", topStudent.getStudentNo());
+                candidate.put("studentName", topStudent.getName());
+                candidate.put("defenseType", topStudent.getDefenseType());
+                candidate.put("title", topStudent.getTitle());
+                candidate.put("groupAvgScore", round(topAvgScore, 1));
+                
+                // 获取大组答辩打分情况
+                List<LargeGroupScore> largeScores = largeGroupScoreMapper.findByStudentIdAndYear(topStudent.getId(), year);
+                candidate.put("largeGroupScoredCount", largeScores != null ? largeScores.size() : 0);
+                candidate.put("totalTeachersCount", totalTeachers);
+                
+                // 计算大组答辩平均分
+                if (largeScores != null && !largeScores.isEmpty()) {
+                    double largeAvg = largeScores.stream()
+                            .filter(ls -> ls.getScore() != null)
+                            .mapToInt(LargeGroupScore::getScore)
+                            .average()
+                            .orElse(0.0);
+                    candidate.put("largeGroupAvgScore", round(largeAvg, 1));
+                } else {
+                    candidate.put("largeGroupAvgScore", null);
+                }
+                
+                // 获取当前教师对该候选人的打分
+                Integer myLargeGroupScore = null;
+                if (currentTeacherId != null && largeScores != null) {
+                    for (LargeGroupScore ls : largeScores) {
+                        if (ls.getTeacherId() != null && ls.getTeacherId().equals(currentTeacherId)) {
+                            myLargeGroupScore = ls.getScore();
+                            break;
+                        }
+                    }
+                }
+                candidate.put("myLargeGroupScore", myLargeGroupScore);
+                
+                candidates.add(candidate);
+            }
+        }
+        
+        return candidates;
+    }
+
+    @Override
+    @Transactional
+    public void saveLargeGroupScore(Long studentId, Long teacherId, Integer year, Integer score) {
+        if (studentId == null || teacherId == null || year == null || score == null) {
+            throw new IllegalArgumentException("学生ID/教师ID/年份/分数不能为空");
+        }
+        
+        LargeGroupScore existing = largeGroupScoreMapper.findByStudentIdAndTeacherIdAndYear(studentId, teacherId, year);
+        if (existing == null) {
+            LargeGroupScore record = new LargeGroupScore();
+            record.setStudentId(studentId);
+            record.setTeacherId(teacherId);
+            record.setYear(year);
+            record.setScore(score);
+            largeGroupScoreMapper.insert(record);
+        } else {
+            existing.setScore(score);
+            largeGroupScoreMapper.update(existing);
+        }
+    }
+
+    @Override
+    public Map<String, Object> getLargeGroupStudentScores(Long studentId, Integer year) {
+        Map<String, Object> result = new HashMap<>();
+        
+        List<LargeGroupScore> scores = largeGroupScoreMapper.findByStudentIdAndYear(studentId, year);
+        result.put("scores", scores != null ? scores : java.util.Collections.emptyList());
+        
+        if (scores != null && !scores.isEmpty()) {
+            double avgScore = scores.stream()
+                    .filter(s -> s.getScore() != null)
+                    .mapToInt(LargeGroupScore::getScore)
+                    .average()
+                    .orElse(0.0);
+            result.put("avgScore", round(avgScore, 1));
+        } else {
+            result.put("avgScore", null);
+        }
+        
+        return result;
+    }
+
+    @Override
+    public Double calculateGroupAvgScore(Long studentId, Integer year) {
+        List<TeacherScoreRecord> records = teacherScoreRecordMapper.findByStudentIdAndYear(studentId, year);
+        if (records == null || records.isEmpty()) {
+            return null;
+        }
+        
+        return round(records.stream()
+                .filter(r -> r.getTotalScore() != null)
+                .mapToInt(TeacherScoreRecord::getTotalScore)
+                .average()
+                .orElse(0.0), 1);
     }
 
     private double round(double value, int scale) {

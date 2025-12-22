@@ -133,6 +133,23 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         if (path.startsWith("/defense/")) {
+            // 教师小组打分和大组答辩相关 API，允许所有教师访问
+            if (path.startsWith("/defense/score/teacher/") || path.startsWith("/defense/score/largegroup/")) {
+                // 检查是否是教师（通过 currentTeacher 或 currentUser 的角色）
+                if (currentTeacher != null) {
+                    return true;
+                }
+                if (currentUser != null && currentUser.getRole() != null) {
+                    String roleName = currentUser.getRole().getName();
+                    if ("TEACHER".equals(roleName) || "DEFENSE_LEADER".equals(roleName)) {
+                        return true;
+                    }
+                }
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "需要教师权限");
+                return false;
+            }
+            
+            // 其他 /defense/ 路径需要 MANAGE_DEFENSE 权限或答辩组长权限
             boolean hasPermission = false;
             if (currentUser != null && authService.hasPermission(currentUser, "MANAGE_DEFENSE")) {
                 hasPermission = true;
