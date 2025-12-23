@@ -944,6 +944,8 @@ public class ExportController {
     private byte[] loadSignature(String namePrefix) {
         String[] exts = {"png", "jpg", "jpeg"};
         java.nio.file.Path basePath = getUploadBasePath();
+        
+        // 首先尝试直接使用传入的前缀（如 teacher_1）
         for (String ext : exts) {
             java.nio.file.Path p = basePath.resolve("signatures").resolve(namePrefix + "." + ext);
             if (Files.exists(p)) {
@@ -952,6 +954,27 @@ public class ExportController {
                 } catch (Exception ignored) {}
             }
         }
+        
+        // 如果是teacher_前缀但没找到签名，尝试查找对应的user_签名
+        // 因为教师登录时可能以User身份登录，签名保存为user_{userId}格式
+        if (namePrefix.startsWith("teacher_")) {
+            try {
+                Long teacherId = Long.parseLong(namePrefix.substring("teacher_".length()));
+                Teacher teacher = teacherMapper.findById(teacherId);
+                if (teacher != null && teacher.getUserId() != null) {
+                    String userPrefix = "user_" + teacher.getUserId();
+                    for (String ext : exts) {
+                        java.nio.file.Path p = basePath.resolve("signatures").resolve(userPrefix + "." + ext);
+                        if (Files.exists(p)) {
+                            try {
+                                return Files.readAllBytes(p);
+                            } catch (Exception ignored) {}
+                        }
+                    }
+                }
+            } catch (NumberFormatException ignored) {}
+        }
+        
         return null;
     }
 

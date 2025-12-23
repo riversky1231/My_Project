@@ -13,7 +13,8 @@ public interface TeacherMapper {
     @Select("SELECT * FROM teacher WHERE id = #{id}")
     @Results({
         @Result(property = "teacherNo", column = "teacher_no"),
-        @Result(property = "departmentId", column = "department_id")
+        @Result(property = "departmentId", column = "department_id"),
+        @Result(property = "userId", column = "user_id")
     })
     Teacher findById(Long id);
     
@@ -25,7 +26,8 @@ public interface TeacherMapper {
             "</script>")
     @Results({
         @Result(property = "teacherNo", column = "teacher_no"),
-        @Result(property = "departmentId", column = "department_id")
+        @Result(property = "departmentId", column = "department_id"),
+        @Result(property = "userId", column = "user_id")
     })
     List<Teacher> findByDepartmentId(Long departmentId);
     

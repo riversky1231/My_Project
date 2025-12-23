@@ -15,6 +15,8 @@ import org.springframework.core.io.Resource;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -112,22 +114,83 @@ public class DocTemplateServiceImpl implements DocTemplateService {
 
     private void replaceImageInParagraph(XWPFParagraph para, Map<String, byte[]> imageBytesMap) {
         String text = para.getText();
+        if (text == null || text.isEmpty()) {
+            return;
+        }
+        
+        // 收集所有需要替换的占位符及其位置
+        List<PlaceholderInfo> placeholders = new ArrayList<>();
         for (Map.Entry<String, byte[]> entry : imageBytesMap.entrySet()) {
             String key = entry.getKey();
             byte[] bytes = entry.getValue();
-            if (text.contains(key) && bytes != null) {
-                // 清空文字
-                int runCount = para.getRuns().size();
-                for (int i = runCount - 1; i >= 0; i--) {
-                    para.removeRun(i);
-                }
-                try (ByteArrayInputStream bais = new ByteArrayInputStream(bytes)) {
-                    XWPFRun run = para.createRun();
-                    run.addPicture(bais, XWPFDocument.PICTURE_TYPE_PNG, "image", Units.toEMU(120), Units.toEMU(50));
-                } catch (Exception e) {
-                    throw new RuntimeException("插入图片失败: " + e.getMessage(), e);
+            if (bytes != null) {
+                int pos = text.indexOf(key);
+                while (pos >= 0) {
+                    placeholders.add(new PlaceholderInfo(key, pos, bytes));
+                    pos = text.indexOf(key, pos + key.length());
                 }
             }
+        }
+        
+        // 如果没有找到任何占位符，直接返回
+        if (placeholders.isEmpty()) {
+            return;
+        }
+        
+        // 按位置排序
+        placeholders.sort(Comparator.comparingInt(p -> p.position));
+        
+        // 清空段落
+        int runCount = para.getRuns().size();
+        for (int i = runCount - 1; i >= 0; i--) {
+            para.removeRun(i);
+        }
+        
+        // 按顺序重建段落：文本和图片交替
+        int currentPos = 0;
+        for (PlaceholderInfo ph : placeholders) {
+            // 添加占位符前面的文本
+            if (ph.position > currentPos) {
+                String textBefore = text.substring(currentPos, ph.position);
+                if (!textBefore.isEmpty()) {
+                    XWPFRun textRun = para.createRun();
+                    textRun.setText(textBefore, 0);
+                }
+            }
+            
+            // 添加图片
+            try (ByteArrayInputStream bais = new ByteArrayInputStream(ph.imageBytes)) {
+                XWPFRun imageRun = para.createRun();
+                imageRun.addPicture(bais, XWPFDocument.PICTURE_TYPE_PNG, "signature", Units.toEMU(120), Units.toEMU(50));
+            } catch (Exception e) {
+                throw new RuntimeException("插入图片失败: " + e.getMessage(), e);
+            }
+            
+            currentPos = ph.position + ph.key.length();
+        }
+        
+        // 添加最后一个占位符后面的文本
+        if (currentPos < text.length()) {
+            String textAfter = text.substring(currentPos);
+            if (!textAfter.isEmpty()) {
+                XWPFRun textRun = para.createRun();
+                textRun.setText(textAfter, 0);
+            }
+        }
+    }
+    
+    /**
+     * 占位符信息类，用于记录占位符的位置和对应的图片数据
+     */
+    private static class PlaceholderInfo {
+        String key;
+        int position;
+        byte[] imageBytes;
+        
+        PlaceholderInfo(String key, int position, byte[] imageBytes) {
+            this.key = key;
+            this.position = position;
+            this.imageBytes = imageBytes;
         }
     }
 }
