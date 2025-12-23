@@ -72,10 +72,27 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public boolean changeUserPassword(Long userId, String oldPassword, String newPassword) {
+        System.out.println("changeUserPassword: userId=" + userId);
         User user = userMapper.findById(userId);
-        if (user != null && passwordEncoder.matches(oldPassword, user.getPassword())) {
+        if (user == null) {
+            System.out.println("用户不存在: userId=" + userId);
+            return false;
+        }
+        System.out.println("找到用户: " + user.getUsername());
+        
+        if (user.getPassword() == null) {
+            System.out.println("用户密码为空，无法验证旧密码");
+            return false;
+        }
+        
+        boolean passwordMatches = passwordEncoder.matches(oldPassword, user.getPassword());
+        System.out.println("密码匹配结果: " + passwordMatches);
+        
+        if (passwordMatches) {
             String encodedPassword = passwordEncoder.encode(newPassword);
-            return userMapper.updatePassword(userId, encodedPassword) > 0;
+            int updateResult = userMapper.updatePassword(userId, encodedPassword);
+            System.out.println("密码更新结果: " + updateResult);
+            return updateResult > 0;
         }
         return false;
     }

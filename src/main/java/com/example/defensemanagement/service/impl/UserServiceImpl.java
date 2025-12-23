@@ -175,11 +175,14 @@ public class UserServiceImpl implements UserService {
                 }
             }
 
-            // 处理密码
+            // 处理密码：如果密码为空或只有空白字符，则不更新密码（设置为null，让UserSqlBuilder跳过）
             if (StringUtils.hasText(user.getPassword())) {
+                System.out.println("更新用户密码: userId=" + user.getId() + ", 密码长度=" + user.getPassword().length());
                 user.setPassword(passwordEncoder.encode(user.getPassword()));
             } else {
-                user.setPassword(oldUser.getPassword());
+                // 如果密码为空，设置为null，这样UserSqlBuilder就不会更新密码字段
+                System.out.println("密码为空，不更新密码字段: userId=" + user.getId());
+                user.setPassword(null);
             }
             userMapper.update(user);
             

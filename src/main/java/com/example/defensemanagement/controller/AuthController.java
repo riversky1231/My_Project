@@ -69,20 +69,41 @@ public class AuthController {
                                 @RequestParam String newPassword,
                                 HttpSession session) {
         
+        System.out.println("changePassword 被调用: oldPassword=" + (oldPassword != null ? "***" : "null") + ", newPassword=" + (newPassword != null ? "***" : "null"));
+        
         String userType = (String) session.getAttribute("userType");
+        System.out.println("userType: " + userType);
         
         if ("USER".equals(userType)) {
             User currentUser = (User) session.getAttribute("currentUser");
-            if (currentUser != null && authService.changeUserPassword(currentUser.getId(), oldPassword, newPassword)) {
-                return "success";
+            System.out.println("currentUser: " + (currentUser != null ? currentUser.getUsername() : "null"));
+            if (currentUser != null) {
+                boolean result = authService.changeUserPassword(currentUser.getId(), oldPassword, newPassword);
+                System.out.println("changeUserPassword 结果: " + result);
+                if (result) {
+                    return "success";
+                } else {
+                    return "error:旧密码错误或用户不存在";
+                }
+            } else {
+                return "error:未找到当前用户";
             }
         } else if ("TEACHER".equals(userType)) {
             Teacher currentTeacher = (Teacher) session.getAttribute("currentTeacher");
-            if (currentTeacher != null && authService.changeTeacherPassword(currentTeacher.getId(), oldPassword, newPassword)) {
-                return "success";
+            System.out.println("currentTeacher: " + (currentTeacher != null ? currentTeacher.getTeacherNo() : "null"));
+            if (currentTeacher != null) {
+                boolean result = authService.changeTeacherPassword(currentTeacher.getId(), oldPassword, newPassword);
+                System.out.println("changeTeacherPassword 结果: " + result);
+                if (result) {
+                    return "success";
+                } else {
+                    return "error:旧密码错误或教师不存在";
+                }
+            } else {
+                return "error:未找到当前教师";
             }
         }
         
-        return "error";
+        return "error:用户类型未知";
     }
 }

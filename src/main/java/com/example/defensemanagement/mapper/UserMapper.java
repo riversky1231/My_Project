@@ -62,7 +62,8 @@ public interface UserMapper {
                 if (user.getUsername() != null) {
                     SET("username = #{username}");
                 }
-                if (user.getPassword() != null) {
+                // 只有当密码不为null且不为空字符串时才更新密码
+                if (user.getPassword() != null && !user.getPassword().trim().isEmpty()) {
                     SET("password = #{password}");
                 }
                 if (user.getRealName() != null) {
@@ -80,8 +81,14 @@ public interface UserMapper {
                 if (user.getRoleId() != null) {
                     SET("role_id = #{roleId}");
                 }
+                // 支持将 department_id 设置为 null（超级管理员可以没有院系）
+                // 如果 departmentId 为 null，设置为 NULL；否则设置为对应的值
+                // 注意：这里我们总是更新 department_id，前端需要明确发送 null 来清空院系
                 if (user.getDepartmentId() != null) {
                     SET("department_id = #{departmentId}");
+                } else {
+                    // 如果 departmentId 为 null，设置为 NULL（允许超级管理员没有院系）
+                    SET("department_id = NULL");
                 }
                 SET("updated_time = CURRENT_TIMESTAMP");
                 WHERE("id = #{id}");

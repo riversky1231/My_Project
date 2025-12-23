@@ -271,7 +271,8 @@
          " th:attr="
             data-user-type=${currentUserType},
             data-user-role=${currentAdmin != null ? currentAdmin.role.name : 'TEACHER'},
-            data-user-dept=${currentAdmin != null ? currentAdmin.departmentId : (currentTeacher != null ? currentTeacher.departmentId : '')}
+            data-user-dept=${currentAdmin != null ? currentAdmin.departmentId : (currentTeacher != null ? currentTeacher.departmentId : '')},
+            data-user-id=${currentAdmin != null ? currentAdmin.id : (currentTeacher != null ? currentTeacher.userId : '')}
          ">
             <div th:if="${currentAdmin}" class="text-center">
                 <small class="text-muted">当前用户</small>
@@ -1246,7 +1247,9 @@
                             </tr>
                         </thead>
                         <tbody id="ts-student-list">
-                            <tr><td colspan="11" class="text-center text-muted">加载中...</td></tr>
+                            <tr>
+                                <td colspan="11" class="text-center text-muted">加载中...</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -1254,7 +1257,8 @@
         </div>
 
         <!-- Teacher Scoring Modal -->
-        <div class="modal fade" id="teacherScoringModal" tabindex="-1" aria-labelledby="teacherScoringModalLabel" aria-hidden="true">
+        <div class="modal fade" id="teacherScoringModal" tabindex="-1" aria-labelledby="teacherScoringModalLabel"
+            aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -1266,57 +1270,66 @@
                         <form id="tsScoreForm" class="row g-3">
                             <input type="hidden" id="ts-modal-student-id">
                             <input type="hidden" id="ts-modal-defense-type">
-                            
+
                             <!-- 论文类型评分项 -->
                             <div id="ts-paper-items" class="col-12">
                                 <h6>论文类评分项</h6>
                                 <div class="row g-3">
                                     <div class="col-md-4">
                                         <label class="form-label">论文质量 (满50分)</label>
-                                        <input type="number" class="form-control ts-paper-item" id="ts-item1" min="0" max="50" placeholder="0-50">
+                                        <input type="number" class="form-control ts-paper-item" id="ts-item1" min="0"
+                                            max="50" placeholder="0-50">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">答辩自述报告 (满25分)</label>
-                                        <input type="number" class="form-control ts-paper-item" id="ts-item2" min="0" max="25" placeholder="0-25">
+                                        <input type="number" class="form-control ts-paper-item" id="ts-item2" min="0"
+                                            max="25" placeholder="0-25">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">回答问题情况 (满25分)</label>
-                                        <input type="number" class="form-control ts-paper-item" id="ts-item3" min="0" max="25" placeholder="0-25">
+                                        <input type="number" class="form-control ts-paper-item" id="ts-item3" min="0"
+                                            max="25" placeholder="0-25">
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <!-- 设计类型评分项 -->
                             <div id="ts-design-items" class="col-12" style="display: none;">
                                 <h6>设计类评分项 (权值: 0.15/0.15/0.15/0.25/0.15/0.15)</h6>
                                 <div class="row g-3">
                                     <div class="col-md-4">
                                         <label class="form-label">设计质量1 (满15分)</label>
-                                        <input type="number" class="form-control ts-design-item" id="ts-d-item1" min="0" max="15" placeholder="0-15">
+                                        <input type="number" class="form-control ts-design-item" id="ts-d-item1" min="0"
+                                            max="15" placeholder="0-15">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">设计质量2 (满15分)</label>
-                                        <input type="number" class="form-control ts-design-item" id="ts-d-item2" min="0" max="15" placeholder="0-15">
+                                        <input type="number" class="form-control ts-design-item" id="ts-d-item2" min="0"
+                                            max="15" placeholder="0-15">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">设计质量3 (满15分)</label>
-                                        <input type="number" class="form-control ts-design-item" id="ts-d-item3" min="0" max="15" placeholder="0-15">
+                                        <input type="number" class="form-control ts-design-item" id="ts-d-item3" min="0"
+                                            max="15" placeholder="0-15">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">答辩自述报告 (满25分)</label>
-                                        <input type="number" class="form-control ts-design-item" id="ts-d-item4" min="0" max="25" placeholder="0-25">
+                                        <input type="number" class="form-control ts-design-item" id="ts-d-item4" min="0"
+                                            max="25" placeholder="0-25">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">回答问题1 (满15分)</label>
-                                        <input type="number" class="form-control ts-design-item" id="ts-d-item5" min="0" max="15" placeholder="0-15">
+                                        <input type="number" class="form-control ts-design-item" id="ts-d-item5" min="0"
+                                            max="15" placeholder="0-15">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">回答问题2 (满15分)</label>
-                                        <input type="number" class="form-control ts-design-item" id="ts-d-item6" min="0" max="15" placeholder="0-15">
+                                        <input type="number" class="form-control ts-design-item" id="ts-d-item6" min="0"
+                                            max="15" placeholder="0-15">
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="col-md-4">
                                 <label class="form-label">总分 (自动计算)</label>
                                 <input type="number" class="form-control" id="ts-total-score" readonly>
@@ -1368,7 +1381,9 @@
                             </tr>
                         </thead>
                         <tbody id="lg-candidate-list">
-                            <tr><td colspan="10" class="text-center text-muted">加载中...</td></tr>
+                            <tr>
+                                <td colspan="10" class="text-center text-muted">加载中...</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -1376,7 +1391,8 @@
         </div>
 
         <!-- Large Group Scoring Modal -->
-        <div class="modal fade" id="largeGroupScoringModal" tabindex="-1" aria-labelledby="largeGroupScoringModalLabel" aria-hidden="true">
+        <div class="modal fade" id="largeGroupScoringModal" tabindex="-1" aria-labelledby="largeGroupScoringModalLabel"
+            aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -1389,7 +1405,8 @@
                             <input type="hidden" id="lg-modal-student-id">
                             <div class="mb-3">
                                 <label class="form-label">大组答辩总分 (满分100)</label>
-                                <input type="number" class="form-control" id="lg-score" min="0" max="100" placeholder="请输入0-100的分数">
+                                <input type="number" class="form-control" id="lg-score" min="0" max="100"
+                                    placeholder="请输入0-100的分数">
                             </div>
                         </form>
                     </div>
@@ -1494,7 +1511,8 @@
                         </div>
                         <div class="col-md-6">
                             <label for="department" class="form-label">所属院系</label>
-                            <select class="form-select" id="department" required>
+                            <select class="form-select" id="department">
+                                <option value="">无（超级管理员）</option>
                                 <option value="1">计算机科学与技术学院</option>
                                 <option value="2">软件学院</option>
                             </select>
@@ -1801,7 +1819,7 @@
                 const navTeacherScoring = document.getElementById('nav-teacher-scoring');
                 const navLargeGroupDefense = document.getElementById('nav-large-group-defense');
                 const isTeacherOrLeader = userType === 'TEACHER' || userRole === 'TEACHER' || userRole === 'DEFENSE_LEADER';
-                
+
                 if (navTeacherScoring) {
                     if (isTeacherOrLeader) {
                         navTeacherScoring.style.display = '';
@@ -2355,7 +2373,10 @@
 
                 console.log('DEBUG: 编辑模式 - 用户名:', user.username);
 
-                // 只有超级管理员才能修改用户名
+                // 检查被编辑的用户是否是超级管理员
+                const isEditingSuperAdmin = user.role && (user.role.name === 'SUPER_ADMIN' || user.roleId === '1' || user.roleId === 1);
+
+                // 只有超级管理员才能修改用户名（但超级管理员自己的账号也可以修改）
                 if (currentUserRole !== 'SUPER_ADMIN') {
                     console.log('DEBUG: 非超级管理员，锁定用户名');
                     usernameInput.readOnly = true;
@@ -2369,8 +2390,17 @@
                 document.getElementById('role').value = user.roleId;
                 document.getElementById('department').value = user.departmentId || '';
                 document.getElementById('userStatus').checked = user.status === 1;
-                // 编辑模式下密码为可选
-                document.getElementById('password').placeholder = '留空表示不修改密码';
+
+                // 密码字段统一使用10位占位符
+                const passwordInput = document.getElementById('password');
+                const currentUserId = userInfoDiv.dataset.userId;
+                const isEditingSelf = currentUserId && String(currentUserId) === String(user.id);
+
+                // 所有用户编辑时都显示10位占位符
+                passwordInput.value = '••••••••••'; // 10位占位符
+                passwordInput.placeholder = '请输入新密码（留空则不修改）';
+                passwordInput.readOnly = false; // 确保密码字段可编辑
+                passwordInput.disabled = false; // 确保密码字段可用
 
                 // 院系管理员编辑用户时，院系字段只读（只能管理自己院系的用户）
                 if (currentUserRole === 'DEPT_ADMIN') {
@@ -2381,7 +2411,10 @@
                 console.log('DEBUG: 新增模式');
                 modalLabel.textContent = '添加新用户';
                 document.getElementById('userStatus').checked = true; // 默认启用
-                document.getElementById('password').placeholder = '请输入密码';
+                // 新增模式下密码字段为空，不使用占位符
+                const passwordInput = document.getElementById('password');
+                passwordInput.value = '';
+                passwordInput.placeholder = '请输入密码';
 
                 // 院系管理员新增用户时的限制
                 if (currentUserRole === 'DEPT_ADMIN') {
@@ -2426,16 +2459,40 @@
 
         async function saveUser() {
             const userId = document.getElementById('userId').value;
+            let passwordValue = document.getElementById('password').value.trim();
+
+            // 如果密码是占位符（无论是 • 还是其他占位符），视为不修改密码，发送空字符串
+            // 注意：占位符可能是 • 字符（Unicode U+2022）或其他字符
+            // 判断逻辑：如果密码只包含占位符字符（•、·等），则视为占位符
+            if (passwordValue === '' ||
+                (passwordValue.length >= 8 && passwordValue.length <= 12 && /^[•·\u2022\u25CF\u25E6\s]+$/.test(passwordValue))) {
+                // 如果密码只包含占位符字符，视为不修改密码
+                passwordValue = '';
+            }
+
+            // 处理院系ID：如果为空字符串，转换为null（超级管理员可以没有院系）
+            let departmentIdValue = document.getElementById('department').value;
+            if (departmentIdValue === '') {
+                departmentIdValue = null;
+            } else {
+                departmentIdValue = parseInt(departmentIdValue);
+            }
+
             const user = {
-                id: userId ? userId : null,
+                id: userId ? parseInt(userId) : null,
                 username: document.getElementById('username').value,
                 realName: document.getElementById('realName').value,
-                password: document.getElementById('password').value,
+                password: passwordValue, // 如果是占位符或空，发送空字符串，后端会处理为不修改
                 email: document.getElementById('email').value,
-                roleId: document.getElementById('role').value,
-                departmentId: document.getElementById('department').value,
+                roleId: parseInt(document.getElementById('role').value),
+                departmentId: departmentIdValue, // null 或数字ID
                 status: document.getElementById('userStatus').checked ? 1 : 0,
             };
+
+            // 调试信息
+            console.log('保存用户 - 用户ID:', userId);
+            console.log('保存用户 - 密码字段:', passwordValue ? '有新密码（长度: ' + passwordValue.length + '）' : '不修改密码');
+            console.log('保存用户 - 完整用户对象:', JSON.stringify({ ...user, password: passwordValue ? '***' : '' }));
 
             try {
                 const response = await fetch('/admin/users/save', {
@@ -2444,6 +2501,7 @@
                     body: JSON.stringify(user)
                 });
                 const result = await response.text();
+                console.log('保存用户 - 后端返回结果:', result);
                 if (result === 'success') {
                     bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
                     searchUsersWithPagination(currentUserPage); // 使用当前页刷新
@@ -2452,7 +2510,7 @@
                     showAlert('error', '保存失败: ' + result);
                 }
             } catch (error) {
-                console.error(error);
+                console.error('保存用户 - 请求异常:', error);
                 showAlert('error', '保存失败，请检查网络连接');
             }
         }
@@ -5197,34 +5255,34 @@
         }
 
         // ==================== 教师小组打分功能 ====================
-        
+
         // 加载教师所在小组的学生列表
         async function loadTeacherGroupStudents() {
             const tbody = document.getElementById('ts-student-list');
             tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">加载中...</td></tr>';
-            
+
             try {
                 const response = await fetch('/defense/score/teacher/group/students');
                 if (!response.ok) throw new Error('HTTP错误: ' + response.status);
                 const data = await response.json();
                 console.log('教师小组学生数据:', data);
-                
+
                 // 检查是否有错误响应
                 if (data.error) {
                     tbody.innerHTML = `<tr><td colspan="9" class="text-center text-warning">${data.error}</td></tr>`;
                     return;
                 }
-                
+
                 // 显示教师和小组信息
                 document.getElementById('ts-teacher-info').textContent = data.teacherName ? `教师：${data.teacherName}` : '';
                 document.getElementById('ts-group-info').textContent = data.groupName ? `小组：${data.groupName}` : '';
-                
+
                 const students = data.students || [];
                 if (students.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">您尚未分配到任何小组，或小组内没有学生</td></tr>';
                     return;
                 }
-                
+
                 tbody.innerHTML = '';
                 students.forEach(s => {
                     const defenseTypeText = s.defenseType === 'PAPER' ? '论文' : '设计';
@@ -5236,7 +5294,7 @@
                     const finalDefenseScore = s.finalDefenseScore != null ? s.finalDefenseScore.toFixed(1) : '-';
                     const myScore = s.myScore != null ? s.myScore.totalScore : null;
                     const hasScored = s.hasScored;
-                    
+
                     // 构建分项成绩对象
                     let myScoreItems = {};
                     if (s.myScore) {
@@ -5249,7 +5307,7 @@
                             item6: s.myScore.item6Score
                         };
                     }
-                    
+
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${s.studentNo || ''}</td>
@@ -5278,13 +5336,13 @@
                 showAlert('error', error.message || '加载小组学生失败');
             }
         }
-        
+
         // 打开教师打分模态框
         function openTeacherScoringModal(studentId, studentNo, studentName, defenseType, title, myScoreItems) {
             // 设置学生信息
             document.getElementById('ts-modal-student-id').value = studentId;
             document.getElementById('ts-modal-defense-type').value = defenseType;
-            
+
             const defenseTypeText = defenseType === 'PAPER' ? '论文' : '设计';
             document.getElementById('ts-modal-student-info').innerHTML = `
                 <div class="alert alert-light">
@@ -5293,15 +5351,15 @@
                     <br><strong>题目：</strong>${title}
                 </div>
             `;
-            
+
             // 根据答辩类型显示不同的评分项
             const paperItems = document.getElementById('ts-paper-items');
             const designItems = document.getElementById('ts-design-items');
-            
+
             if (defenseType === 'PAPER') {
                 paperItems.style.display = 'block';
                 designItems.style.display = 'none';
-                
+
                 // 清空或填充已有分数
                 document.getElementById('ts-item1').value = myScoreItems && myScoreItems.item1 != null ? myScoreItems.item1 : '';
                 document.getElementById('ts-item2').value = myScoreItems && myScoreItems.item2 != null ? myScoreItems.item2 : '';
@@ -5309,7 +5367,7 @@
             } else {
                 paperItems.style.display = 'none';
                 designItems.style.display = 'block';
-                
+
                 // 清空或填充已有分数
                 document.getElementById('ts-d-item1').value = myScoreItems && myScoreItems.item1 != null ? myScoreItems.item1 : '';
                 document.getElementById('ts-d-item2').value = myScoreItems && myScoreItems.item2 != null ? myScoreItems.item2 : '';
@@ -5318,26 +5376,26 @@
                 document.getElementById('ts-d-item5').value = myScoreItems && myScoreItems.item5 != null ? myScoreItems.item5 : '';
                 document.getElementById('ts-d-item6').value = myScoreItems && myScoreItems.item6 != null ? myScoreItems.item6 : '';
             }
-            
+
             // 计算总分
             updateTeacherScoreTotal();
-            
+
             // 绑定输入事件
             document.querySelectorAll('.ts-paper-item, .ts-design-item').forEach(input => {
                 input.removeEventListener('input', updateTeacherScoreTotal);
                 input.addEventListener('input', updateTeacherScoreTotal);
             });
-            
+
             // 显示模态框
             const modal = new bootstrap.Modal(document.getElementById('teacherScoringModal'));
             modal.show();
         }
-        
+
         // 更新教师打分总分
         function updateTeacherScoreTotal() {
             const defenseType = document.getElementById('ts-modal-defense-type').value;
             let total = 0;
-            
+
             if (defenseType === 'PAPER') {
                 const item1 = parseInt(document.getElementById('ts-item1').value) || 0;
                 const item2 = parseInt(document.getElementById('ts-item2').value) || 0;
@@ -5352,20 +5410,20 @@
                 const item6 = parseInt(document.getElementById('ts-d-item6').value) || 0;
                 total = item1 + item2 + item3 + item4 + item5 + item6;
             }
-            
+
             document.getElementById('ts-total-score').value = total;
         }
-        
+
         // 提交教师打分
         async function submitTeacherScore() {
             const studentId = document.getElementById('ts-modal-student-id').value;
             const defenseType = document.getElementById('ts-modal-defense-type').value;
             const totalScore = parseInt(document.getElementById('ts-total-score').value) || 0;
-            
+
             let params = new URLSearchParams();
             params.append('studentId', studentId);
             params.append('totalScore', totalScore);
-            
+
             if (defenseType === 'PAPER') {
                 params.append('item1', document.getElementById('ts-item1').value || 0);
                 params.append('item2', document.getElementById('ts-item2').value || 0);
@@ -5378,7 +5436,7 @@
                 params.append('item5', document.getElementById('ts-d-item5').value || 0);
                 params.append('item6', document.getElementById('ts-d-item6').value || 0);
             }
-            
+
             try {
                 const response = await fetch('/defense/score/teacher/group/score', {
                     method: 'POST',
@@ -5386,7 +5444,7 @@
                     body: params.toString()
                 });
                 const result = await response.text();
-                
+
                 if (result === 'success') {
                     showAlert('success', '打分成功！');
                     bootstrap.Modal.getInstance(document.getElementById('teacherScoringModal')).hide();
@@ -5399,36 +5457,36 @@
                 showAlert('error', '打分失败，请重试');
             }
         }
-        
+
         // ==================== 大组答辩功能 ====================
-        
+
         // 加载大组答辩候选人
         async function loadLargeGroupCandidates() {
             const tbody = document.getElementById('lg-candidate-list');
             tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">加载中...</td></tr>';
-            
+
             try {
                 const response = await fetch('/defense/score/largegroup/candidates');
                 if (!response.ok) throw new Error('HTTP错误: ' + response.status);
                 const data = await response.json();
                 console.log('大组答辩候选人数据:', data);
-                
+
                 // 检查是否有错误响应
                 if (data.error) {
                     tbody.innerHTML = `<tr><td colspan="9" class="text-center text-warning">${data.error}</td></tr>`;
                     return;
                 }
-                
+
                 // 显示信息
                 document.getElementById('lg-teacher-info').textContent = data.teacherName ? `教师：${data.teacherName}` : '';
                 document.getElementById('lg-year-info').textContent = data.year ? `${data.year}年` : '';
-                
+
                 const candidates = data.candidates || [];
                 if (candidates.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">暂无大组答辩候选人（需要先完成小组打分）</td></tr>';
                     return;
                 }
-                
+
                 tbody.innerHTML = '';
                 candidates.forEach(c => {
                     const defenseTypeText = c.defenseType === 'PAPER' ? '论文' : '设计';
@@ -5439,7 +5497,7 @@
                     const lgAvgScore = c.largeGroupAvgScore != null ? c.largeGroupAvgScore.toFixed(1) : '-';
                     const adjustmentFactor = c.adjustmentFactor != null ? c.adjustmentFactor.toFixed(3) : '-';
                     const hasScored = c.myLargeGroupScore != null;
-                    
+
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${c.groupName || ''}</td>
@@ -5467,11 +5525,11 @@
                 showAlert('error', error.message || '加载大组答辩候选人失败');
             }
         }
-        
+
         // 打开大组答辩打分模态框
         function openLargeGroupScoringModal(studentId, studentNo, studentName, groupName, groupAvgScore, myScore) {
             document.getElementById('lg-modal-student-id').value = studentId;
-            
+
             document.getElementById('lg-modal-student-info').innerHTML = `
                 <div class="alert alert-light">
                     <strong>学生：</strong>${studentName} (${studentNo})<br>
@@ -5479,23 +5537,23 @@
                     <strong>小组平均分：</strong>${groupAvgScore != null ? groupAvgScore : '-'}
                 </div>
             `;
-            
+
             document.getElementById('lg-score').value = myScore != null ? myScore : '';
-            
+
             const modal = new bootstrap.Modal(document.getElementById('largeGroupScoringModal'));
             modal.show();
         }
-        
+
         // 提交大组答辩打分
         async function submitLargeGroupScore() {
             const studentId = document.getElementById('lg-modal-student-id').value;
             const score = parseInt(document.getElementById('lg-score').value);
-            
+
             if (isNaN(score) || score < 0 || score > 100) {
                 showAlert('error', '请输入0-100的有效分数');
                 return;
             }
-            
+
             try {
                 const response = await fetch('/defense/score/largegroup/save', {
                     method: 'POST',
@@ -5503,7 +5561,7 @@
                     body: `studentId=${studentId}&score=${score}`
                 });
                 const result = await response.text();
-                
+
                 if (result === 'success') {
                     showAlert('success', '大组答辩打分成功！');
                     bootstrap.Modal.getInstance(document.getElementById('largeGroupScoringModal')).hide();
