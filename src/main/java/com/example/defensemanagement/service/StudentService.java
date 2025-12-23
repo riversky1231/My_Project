@@ -61,4 +61,9 @@ public interface StudentService {
      * 根据年份查找所有学生（超级管理员使用）
      */
     List<Student> findByYear(Integer year);
+    
+    /**
+     * 根据评阅人ID和年份获取学生列表
+     */
+    List<Student> getStudentsByReviewer(Long teacherId, Integer year);
 }

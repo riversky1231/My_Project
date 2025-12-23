@@ -26,6 +26,17 @@
         WHERE student_id = #{studentId} AND year = #{year}
     </select>
 
+    <select id="findByStudentIdsAndYear" resultMap="StudentFinalScoreMap">
+        SELECT * FROM student_final_score
+        WHERE year = #{year}
+        <if test="studentIds != null and studentIds.size() > 0">
+            AND student_id IN
+            <foreach collection="studentIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+
     <insert id="insert" parameterType="com.example.defensemanagement.entity.StudentFinalScore" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO student_final_score
         (student_id, year, advisor_score, reviewer_score, final_defense_score,

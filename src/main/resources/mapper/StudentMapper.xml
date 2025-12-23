@@ -93,6 +93,18 @@
         WHERE s.advisor_teacher_id = #{advisorId} AND s.defense_year = #{year}
     </select>
 
+    <select id="findByReviewerIdAndYear" resultMap="StudentResultMap">
+        SELECT s.*,
+               a.id as advisor_id, a.teacher_no as advisor_teacher_no, a.name as advisor_name, a.title as advisor_title,
+               r.id as reviewer_id, r.teacher_no as reviewer_teacher_no, r.name as reviewer_name, r.title as reviewer_title,
+               g.id as group_id, g.name as group_name
+        FROM t_student s
+        LEFT JOIN teacher a ON s.advisor_teacher_id = a.id
+        LEFT JOIN teacher r ON s.reviewer_teacher_id = r.id
+        LEFT JOIN defense_group g ON s.defense_group_id = g.id
+        WHERE s.reviewer_teacher_id = #{reviewerId} AND s.defense_year = #{year}
+    </select>
+
     <select id="findByDefenseGroupId" resultMap="StudentResultMap">
         SELECT s.*,
                a.id as advisor_id, a.teacher_no as advisor_teacher_no, a.name as advisor_name, a.title as advisor_title,

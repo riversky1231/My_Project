@@ -4,11 +4,14 @@ import com.example.defensemanagement.entity.Student;
 import com.example.defensemanagement.entity.User;
 import com.example.defensemanagement.entity.Teacher;
 import com.example.defensemanagement.entity.DefenseGroup;
+import com.example.defensemanagement.entity.StudentFinalScore;
 import com.example.defensemanagement.service.AuthService;
 import com.example.defensemanagement.service.StudentService;
 import com.example.defensemanagement.service.ConfigService;
+import com.example.defensemanagement.service.ScoreService;
 import com.example.defensemanagement.mapper.DefenseGroupMapper;
 import com.example.defensemanagement.mapper.TeacherMapper;
+import com.example.defensemanagement.mapper.StudentFinalScoreMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +20,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpSession;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/department/student")
@@ -33,6 +40,12 @@ public class StudentController {
     
     @Autowired
     private TeacherMapper teacherMapper;
+    
+    @Autowired
+    private StudentFinalScoreMapper studentFinalScoreMapper;
+    
+    @Autowired
+    private ScoreService scoreService;
 
     // 检查院系管理员或超级管理员权限的辅助方法
     private String checkDeptAdmin(HttpSession session) {
@@ -282,5 +295,344 @@ public class StudentController {
         } catch (Exception e) {
             return "error:" + e.getMessage();
         }
+    }
+    
+    // ======================= 教师专用接口 =======================
+    
+    /**
+     * 从 Session 中获取当前教师
+     */
+    private Teacher getTeacherFromSession(HttpSession session) {
+        // 先尝试从 session 获取教师
+        Teacher teacher = (Teacher) session.getAttribute("currentTeacher");
+        if (teacher != null) {
+            return teacher;
+        }
+        
+        // 如果是 User 登录，检查是否是教师角色
+        User user = (User) session.getAttribute("currentUser");
+        if (user != null && user.getRole() != null) {
+            String roleName = user.getRole().getName();
+            if ("TEACHER".equals(roleName) || "DEFENSE_LEADER".equals(roleName)) {
+                // 通过 user_id 查找关联的教师记录
+                teacher = teacherMapper.findByUserId(user.getId());
+                if (teacher != null) {
+                    return teacher;
+                }
+                // 如果通过 userId 找不到，尝试通过用户名（假设用户名是教师工号）
+                teacher = teacherMapper.findByTeacherNo(user.getUsername());
+                return teacher;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * 获取教师指导的学生列表（含成绩信息）
+     * GET /department/student/teacher/advised
+     */
+    @GetMapping("/teacher/advised")
+    @ResponseBody
+    public Map<String, Object> getAdvisedStudentsWithScores(HttpSession session) {
+        Map<String, Object> result = new HashMap<>();
+        
+        Teacher teacher = getTeacherFromSession(session);
+        if (teacher == null) {
+            result.put("error", "请先登录教师账号");
+            return result;
+        }
+        
+        Integer currentYear = configService.getCurrentDefenseYear();
+        if (currentYear == null) {
+            result.put("error", "请先设置当前答辩年份");
+            return result;
+        }
+        
+        // 获取指导的学生列表
+        List<Student> students = studentService.getStudentsByAdvisor(teacher.getId(), currentYear);
+        
+        // 获取学生成绩信息
+        List<Map<String, Object>> studentList = new ArrayList<>();
+        if (students != null) {
+            List<Long> studentIds = students.stream().map(Student::getId).collect(Collectors.toList());
+            List<StudentFinalScore> scores = studentIds.isEmpty() ? new ArrayList<>() : 
+                studentFinalScoreMapper.findByStudentIdsAndYear(studentIds, currentYear);
+            Map<Long, StudentFinalScore> scoreMap = scores.stream()
+                .collect(Collectors.toMap(StudentFinalScore::getStudentId, s -> s));
+            
+            for (Student s : students) {
+                Map<String, Object> info = new HashMap<>();
+                info.put("id", s.getId());
+                info.put("studentNo", s.getStudentNo());
+                info.put("name", s.getName());
+                info.put("classInfo", s.getClassInfo());
+                info.put("defenseType", s.getDefenseType());
+                info.put("title", s.getTitle());
+                info.put("defenseYear", s.getDefenseYear());
+                info.put("advisorTeacherId", s.getAdvisorTeacherId());
+                info.put("reviewerTeacherId", s.getReviewerTeacherId());
+                
+                // 设置评阅教师信息
+                if (s.getReviewer() != null) {
+                    info.put("reviewerName", s.getReviewer().getName());
+                    info.put("reviewerTeacherNo", s.getReviewer().getTeacherNo());
+                } else {
+                    info.put("reviewerName", null);
+                    info.put("reviewerTeacherNo", null);
+                }
+                
+                // 设置答辩小组信息
+                info.put("defenseGroupId", s.getDefenseGroupId());
+                if (s.getDefenseGroup() != null) {
+                    info.put("defenseGroupName", s.getDefenseGroup().getName());
+                } else {
+                    info.put("defenseGroupName", null);
+                }
+                
+                // 设置成绩信息
+                StudentFinalScore score = scoreMap.get(s.getId());
+                if (score != null) {
+                    info.put("advisorScore", score.getAdvisorScore());
+                    info.put("reviewerScore", score.getReviewerScore());
+                    info.put("finalDefenseScore", score.getFinalDefenseScore());
+                    info.put("totalGrade", score.getTotalGrade());
+                } else {
+                    info.put("advisorScore", null);
+                    info.put("reviewerScore", null);
+                    info.put("finalDefenseScore", null);
+                    info.put("totalGrade", null);
+                }
+                
+                studentList.add(info);
+            }
+        }
+        
+        result.put("students", studentList);
+        result.put("teacherId", teacher.getId());
+        result.put("teacherName", teacher.getName());
+        result.put("year", currentYear);
+        return result;
+    }
+    
+    /**
+     * 教师设置指导教师评定成绩
+     * POST /department/student/teacher/setAdvisorScore
+     */
+    @PostMapping("/teacher/setAdvisorScore")
+    @ResponseBody
+    public String setAdvisorScoreByTeacher(@RequestParam Long studentId, @RequestParam Integer score, HttpSession session) {
+        Teacher teacher = getTeacherFromSession(session);
+        if (teacher == null) {
+            return "error:请先登录教师账号";
+        }
+        
+        Integer currentYear = configService.getCurrentDefenseYear();
+        if (currentYear == null) {
+            return "error:请先设置当前答辩年份";
+        }
+        
+        // 验证该学生是否是当前教师指导的
+        Student student = studentService.findById(studentId);
+        if (student == null) {
+            return "error:学生不存在";
+        }
+        if (student.getAdvisorTeacherId() == null || !student.getAdvisorTeacherId().equals(teacher.getId())) {
+            return "error:您不是该学生的指导教师";
+        }
+        
+        try {
+            scoreService.setAdvisorScore(studentId, currentYear, score);
+            return "success";
+        } catch (Exception e) {
+            return "error:" + e.getMessage();
+        }
+    }
+    
+    /**
+     * 教师为学生指定评阅人
+     * POST /department/student/teacher/assignReviewer
+     */
+    @PostMapping("/teacher/assignReviewer")
+    @ResponseBody
+    public String assignReviewerByTeacher(@RequestParam Long studentId, @RequestParam Long reviewerId, HttpSession session) {
+        Teacher teacher = getTeacherFromSession(session);
+        if (teacher == null) {
+            return "error:请先登录教师账号";
+        }
+        
+        // 验证该学生是否是当前教师指导的
+        Student student = studentService.findById(studentId);
+        if (student == null) {
+            return "error:学生不存在";
+        }
+        if (student.getAdvisorTeacherId() == null || !student.getAdvisorTeacherId().equals(teacher.getId())) {
+            return "error:您不是该学生的指导教师";
+        }
+        
+        try {
+            studentService.assignReviewer(studentId, reviewerId);
+            return "success";
+        } catch (Exception e) {
+            return "error:" + e.getMessage();
+        }
+    }
+    
+    /**
+     * 获取当前教师作为评阅人的学生列表（含成绩信息）
+     * GET /department/student/teacher/reviewed
+     */
+    @GetMapping("/teacher/reviewed")
+    @ResponseBody
+    public Map<String, Object> getReviewedStudentsWithScores(HttpSession session) {
+        Map<String, Object> result = new HashMap<>();
+        
+        Teacher teacher = getTeacherFromSession(session);
+        if (teacher == null) {
+            result.put("error", "请先登录教师账号");
+            return result;
+        }
+        
+        Integer currentYear = configService.getCurrentDefenseYear();
+        if (currentYear == null) {
+            result.put("error", "请先设置当前答辩年份");
+            return result;
+        }
+        
+        // 获取作为评阅人的学生列表
+        List<Student> students = studentService.getStudentsByReviewer(teacher.getId(), currentYear);
+        
+        // 获取学生成绩信息
+        List<Map<String, Object>> studentList = new ArrayList<>();
+        if (students != null) {
+            List<Long> studentIds = students.stream().map(Student::getId).collect(Collectors.toList());
+            List<StudentFinalScore> scores = studentIds.isEmpty() ? new ArrayList<>() : 
+                studentFinalScoreMapper.findByStudentIdsAndYear(studentIds, currentYear);
+            Map<Long, StudentFinalScore> scoreMap = scores.stream()
+                .collect(Collectors.toMap(StudentFinalScore::getStudentId, s -> s));
+            
+            for (Student s : students) {
+                Map<String, Object> info = new HashMap<>();
+                info.put("id", s.getId());
+                info.put("studentNo", s.getStudentNo());
+                info.put("name", s.getName());
+                info.put("classInfo", s.getClassInfo());
+                info.put("defenseType", s.getDefenseType());
+                info.put("title", s.getTitle());
+                info.put("defenseYear", s.getDefenseYear());
+                info.put("advisorTeacherId", s.getAdvisorTeacherId());
+                info.put("reviewerTeacherId", s.getReviewerTeacherId());
+                
+                // 设置指导教师信息
+                if (s.getAdvisor() != null) {
+                    info.put("advisorName", s.getAdvisor().getName());
+                    info.put("advisorTeacherNo", s.getAdvisor().getTeacherNo());
+                } else {
+                    info.put("advisorName", null);
+                    info.put("advisorTeacherNo", null);
+                }
+                
+                // 设置答辩小组信息
+                info.put("defenseGroupId", s.getDefenseGroupId());
+                if (s.getDefenseGroup() != null) {
+                    info.put("defenseGroupName", s.getDefenseGroup().getName());
+                } else {
+                    info.put("defenseGroupName", null);
+                }
+                
+                // 设置成绩信息
+                StudentFinalScore score = scoreMap.get(s.getId());
+                if (score != null) {
+                    info.put("advisorScore", score.getAdvisorScore());
+                    info.put("reviewerScore", score.getReviewerScore());
+                    info.put("finalDefenseScore", score.getFinalDefenseScore());
+                    info.put("totalGrade", score.getTotalGrade());
+                } else {
+                    info.put("advisorScore", null);
+                    info.put("reviewerScore", null);
+                    info.put("finalDefenseScore", null);
+                    info.put("totalGrade", null);
+                }
+                
+                studentList.add(info);
+            }
+        }
+        
+        result.put("students", studentList);
+        result.put("teacherId", teacher.getId());
+        result.put("teacherName", teacher.getName());
+        result.put("year", currentYear);
+        return result;
+    }
+    
+    /**
+     * 教师设置评阅人评定成绩
+     * POST /department/student/teacher/setReviewerScore
+     */
+    @PostMapping("/teacher/setReviewerScore")
+    @ResponseBody
+    public String setReviewerScoreByTeacher(@RequestParam Long studentId, @RequestParam Integer score, HttpSession session) {
+        Teacher teacher = getTeacherFromSession(session);
+        if (teacher == null) {
+            return "error:请先登录教师账号";
+        }
+        
+        Integer currentYear = configService.getCurrentDefenseYear();
+        if (currentYear == null) {
+            return "error:请先设置当前答辩年份";
+        }
+        
+        // 验证该学生是否是当前教师评阅的
+        Student student = studentService.findById(studentId);
+        if (student == null) {
+            return "error:学生不存在";
+        }
+        if (student.getReviewerTeacherId() == null || !student.getReviewerTeacherId().equals(teacher.getId())) {
+            return "error:您不是该学生的评阅人";
+        }
+        
+        try {
+            scoreService.setReviewerScore(studentId, currentYear, score);
+            return "success";
+        } catch (Exception e) {
+            return "error:" + e.getMessage();
+        }
+    }
+    
+    /**
+     * 获取可选的评阅教师列表（所有教师，排除自己）
+     * GET /department/student/teacher/reviewerCandidates
+     */
+    @GetMapping("/teacher/reviewerCandidates")
+    @ResponseBody
+    public List<Map<String, Object>> getReviewerCandidates(HttpSession session) {
+        Teacher currentTeacher = getTeacherFromSession(session);
+        List<Map<String, Object>> candidates = new ArrayList<>();
+        
+        User currentUser = (User) session.getAttribute("currentUser");
+        Long departmentId = null;
+        if (currentTeacher != null) {
+            departmentId = currentTeacher.getDepartmentId();
+        } else if (currentUser != null) {
+            departmentId = currentUser.getDepartmentId();
+        }
+        
+        // 获取同院系的教师列表
+        List<Teacher> teachers = teacherMapper.findByDepartmentId(departmentId);
+        if (teachers != null) {
+            for (Teacher t : teachers) {
+                // 排除自己
+                if (currentTeacher != null && t.getId().equals(currentTeacher.getId())) {
+                    continue;
+                }
+                Map<String, Object> info = new HashMap<>();
+                info.put("id", t.getId());
+                info.put("teacherNo", t.getTeacherNo());
+                info.put("name", t.getName());
+                info.put("title", t.getTitle());
+                candidates.add(info);
+            }
+        }
+        
+        return candidates;
     }
 }

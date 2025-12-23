@@ -86,6 +86,22 @@ public class AuthInterceptor implements HandlerInterceptor {
         if (path.startsWith("/department/")) {
             // 学生管理：超级管理员、院系管理员可以管理，教师可以查看自己指导的学生
             if (path.startsWith("/department/student")) {
+                // 教师专用接口：允许教师访问
+                if (path.startsWith("/department/student/teacher/")) {
+                    // 检查是否是教师（通过 currentTeacher 或 currentUser 的角色）
+                    if (currentTeacher != null) {
+                        return true;
+                    }
+                    if (currentUser != null && currentUser.getRole() != null) {
+                        String roleName = currentUser.getRole().getName();
+                        if ("TEACHER".equals(roleName) || "DEFENSE_LEADER".equals(roleName)) {
+                            return true;
+                        }
+                    }
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "需要教师权限");
+                    return false;
+                }
+                
                 // 允许教师访问（查看自己指导的学生）
                 if (currentTeacher != null) {
                     // 教师可以访问 /list 接口查看自己指导的学生，以及获取当前年份和小组列表

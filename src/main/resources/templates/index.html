@@ -236,17 +236,19 @@
         <div class="logo">答辩管理</div>
         <nav id="sidebar-nav" class="nav flex-column">
             <a class="nav-link active" href="javascript:void(0);" onclick="showView('dashboard-view', this)"><i
-                    class="bi bi-speedometer2"></i> 工作台</a>
+                    class="bi bi-speedometer2"></i> 答辩总览</a>
             <a class="nav-link" id="nav-group-management" href="javascript:void(0);"
                 onclick="showView('group-management-view', this)"><i class="bi bi-people"></i> 小组管理</a>
             <a class="nav-link" href="javascript:void(0);" onclick="showView('student-management-view', this)"><i
                     class="bi bi-person-badge"></i> 学生管理</a>
+            <a class="nav-link" id="nav-review-management" href="javascript:void(0);"
+                onclick="showView('review-management-view', this)"><i class="bi bi-journal-check"></i> 评阅管理</a>
             <a class="nav-link" id="nav-user-management" href="javascript:void(0);"
                 onclick="showView('user-management-view', this)"><i class="bi bi-person-circle"></i> 用户管理</a>
             <a class="nav-link" id="nav-department-management" href="javascript:void(0);"
                 onclick="showView('department-management-view', this)"><i class="bi bi-building"></i> 院系管理</a>
             <a class="nav-link" id="nav-score-view" href="javascript:void(0);" onclick="showView('score-view', this)"><i
-                    class="bi bi-clipboard-check"></i> 打分/评阅</a>
+                    class="bi bi-chat-left-text"></i> 评语管理</a>
             <a class="nav-link" id="nav-teacher-scoring" href="javascript:void(0);"
                 onclick="showView('teacher-scoring-view', this)"><i class="bi bi-pencil-square"></i> 小组打分</a>
             <a class="nav-link" id="nav-large-group-defense" href="javascript:void(0);"
@@ -296,7 +298,7 @@
         <!-- Dashboard View -->
         <div id="dashboard-view" class="view-container">
             <header class="header">
-                <h1>工作台</h1>
+                <h1>答辩总览</h1>
                 <div class="d-flex align-items-center">
                     <div class="me-3">
                         <span class="text-muted">欢迎，</span>
@@ -316,20 +318,6 @@
                         <div class="label">小组总数</div>
                     </div>
                 </div>
-                <div class="summary-card">
-                    <div class="icon" style="background: #0ea5e9;"><i class="bi bi-clipboard-data"></i></div>
-                    <div>
-                        <div class="value" id="avg-score">0</div>
-                        <div class="label">平均得分</div>
-                    </div>
-                </div>
-                <div class="summary-card">
-                    <div class="icon" style="background: #10b981;"><i class="bi bi-trophy"></i></div>
-                    <div>
-                        <div class="value" id="max-score">0</div>
-                        <div class="label">最高分</div>
-                    </div>
-                </div>
             </div>
 
             <div class="main-grid">
@@ -347,26 +335,14 @@
                                     th:text="${'学生数: ' + (group.members != null ? group.members.size() : 0)}"></small>
                             </div>
                             <div class="d-flex align-items-center">
-                                <div class="input-group input-group-sm" style="width: 130px;">
-                                    <input type="number" class="form-control score-input" th:value="${group.score}"
-                                        min="0" max="100">
-                                    <button class="btn btn-outline-secondary" type="button"
-                                        onclick="updateScore(this)"><i class="bi bi-check-lg"></i></button>
-                                </div>
-                                <button class="btn btn-sm btn-outline-primary ms-2" data-bs-toggle="modal"
+                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
                                     data-bs-target="#membersModal" th:data-group-id="${group.id}"><i
-                                        class="bi bi-people"></i></button>
+                                        class="bi bi-people"></i> 查看成员</button>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="right-column">
-                    <div class="module">
-                        <div class="module-header">
-                            <h4><i class="bi bi-graph-up"></i> 小组评分</h4>
-                        </div>
-                        <div class="chart-container"><canvas id="scoreChart"></canvas></div>
-                    </div>
                     <div class="module">
                         <div class="module-header">
                             <h4><i class="bi bi-chat-left-text"></i> 学生评语管理</h4>
@@ -506,6 +482,47 @@
                             </tr>
                         </thead>
                         <tbody id="student-list">
+                            <tr>
+                                <td colspan="9" class="text-center text-muted">加载中...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Review Management View (教师评阅管理) -->
+        <div id="review-management-view" class="view-container" style="display: none;">
+            <header class="header">
+                <h1><i class="bi bi-journal-check"></i> 评阅管理</h1>
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-primary me-2" id="review-teacher-info"></span>
+                    <button class="btn btn-outline-primary" onclick="loadReviewedStudents()">
+                        <i class="bi bi-arrow-clockwise"></i> 刷新
+                    </button>
+                </div>
+            </header>
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i>
+                <strong>说明：</strong>这里显示您作为评阅人的学生列表。您可以为这些学生打评阅人评定成绩。
+            </div>
+            <div class="module">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>学号</th>
+                                <th>姓名</th>
+                                <th>班级</th>
+                                <th>类型</th>
+                                <th>题目</th>
+                                <th>指导教师</th>
+                                <th>指导教师评定成绩</th>
+                                <th>评阅人评定成绩</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="review-student-list">
                             <tr>
                                 <td colspan="9" class="text-center text-muted">加载中...</td>
                             </tr>
@@ -655,29 +672,8 @@
         <!-- Score & Evaluate View -->
         <div id="score-view" class="view-container" style="display: none;">
             <header class="header">
-                <h1>打分与评阅</h1>
+                <h1>评语管理</h1>
             </header>
-            <div class="module mb-3">
-                <div class="module-header">
-                    <h4><i class="bi bi-journal-check"></i> 导师/评阅成绩</h4>
-                </div>
-                <div class="row g-2">
-                    <div class="col-md-3"><input class="form-control" id="advisor-student-id" placeholder="学生ID"></div>
-                    <div class="col-md-2"><input class="form-control" id="advisor-year" placeholder="年份"></div>
-                    <div class="col-md-2"><input class="form-control" id="advisor-score" placeholder="导师成绩"></div>
-                    <div class="col-md-2">
-                        <button class="btn btn-outline-primary w-100" onclick="setAdvisor()">保存导师成绩</button>
-                    </div>
-                </div>
-                <div class="row g-2 mt-2">
-                    <div class="col-md-3"><input class="form-control" id="reviewer-student-id" placeholder="学生ID"></div>
-                    <div class="col-md-2"><input class="form-control" id="reviewer-year" placeholder="年份"></div>
-                    <div class="col-md-2"><input class="form-control" id="reviewer-score" placeholder="评阅成绩"></div>
-                    <div class="col-md-2">
-                        <button class="btn btn-outline-primary w-100" onclick="setReviewer()">保存评阅成绩</button>
-                    </div>
-                </div>
-            </div>
 
             <div class="module">
                 <div class="module-header">
@@ -1762,7 +1758,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        let scoreChart;
 
         document.addEventListener('DOMContentLoaded', function () {
             // 显示登录成功提示
@@ -1789,7 +1784,7 @@
                     }
                 }
 
-                // 打分/评阅菜单：只有教师和答辩组长可以看到
+                // 评语管理菜单：只有教师和答辩组长可以看到
                 const navScoreView = document.getElementById('nav-score-view');
                 if (navScoreView) {
                     const isTeacher = userType === 'TEACHER' || userRole === 'TEACHER' || userRole === 'DEFENSE_LEADER';
@@ -1867,6 +1862,16 @@
                         navLargeGroupDefense.style.display = 'none';
                     }
                 }
+
+                // 评阅管理菜单：只有教师和答辩组长可以看到
+                const navReviewManagement = document.getElementById('nav-review-management');
+                if (navReviewManagement) {
+                    if (isTeacherOrLeader) {
+                        navReviewManagement.style.display = '';
+                    } else {
+                        navReviewManagement.style.display = 'none';
+                    }
+                }
             }
 
             // Drag and Drop
@@ -1909,7 +1914,6 @@
             // Optimized Initial Load
             const initialData = getGroupData();
             updateSummaryCards(initialData);
-            renderChart(initialData);
         });
 
         function showLoginSuccessAlert() {
@@ -1947,89 +1951,13 @@
             const groups = document.querySelectorAll('.group-item');
             return Array.from(groups).map(g => ({
                 id: g.dataset.id,
-                name: g.dataset.name,
-                score: parseInt(g.dataset.score, 10) || 0
+                name: g.dataset.name
             }));
         }
 
         function updateSummaryCards(data) {
-            if (!data || data.length === 0) {
-                document.getElementById('total-groups').textContent = 0;
-                document.getElementById('avg-score').textContent = 'N/A';
-                document.getElementById('max-score').textContent = 'N/A';
-                return;
-            }
-
-            const scores = data.map(g => g.score);
-            const totalGroups = data.length;
-            const totalScore = scores.reduce((sum, score) => sum + score, 0);
-            const avgScore = (totalScore / totalGroups).toFixed(1);
-            const maxScore = Math.max(...scores);
-
+            const totalGroups = data ? data.length : 0;
             document.getElementById('total-groups').textContent = totalGroups;
-            document.getElementById('avg-score').textContent = avgScore;
-            document.getElementById('max-score').textContent = maxScore;
-        }
-
-        function renderChart(data) {
-            const labels = data.map(g => g.name);
-            const scores = data.map(g => g.score);
-
-            const ctx = document.getElementById('scoreChart').getContext('2d');
-            if (scoreChart) {
-                scoreChart.destroy();
-            }
-            scoreChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: '小组得分',
-                        data: scores,
-                        borderColor: 'rgba(79, 70, 229, 1)',
-                        backgroundColor: 'rgba(99, 102, 241, 0.2)',
-                        fill: true,
-                        tension: 0.4,
-                        pointBackgroundColor: 'rgba(79, 70, 229, 1)',
-                        pointBorderColor: '#fff',
-                        pointHoverRadius: 7,
-                        pointHoverBackgroundColor: '#fff',
-                        pointHoverBorderColor: 'rgba(79, 70, 229, 1)'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true, max: 100 } },
-                    plugins: { legend: { display: false } }
-                }
-            });
-        }
-
-        function updateScore(buttonElement) {
-            const groupItem = buttonElement.closest('.group-item');
-            const inputElement = groupItem.querySelector('.score-input');
-            const groupId = groupItem.dataset.id;
-            const score = inputElement.value;
-
-            buttonElement.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
-            buttonElement.disabled = true;
-
-            fetch(`/group/${groupId}/score?score=${score}`, {
-                method: 'POST'
-            }).then(response => {
-                if (response.ok) {
-                    groupItem.dataset.score = score;
-                    const updatedData = getGroupData();
-                    updateSummaryCards(updatedData);
-                    renderChart(updatedData);
-                } else {
-                    showAlert('error', '分数更新失败!');
-                }
-            }).finally(() => {
-                buttonElement.innerHTML = '<i class="bi bi-check-lg"></i>';
-                buttonElement.disabled = false;
-            });
         }
 
         function showView(viewId, clickedLink) {
@@ -2100,12 +2028,12 @@
                 loadScoreRecords();
             }
             if (viewId === 'score-view') {
-                // 打分/评阅页面加载（教师和答辩组长）
+                // 评语管理页面加载（教师和答辩组长）
                 // 可以在这里预加载当前年份等信息
                 loadCurrentYearForScore();
             }
             if (viewId === 'dashboard-view') {
-                // 工作台页面加载
+                // 答辩总览页面加载
                 // 可以在这里加载当前年份
                 loadCurrentYearForDashboard();
             }
@@ -2128,6 +2056,10 @@
             if (viewId === 'large-group-defense-view') {
                 // 大组答辩页面加载
                 loadLargeGroupCandidates();
+            }
+            if (viewId === 'review-management-view') {
+                // 评阅管理页面加载
+                loadReviewedStudents();
             }
         }
 
@@ -2643,6 +2575,80 @@
 
         // --- Student Management Functions ---
         async function loadStudents() {
+            // 根据用户角色判断加载哪种学生列表
+            const userInfoDiv = document.querySelector('.user-info');
+            const userRole = userInfoDiv ? userInfoDiv.dataset.userRole : '';
+            const userType = userInfoDiv ? userInfoDiv.dataset.userType : '';
+            
+            console.log('loadStudents - userRole:', userRole, 'userType:', userType);
+            
+            // 判断是否为教师/答辩组长（非管理员）
+            const isTeacherRole = (userRole === 'TEACHER' || userRole === 'DEFENSE_LEADER' || userType === 'TEACHER');
+            const isAdminRole = (userRole === 'SUPER_ADMIN' || userRole === 'DEPT_ADMIN');
+            
+            if (isTeacherRole && !isAdminRole) {
+                // 教师/答辩组长：显示自己指导的学生，使用教师版表头和功能
+                updateStudentTableHeaderForTeacher();
+                hideAdminStudentButtons();
+                loadAdvisedStudentsForTeacher();
+            } else {
+                // 管理员：显示所有学生
+                updateStudentTableHeaderForAdmin();
+                showAdminStudentButtons();
+                loadStudentsForAdmin();
+            }
+        }
+        
+        // 更新学生管理表头为教师版（显示成绩相关列）
+        function updateStudentTableHeaderForTeacher() {
+            const tableHead = document.querySelector('#student-management-view table thead tr');
+            if (tableHead) {
+                tableHead.innerHTML = `
+                    <th>学号</th>
+                    <th>姓名</th>
+                    <th>班级</th>
+                    <th>类型</th>
+                    <th>题目</th>
+                    <th>指导教师评定成绩</th>
+                    <th>评阅人评定成绩</th>
+                    <th>评阅人</th>
+                    <th>答辩小组</th>
+                `;
+            }
+        }
+        
+        // 更新学生管理表头为管理员版
+        function updateStudentTableHeaderForAdmin() {
+            const tableHead = document.querySelector('#student-management-view table thead tr');
+            if (tableHead) {
+                tableHead.innerHTML = `
+                    <th>学号</th>
+                    <th>姓名</th>
+                    <th>班级</th>
+                    <th>类型</th>
+                    <th>题目</th>
+                    <th>指导教师</th>
+                    <th>评阅教师</th>
+                    <th>答辩小组</th>
+                    <th>操作</th>
+                `;
+            }
+        }
+        
+        // 隐藏管理员专用按钮（添加学生等）
+        function hideAdminStudentButtons() {
+            const addButton = document.querySelector('#student-management-view header .btn-primary');
+            if (addButton) addButton.style.display = 'none';
+        }
+        
+        // 显示管理员专用按钮
+        function showAdminStudentButtons() {
+            const addButton = document.querySelector('#student-management-view header .btn-primary');
+            if (addButton) addButton.style.display = '';
+        }
+        
+        // 管理员加载学生列表
+        async function loadStudentsForAdmin() {
             const keyword = document.getElementById('student-search-input')?.value.trim() || '';
             try {
                 const response = await fetch(`/department/student/list`);
@@ -2658,13 +2664,6 @@
                 }
                 const students = await response.json();
                 console.log('Loaded students:', students);
-                // 调试：打印第一个学生的完整信息
-                if (students && students.length > 0) {
-                    console.log('First student full data:', JSON.stringify(students[0], null, 2));
-                    console.log('First student advisor:', students[0].advisor);
-                    console.log('First student reviewer:', students[0].reviewer);
-                    console.log('First student defenseGroup:', students[0].defenseGroup);
-                }
                 renderStudentTable(students, keyword);
             } catch (error) {
                 console.error('Load students error:', error);
@@ -2931,24 +2930,320 @@
             }
         }
 
+        // ==================== 教师学生管理与评阅功能 ====================
+
+        // 加载教师指导的学生列表（含成绩信息）
+        async function loadAdvisedStudentsForTeacher() {
+            const tbody = document.getElementById('student-list');
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">加载中...</td></tr>';
+
+            try {
+                const response = await fetch('/department/student/teacher/advised');
+                if (!response.ok) throw new Error('HTTP错误: ' + response.status);
+                const data = await response.json();
+                console.log('教师指导学生数据:', data);
+
+                if (data.error) {
+                    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-warning">${data.error}</td></tr>`;
+                    return;
+                }
+
+                const students = data.students || [];
+                if (students.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">您没有指导的学生</td></tr>';
+                    return;
+                }
+
+                renderTeacherStudentTable(students, data.teacherId);
+            } catch (error) {
+                console.error('加载指导学生失败:', error);
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
+            }
+        }
+
+        // 渲染教师学生管理表格（显示成绩、支持打指导教师评定成绩和指定评阅人）
+        function renderTeacherStudentTable(students, teacherId) {
+            const tbody = document.getElementById('student-list');
+            tbody.innerHTML = '';
+
+            students.forEach(s => {
+                const defenseTypeText = s.defenseType === 'PAPER' ? '论文' : '设计';
+                const defenseTypeBadge = s.defenseType === 'PAPER' ? 'bg-info' : 'bg-warning';
+                const advisorScore = s.advisorScore != null ? s.advisorScore : '未评分';
+                const reviewerScore = s.reviewerScore != null ? s.reviewerScore : '未评分';
+                const reviewerInfo = s.reviewerName ? `${s.reviewerName}` : '未指定';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${s.studentNo || ''}</td>
+                    <td><strong>${s.name || ''}</strong></td>
+                    <td>${s.classInfo || ''}</td>
+                    <td><span class="badge ${defenseTypeBadge}">${defenseTypeText}</span></td>
+                    <td>${s.title || ''}</td>
+                    <td>
+                        <span class="badge ${s.advisorScore != null ? 'bg-success' : 'bg-secondary'}">
+                            ${advisorScore}
+                        </span>
+                        <button class="btn btn-sm btn-outline-primary ms-1" onclick="openAdvisorScoreModal(${s.id}, '${s.name}', ${s.advisorScore || 'null'})">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </td>
+                    <td>
+                        <span class="badge ${s.reviewerScore != null ? 'bg-success' : 'bg-secondary'}">
+                            ${reviewerScore}
+                        </span>
+                    </td>
+                    <td>
+                        ${reviewerInfo}
+                        <button class="btn btn-sm btn-outline-info ms-1" onclick="openAssignReviewerModal(${s.id}, '${s.name}', ${s.reviewerTeacherId || 'null'})">
+                            <i class="bi bi-person-plus"></i>
+                        </button>
+                    </td>
+                    <td>
+                        <span class="badge bg-primary">${s.defenseGroupName || '未分配'}</span>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // 加载评阅管理页面（教师作为评阅人的学生列表）
+        async function loadReviewedStudents() {
+            const tbody = document.getElementById('review-student-list');
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">加载中...</td></tr>';
+
+            try {
+                const response = await fetch('/department/student/teacher/reviewed');
+                if (!response.ok) throw new Error('HTTP错误: ' + response.status);
+                const data = await response.json();
+                console.log('教师评阅学生数据:', data);
+
+                if (data.error) {
+                    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-warning">${data.error}</td></tr>`;
+                    return;
+                }
+
+                // 更新页面信息
+                document.getElementById('review-teacher-info').textContent = data.teacherName ? `教师：${data.teacherName}` : '';
+
+                const students = data.students || [];
+                if (students.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">您还没有被指定为任何学生的评阅人</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                students.forEach(s => {
+                    const defenseTypeText = s.defenseType === 'PAPER' ? '论文' : '设计';
+                    const defenseTypeBadge = s.defenseType === 'PAPER' ? 'bg-info' : 'bg-warning';
+                    const advisorScore = s.advisorScore != null ? s.advisorScore : '未评分';
+                    const reviewerScore = s.reviewerScore != null ? s.reviewerScore : '未评分';
+                    const advisorInfo = s.advisorName ? `${s.advisorName}` : '未指定';
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${s.studentNo || ''}</td>
+                        <td><strong>${s.name || ''}</strong></td>
+                        <td>${s.classInfo || ''}</td>
+                        <td><span class="badge ${defenseTypeBadge}">${defenseTypeText}</span></td>
+                        <td>${s.title || ''}</td>
+                        <td>${advisorInfo}</td>
+                        <td><span class="badge ${s.advisorScore != null ? 'bg-success' : 'bg-secondary'}">${advisorScore}</span></td>
+                        <td>
+                            <span class="badge ${s.reviewerScore != null ? 'bg-success' : 'bg-secondary'}">
+                                ${reviewerScore}
+                            </span>
+                            <button class="btn btn-sm btn-outline-primary ms-1" onclick="openReviewerScoreModal(${s.id}, '${s.name}', ${s.reviewerScore || 'null'})">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                        </td>
+                        <td>
+                            <span class="badge bg-primary">${s.defenseGroupName || '未分配'}</span>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('加载评阅学生失败:', error);
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
+            }
+        }
+
+        // 打开指导教师评定成绩模态框
+        function openAdvisorScoreModal(studentId, studentName, currentScore) {
+            const score = prompt(`请输入学生 "${studentName}" 的指导教师评定成绩 (0-100):\n当前成绩: ${currentScore || '未评分'}`, currentScore || '');
+            if (score === null) return; // 用户取消
+            const scoreNum = parseInt(score);
+            if (isNaN(scoreNum) || scoreNum < 0 || scoreNum > 100) {
+                showAlert('warning', '请输入有效的成绩 (0-100)');
+                return;
+            }
+            submitAdvisorScore(studentId, scoreNum);
+        }
+
+        // 提交指导教师评定成绩
+        async function submitAdvisorScore(studentId, score) {
+            try {
+                const params = new URLSearchParams();
+                params.append('studentId', studentId);
+                params.append('score', score);
+
+                const response = await fetch('/department/student/teacher/setAdvisorScore', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: params.toString()
+                });
+                const result = await response.text();
+
+                if (result === 'success') {
+                    showAlert('success', '指导教师评定成绩设置成功！');
+                    loadAdvisedStudentsForTeacher();
+                } else {
+                    showAlert('error', '设置失败: ' + result);
+                }
+            } catch (error) {
+                console.error('设置指导教师成绩失败:', error);
+                showAlert('error', '设置失败，请检查网络连接');
+            }
+        }
+
+        // 打开指定评阅人模态框
+        let reviewerCandidatesCache = null;
+        async function openAssignReviewerModal(studentId, studentName, currentReviewerId) {
+            // 加载可选评阅教师列表
+            if (!reviewerCandidatesCache) {
+                try {
+                    const response = await fetch('/department/student/teacher/reviewerCandidates');
+                    if (response.ok) {
+                        reviewerCandidatesCache = await response.json();
+                    } else {
+                        showAlert('error', '加载评阅教师列表失败');
+                        return;
+                    }
+                } catch (error) {
+                    console.error('加载评阅教师列表失败:', error);
+                    showAlert('error', '加载评阅教师列表失败');
+                    return;
+                }
+            }
+
+            // 构建选择框 HTML
+            let selectHtml = `<select class="form-select" id="reviewer-select-dialog">`;
+            selectHtml += `<option value="">请选择评阅教师</option>`;
+            reviewerCandidatesCache.forEach(t => {
+                const selected = t.id === currentReviewerId ? 'selected' : '';
+                selectHtml += `<option value="${t.id}" ${selected}>${t.teacherNo} - ${t.name} (${t.title || ''})</option>`;
+            });
+            selectHtml += `</select>`;
+
+            // 使用简单的确认框
+            const container = document.createElement('div');
+            container.innerHTML = `
+                <div class="modal fade" id="assignReviewerModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">为学生指定评阅人</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>学生：<strong>${studentName}</strong></p>
+                                <div class="mb-3">
+                                    <label class="form-label">选择评阅教师</label>
+                                    ${selectHtml}
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                <button type="button" class="btn btn-primary" onclick="submitAssignReviewer(${studentId})">确定</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(container);
+
+            const modal = new bootstrap.Modal(document.getElementById('assignReviewerModal'));
+            modal.show();
+
+            // 模态框关闭时移除元素
+            document.getElementById('assignReviewerModal').addEventListener('hidden.bs.modal', function() {
+                container.remove();
+            });
+        }
+
+        // 提交指定评阅人
+        async function submitAssignReviewer(studentId) {
+            const reviewerId = document.getElementById('reviewer-select-dialog').value;
+            if (!reviewerId) {
+                showAlert('warning', '请选择评阅教师');
+                return;
+            }
+
+            try {
+                const params = new URLSearchParams();
+                params.append('studentId', studentId);
+                params.append('reviewerId', reviewerId);
+
+                const response = await fetch('/department/student/teacher/assignReviewer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: params.toString()
+                });
+                const result = await response.text();
+
+                if (result === 'success') {
+                    showAlert('success', '评阅人指定成功！');
+                    bootstrap.Modal.getInstance(document.getElementById('assignReviewerModal')).hide();
+                    loadAdvisedStudentsForTeacher();
+                } else {
+                    showAlert('error', '指定失败: ' + result);
+                }
+            } catch (error) {
+                console.error('指定评阅人失败:', error);
+                showAlert('error', '指定失败，请检查网络连接');
+            }
+        }
+
+        // 打开评阅人评定成绩模态框
+        function openReviewerScoreModal(studentId, studentName, currentScore) {
+            const score = prompt(`请输入学生 "${studentName}" 的评阅人评定成绩 (0-100):\n当前成绩: ${currentScore || '未评分'}`, currentScore || '');
+            if (score === null) return; // 用户取消
+            const scoreNum = parseInt(score);
+            if (isNaN(scoreNum) || scoreNum < 0 || scoreNum > 100) {
+                showAlert('warning', '请输入有效的成绩 (0-100)');
+                return;
+            }
+            submitReviewerScore(studentId, scoreNum);
+        }
+
+        // 提交评阅人评定成绩
+        async function submitReviewerScore(studentId, score) {
+            try {
+                const params = new URLSearchParams();
+                params.append('studentId', studentId);
+                params.append('score', score);
+
+                const response = await fetch('/department/student/teacher/setReviewerScore', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: params.toString()
+                });
+                const result = await response.text();
+
+                if (result === 'success') {
+                    showAlert('success', '评阅人评定成绩设置成功！');
+                    loadReviewedStudents();
+                } else {
+                    showAlert('error', '设置失败: ' + result);
+                }
+            } catch (error) {
+                console.error('设置评阅人成绩失败:', error);
+                showAlert('error', '设置失败，请检查网络连接');
+            }
+        }
+
         // addMember() removed: members are derived from Student records (t_student.defense_group_id)
-
-        // --- Score & Evaluate ---
-        async function setAdvisor() {
-            const studentId = document.getElementById('advisor-student-id').value;
-            const year = document.getElementById('advisor-year').value;
-            const score = document.getElementById('advisor-score').value;
-            if (!studentId || !year || !score) return showAlert('warning', '请填写完整信息');
-            await postForm('/defense/score/advisor/set', { studentId, year, score });
-        }
-
-        async function setReviewer() {
-            const studentId = document.getElementById('reviewer-student-id').value;
-            const year = document.getElementById('reviewer-year').value;
-            const score = document.getElementById('reviewer-score').value;
-            if (!studentId || !year || !score) return showAlert('warning', '请填写完整信息');
-            await postForm('/defense/score/reviewer/set', { studentId, year, score });
-        }
 
         // --- Export ---
         function exportSingle() {
@@ -4399,7 +4694,7 @@
         }
 
         function editStudentComment(studentId, year) {
-            // 切换到打分/评阅页面并加载该学生的评语
+            // 切换到评语管理页面并加载该学生的评语
             const scoreViewLink = document.querySelector('a[onclick*="score-view"]');
             if (scoreViewLink) {
                 scoreViewLink.click();

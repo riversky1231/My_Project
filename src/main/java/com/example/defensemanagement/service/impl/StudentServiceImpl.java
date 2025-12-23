@@ -60,6 +60,14 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
+    public List<Student> getStudentsByReviewer(Long teacherId, Integer year) {
+        if (year == null) {
+            year = LocalDate.now().getYear();
+        }
+        return studentMapper.findByReviewerIdAndYear(teacherId, year);
+    }
+
+    @Override
     @Transactional
     public boolean assignAdvisor(Long studentId, Long teacherId) {
         Student student = findById(studentId);
