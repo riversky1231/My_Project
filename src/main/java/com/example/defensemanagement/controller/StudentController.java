@@ -5,7 +5,6 @@ import com.example.defensemanagement.entity.User;
 import com.example.defensemanagement.entity.Teacher;
 import com.example.defensemanagement.entity.DefenseGroup;
 import com.example.defensemanagement.entity.StudentFinalScore;
-import com.example.defensemanagement.service.AuthService;
 import com.example.defensemanagement.service.StudentService;
 import com.example.defensemanagement.service.ConfigService;
 import com.example.defensemanagement.service.ScoreService;
@@ -336,20 +335,38 @@ public class StudentController {
     public Map<String, Object> getAdvisedStudentsWithScores(HttpSession session) {
         Map<String, Object> result = new HashMap<>();
         
+        // 检查是否是超级管理员
+        User currentUser = (User) session.getAttribute("currentUser");
+        boolean isSuperAdmin = currentUser != null && currentUser.getRole() != null && 
+                               "SUPER_ADMIN".equals(currentUser.getRole().getName());
+        
         Teacher teacher = getTeacherFromSession(session);
-        if (teacher == null) {
-            result.put("error", "请先登录教师账号");
-            return result;
-        }
-        
         Integer currentYear = configService.getCurrentDefenseYear();
-        if (currentYear == null) {
-            result.put("error", "请先设置当前答辩年份");
-            return result;
-        }
         
-        // 获取指导的学生列表
-        List<Student> students = studentService.getStudentsByAdvisor(teacher.getId(), currentYear);
+        List<Student> students;
+        if (isSuperAdmin) {
+            // 超级管理员：返回所有学生
+            if (currentYear == null) {
+                students = studentService.findAll();
+            } else {
+                students = studentService.findByYear(currentYear);
+            }
+            result.put("teacherId", null);
+            result.put("teacherName", "超级管理员");
+        } else {
+            // 普通教师：返回自己指导的学生
+            if (teacher == null) {
+                result.put("error", "请先登录教师账号");
+                return result;
+            }
+            if (currentYear == null) {
+                result.put("error", "请先设置当前答辩年份");
+                return result;
+            }
+            students = studentService.getStudentsByAdvisor(teacher.getId(), currentYear);
+            result.put("teacherId", teacher.getId());
+            result.put("teacherName", teacher.getName());
+        }
         
         // 获取学生成绩信息
         List<Map<String, Object>> studentList = new ArrayList<>();
@@ -366,6 +383,16 @@ public class StudentController {
                 info.put("studentNo", s.getStudentNo());
                 info.put("name", s.getName());
                 info.put("classInfo", s.getClassInfo());
+                // 设置院系信息
+                if (s.getDepartment() != null) {
+                    Map<String, Object> deptMap = new HashMap<>();
+                    deptMap.put("name", s.getDepartment().getName());
+                    info.put("department", deptMap);
+                    info.put("departmentName", s.getDepartment().getName());
+                } else {
+                    info.put("department", null);
+                    info.put("departmentName", null);
+                }
                 info.put("defenseType", s.getDefenseType());
                 info.put("title", s.getTitle());
                 info.put("defenseYear", s.getDefenseYear());
@@ -408,8 +435,6 @@ public class StudentController {
         }
         
         result.put("students", studentList);
-        result.put("teacherId", teacher.getId());
-        result.put("teacherName", teacher.getName());
         result.put("year", currentYear);
         return result;
     }
@@ -486,20 +511,38 @@ public class StudentController {
     public Map<String, Object> getReviewedStudentsWithScores(HttpSession session) {
         Map<String, Object> result = new HashMap<>();
         
+        // 检查是否是超级管理员
+        User currentUser = (User) session.getAttribute("currentUser");
+        boolean isSuperAdmin = currentUser != null && currentUser.getRole() != null && 
+                               "SUPER_ADMIN".equals(currentUser.getRole().getName());
+        
         Teacher teacher = getTeacherFromSession(session);
-        if (teacher == null) {
-            result.put("error", "请先登录教师账号");
-            return result;
-        }
-        
         Integer currentYear = configService.getCurrentDefenseYear();
-        if (currentYear == null) {
-            result.put("error", "请先设置当前答辩年份");
-            return result;
-        }
         
-        // 获取作为评阅人的学生列表
-        List<Student> students = studentService.getStudentsByReviewer(teacher.getId(), currentYear);
+        List<Student> students;
+        if (isSuperAdmin) {
+            // 超级管理员：返回所有学生
+            if (currentYear == null) {
+                students = studentService.findAll();
+            } else {
+                students = studentService.findByYear(currentYear);
+            }
+            result.put("teacherId", null);
+            result.put("teacherName", "超级管理员");
+        } else {
+            // 普通教师：返回自己作为评阅人的学生
+            if (teacher == null) {
+                result.put("error", "请先登录教师账号");
+                return result;
+            }
+            if (currentYear == null) {
+                result.put("error", "请先设置当前答辩年份");
+                return result;
+            }
+            students = studentService.getStudentsByReviewer(teacher.getId(), currentYear);
+            result.put("teacherId", teacher.getId());
+            result.put("teacherName", teacher.getName());
+        }
         
         // 获取学生成绩信息
         List<Map<String, Object>> studentList = new ArrayList<>();
@@ -516,6 +559,16 @@ public class StudentController {
                 info.put("studentNo", s.getStudentNo());
                 info.put("name", s.getName());
                 info.put("classInfo", s.getClassInfo());
+                // 设置院系信息
+                if (s.getDepartment() != null) {
+                    Map<String, Object> deptMap = new HashMap<>();
+                    deptMap.put("name", s.getDepartment().getName());
+                    info.put("department", deptMap);
+                    info.put("departmentName", s.getDepartment().getName());
+                } else {
+                    info.put("department", null);
+                    info.put("departmentName", null);
+                }
                 info.put("defenseType", s.getDefenseType());
                 info.put("title", s.getTitle());
                 info.put("defenseYear", s.getDefenseYear());
@@ -558,8 +611,6 @@ public class StudentController {
         }
         
         result.put("students", studentList);
-        result.put("teacherId", teacher.getId());
-        result.put("teacherName", teacher.getName());
         result.put("year", currentYear);
         return result;
     }

@@ -245,19 +245,31 @@ public class ScoreController {
     @GetMapping("/teacher/group/students")
     @ResponseBody
     public Map<String, Object> getTeacherGroupStudents(HttpSession session) {
-        Teacher teacher = getTeacherFromSession(session);
-        if (teacher == null) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("error", "请先登录教师账号");
-            return error;
-        }
+        // 检查是否是超级管理员
+        User currentUser = (User) session.getAttribute("currentUser");
+        boolean isSuperAdmin = currentUser != null && currentUser.getRole() != null && 
+                               "SUPER_ADMIN".equals(currentUser.getRole().getName());
         
-        // 获取当前答辩年份
+        Teacher teacher = getTeacherFromSession(session);
         Integer year = getCurrentDefenseYear();
         
-        Map<String, Object> result = scoreService.getTeacherGroupStudents(teacher.getId(), year);
-        result.put("teacherId", teacher.getId());
-        result.put("teacherName", teacher.getName());
+        Map<String, Object> result;
+        if (isSuperAdmin) {
+            // 超级管理员：返回所有小组的所有学生
+            result = scoreService.getAllGroupStudentsForSuperAdmin(year);
+            result.put("teacherId", null);
+            result.put("teacherName", "超级管理员");
+        } else {
+            // 普通教师：返回自己所在小组的学生
+            if (teacher == null) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "请先登录教师账号");
+                return error;
+            }
+            result = scoreService.getTeacherGroupStudents(teacher.getId(), year);
+            result.put("teacherId", teacher.getId());
+            result.put("teacherName", teacher.getName());
+        }
         result.put("year", year);
         return result;
     }
@@ -290,19 +302,31 @@ public class ScoreController {
     @GetMapping("/largegroup/candidates")
     @ResponseBody
     public Map<String, Object> getLargeGroupCandidates(HttpSession session) {
-        Teacher teacher = getTeacherFromSession(session);
-        if (teacher == null) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("error", "请先登录教师账号");
-            return error;
-        }
+        // 检查是否是超级管理员
+        User currentUser = (User) session.getAttribute("currentUser");
+        boolean isSuperAdmin = currentUser != null && currentUser.getRole() != null && 
+                               "SUPER_ADMIN".equals(currentUser.getRole().getName());
         
+        Teacher teacher = getTeacherFromSession(session);
         Integer year = getCurrentDefenseYear();
         
         Map<String, Object> result = new HashMap<>();
-        result.put("candidates", scoreService.getLargeGroupCandidates(year, teacher.getId()));
-        result.put("teacherId", teacher.getId());
-        result.put("teacherName", teacher.getName());
+        if (isSuperAdmin) {
+            // 超级管理员：返回所有候选人（teacherId为null表示查看所有教师的打分）
+            result.put("candidates", scoreService.getLargeGroupCandidates(year, null));
+            result.put("teacherId", null);
+            result.put("teacherName", "超级管理员");
+        } else {
+            // 普通教师：返回自己能看到和打分的候选人
+            if (teacher == null) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "请先登录教师账号");
+                return error;
+            }
+            result.put("candidates", scoreService.getLargeGroupCandidates(year, teacher.getId()));
+            result.put("teacherId", teacher.getId());
+            result.put("teacherName", teacher.getName());
+        }
         result.put("year", year);
         return result;
     }

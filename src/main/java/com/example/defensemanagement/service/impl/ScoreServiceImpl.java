@@ -397,6 +397,86 @@ public class ScoreServiceImpl implements ScoreService {
     }
 
     @Override
+    public Map<String, Object> getAllGroupStudentsForSuperAdmin(Integer year) {
+        Map<String, Object> result = new HashMap<>();
+        
+        // 获取所有小组
+        List<DefenseGroup> allGroups = defenseGroupMapper.findAllByOrderByDisplayOrderAsc();
+        if (allGroups == null || allGroups.isEmpty()) {
+            result.put("groups", java.util.Collections.emptyList());
+            return result;
+        }
+        
+        // 为每个小组获取学生列表
+        List<Map<String, Object>> groupList = new java.util.ArrayList<>();
+        for (DefenseGroup group : allGroups) {
+            List<Student> students = studentMapper.findByDefenseGroupId(group.getId());
+            if (students == null) {
+                students = new java.util.ArrayList<>();
+            }
+            
+            // 过滤年份
+            if (year != null) {
+                students = students.stream()
+                        .filter(s -> s.getDefenseYear() != null && s.getDefenseYear().equals(year))
+                        .collect(java.util.stream.Collectors.toList());
+            }
+            
+            if (students.isEmpty()) {
+                continue; // 跳过没有学生的小组
+            }
+            
+            // 获取小组内的教师列表
+            List<DefenseGroupTeacher> groupTeachers = defenseGroupTeacherMapper.findByGroupId(group.getId());
+            int totalTeachers = groupTeachers != null ? groupTeachers.size() : 0;
+            
+            // 为每个学生获取打分状态
+            List<Map<String, Object>> studentList = new java.util.ArrayList<>();
+            for (Student s : students) {
+                Map<String, Object> studentInfo = new HashMap<>();
+                studentInfo.put("id", s.getId());
+                studentInfo.put("studentNo", s.getStudentNo());
+                studentInfo.put("name", s.getName());
+                studentInfo.put("defenseType", s.getDefenseType());
+                studentInfo.put("title", s.getTitle());
+                
+                // 获取该学生的所有打分记录
+                List<TeacherScoreRecord> records = teacherScoreRecordMapper.findByStudentIdAndYear(s.getId(), year);
+                studentInfo.put("scoredTeachersCount", records != null ? records.size() : 0);
+                studentInfo.put("totalTeachersCount", totalTeachers);
+                studentInfo.put("hasScored", records != null && !records.isEmpty());
+                
+                // 计算该学生的小组平均分
+                Double studentAvgScore = null;
+                if (records != null && records.size() >= totalTeachers && totalTeachers > 0) {
+                    studentAvgScore = round(records.stream()
+                            .filter(r -> r.getTotalScore() != null)
+                            .mapToInt(TeacherScoreRecord::getTotalScore)
+                            .average()
+                            .orElse(0.0), 1);
+                    studentInfo.put("avgScore", studentAvgScore);
+                    studentInfo.put("allScored", true);
+                } else {
+                    studentInfo.put("avgScore", null);
+                    studentInfo.put("allScored", false);
+                }
+                
+                studentList.add(studentInfo);
+            }
+            
+            Map<String, Object> groupInfo = new HashMap<>();
+            groupInfo.put("groupId", group.getId());
+            groupInfo.put("groupName", group.getName());
+            groupInfo.put("students", studentList);
+            groupList.add(groupInfo);
+        }
+        
+        result.put("groups", groupList);
+        result.put("isSuperAdmin", true);
+        return result;
+    }
+
+    @Override
     public List<Map<String, Object>> getLargeGroupCandidates(Integer year, Long currentTeacherId) {
         List<Map<String, Object>> candidates = new java.util.ArrayList<>();
         

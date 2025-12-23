@@ -44,6 +44,11 @@ public interface ScoreService {
     Map<String, Object> getTeacherGroupStudents(Long teacherId, Integer year);
 
     /**
+     * 超级管理员：获取所有小组的所有学生（含打分状态）
+     */
+    Map<String, Object> getAllGroupStudentsForSuperAdmin(Integer year);
+
+    /**
      * 获取每个小组的最高分学生（大组答辩候选人）
      * @param teacherId 当前教师ID，用于查询该教师对每个候选人的打分
      */

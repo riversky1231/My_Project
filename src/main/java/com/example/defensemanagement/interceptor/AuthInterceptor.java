@@ -86,7 +86,7 @@ public class AuthInterceptor implements HandlerInterceptor {
         if (path.startsWith("/department/")) {
             // 学生管理：超级管理员、院系管理员可以管理，教师可以查看自己指导的学生
             if (path.startsWith("/department/student")) {
-                // 教师专用接口：允许教师访问
+                // 教师专用接口：允许教师和超级管理员访问
                 if (path.startsWith("/department/student/teacher/")) {
                     // 检查是否是教师（通过 currentTeacher 或 currentUser 的角色）
                     if (currentTeacher != null) {
@@ -94,7 +94,7 @@ public class AuthInterceptor implements HandlerInterceptor {
                     }
                     if (currentUser != null && currentUser.getRole() != null) {
                         String roleName = currentUser.getRole().getName();
-                        if ("TEACHER".equals(roleName) || "DEFENSE_LEADER".equals(roleName)) {
+                        if ("TEACHER".equals(roleName) || "DEFENSE_LEADER".equals(roleName) || "SUPER_ADMIN".equals(roleName)) {
                             return true;
                         }
                     }
@@ -151,13 +151,13 @@ public class AuthInterceptor implements HandlerInterceptor {
         if (path.startsWith("/defense/")) {
             // 教师小组打分和大组答辩相关 API，允许所有教师访问
             if (path.startsWith("/defense/score/teacher/") || path.startsWith("/defense/score/largegroup/")) {
-                // 检查是否是教师（通过 currentTeacher 或 currentUser 的角色）
+                // 检查是否是教师或超级管理员（通过 currentTeacher 或 currentUser 的角色）
                 if (currentTeacher != null) {
                     return true;
                 }
                 if (currentUser != null && currentUser.getRole() != null) {
                     String roleName = currentUser.getRole().getName();
-                    if ("TEACHER".equals(roleName) || "DEFENSE_LEADER".equals(roleName)) {
+                    if ("TEACHER".equals(roleName) || "DEFENSE_LEADER".equals(roleName) || "SUPER_ADMIN".equals(roleName)) {
                         return true;
                     }
                 }

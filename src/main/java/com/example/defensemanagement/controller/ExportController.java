@@ -8,7 +8,11 @@ import com.example.defensemanagement.mapper.StudentFinalScoreMapper;
 import com.example.defensemanagement.mapper.StudentMapper;
 import com.example.defensemanagement.mapper.TeacherScoreRecordMapper;
 import com.example.defensemanagement.mapper.DefenseGroupTeacherMapper;
+import com.example.defensemanagement.mapper.TeacherMapper;
+import com.example.defensemanagement.entity.Teacher;
+import com.example.defensemanagement.entity.User;
 import com.example.defensemanagement.service.DocTemplateService;
+import javax.servlet.http.HttpSession;
 import com.example.defensemanagement.service.ConfigService;
 import com.example.defensemanagement.service.AiCommentService;
 import com.example.defensemanagement.service.UserService;
@@ -72,6 +76,12 @@ public class ExportController {
 
     @Autowired
     private DefenseGroupTeacherMapper defenseGroupTeacherMapper;
+    
+    @Autowired
+    private com.example.defensemanagement.mapper.DefenseGroupMapper defenseGroupMapper;
+    
+    @Autowired
+    private TeacherMapper teacherMapper;
     
     @Autowired
     private UserService userService;
@@ -162,34 +172,66 @@ public class ExportController {
             throw new RuntimeException("学生未设置答辩年份");
         }
         
+        // 获取小组信息
+        com.example.defensemanagement.entity.DefenseGroup group = defenseGroupMapper.findById(groupId);
+        String groupName = group != null ? group.getName() : "小组" + groupId;
+        
+        // 获取小组的所有评委（教师）
+        List<DefenseGroupTeacher> groupTeachers = defenseGroupTeacherMapper.findByGroupId(groupId);
+        
+        // 获取院系名称（从第一个学生）
+        String deptName = "未知院系";
+        if (!students.isEmpty() && students.get(0).getDepartmentId() != null) {
+            try {
+                com.example.defensemanagement.entity.Department dept = 
+                    userService.getAllDepartments().stream()
+                        .filter(d -> d.getId().equals(students.get(0).getDepartmentId()))
+                        .findFirst().orElse(null);
+                if (dept != null) {
+                    deptName = dept.getName();
+                }
+            } catch (Exception ignored) {}
+        }
+        
         // 构建统分表数据
         Map<String, String> ph = new HashMap<>();
         DateParts dp = getDateParts("DEFENSE_DATE");
         ph.put("{{YEAR}}", dp.year);
         ph.put("{{MONTH}}", dp.month);
         ph.put("{{DAY}}", dp.day);
+        ph.put("{{GROUP_NAME}}", groupName);
+        ph.put("{{DEPT_NAME}}", deptName);
         ph.put("{{GROUP_ID}}", String.valueOf(groupId));
         
-        // 构建学生数据行
-        StringBuilder studentRows = new StringBuilder();
-        int rowNum = 1;
+        // 找出所有学生中评委数量最多的，确定需要多少列
+        int maxJudges = 0;
+        for (Student stu : students) {
+            List<TeacherScoreRecord> records = teacherScoreRecordMapper.findByStudentIdAndYear(stu.getId(), year);
+            if (records != null) {
+                maxJudges = Math.max(maxJudges, records.size());
+            }
+        }
+        // 至少要有1列，最多支持10列
+        maxJudges = Math.max(1, Math.min(maxJudges, 10));
+        ph.put("{{MAX_JUDGES}}", String.valueOf(maxJudges));
         
+        // 构建学生数据行（支持动态评委列）
+        int rowNum = 1;
         for (Student stu : students) {
             List<TeacherScoreRecord> records = teacherScoreRecordMapper.findByStudentIdAndYear(stu.getId(), year);
             StudentFinalScore fs = studentFinalScoreMapper.findByStudentIdAndYear(stu.getId(), year);
             
-            // 计算平均分（每个评委的打分）
+            // 计算平均分和每个评委的打分
             double avgScore = 0.0;
             int teacherCount = 0;
-            String teacherScores = "";
+            List<Double> judgeScores = new java.util.ArrayList<>();
             
             if (records != null && !records.isEmpty()) {
                 for (TeacherScoreRecord record : records) {
                     if (record.getTotalScore() != null) {
                         avgScore += record.getTotalScore();
                         teacherCount++;
-                        if (!teacherScores.isEmpty()) teacherScores += "、";
-                        teacherScores += String.valueOf(record.getTotalScore());
+                        judgeScores.add(record.getTotalScore().doubleValue());
                     }
                 }
                 if (teacherCount > 0) {
@@ -201,18 +243,38 @@ public class ExportController {
             double factor = fs != null && fs.getAdjustmentFactor() != null ? fs.getAdjustmentFactor() : 1.0;
             double finalScore = avgScore * factor;
             
-            // 构建行数据（使用占位符，实际模板中需要替换）
-            studentRows.append("{{ROW_").append(rowNum).append("_NAME}}|")
-                      .append("{{ROW_").append(rowNum).append("_SCORES}}|")
-                      .append("{{ROW_").append(rowNum).append("_AVG}}|")
-                      .append("{{ROW_").append(rowNum).append("_FACTOR}}|")
-                      .append("{{ROW_").append(rowNum).append("_FINAL}}");
+            // 学生姓名
+            ph.put("{{STU_NAME_" + rowNum + "}}", nvl(stu.getName()));
+            ph.put("{{ROW_" + rowNum + "_NAME}}", nvl(stu.getName())); // 兼容旧格式
             
-            ph.put("{{ROW_" + rowNum + "_NAME}}", nvl(stu.getName()));
+            // 每个评委的打分（动态列）
+            for (int j = 1; j <= maxJudges; j++) {
+                String score = "-";
+                if (j <= judgeScores.size()) {
+                    score = formatInt(judgeScores.get(j - 1));
+                }
+                ph.put("{{JUDGE_" + j + "_SCORE_" + rowNum + "}}", score);
+            }
+            
+            // 答辩得分（平均分）
+            ph.put("{{DEFENSE_SCORE_" + rowNum + "}}", format1(avgScore));
+            ph.put("{{ROW_" + rowNum + "_AVG}}", format1(avgScore)); // 兼容旧格式
+            
+            // 调节系数
+            ph.put("{{FACTOR_" + rowNum + "}}", String.format("%.3f", factor));
+            ph.put("{{ROW_" + rowNum + "_FACTOR}}", String.format("%.3f", factor)); // 兼容旧格式
+            
+            // 最后得分
+            ph.put("{{FINAL_SCORE_" + rowNum + "}}", format1(finalScore));
+            ph.put("{{ROW_" + rowNum + "_FINAL}}", format1(finalScore)); // 兼容旧格式
+            
+            // 兼容旧格式：所有评委分数用"、"连接
+            String teacherScores = "";
+            for (int i = 0; i < judgeScores.size(); i++) {
+                if (i > 0) teacherScores += "、";
+                teacherScores += formatInt(judgeScores.get(i));
+            }
             ph.put("{{ROW_" + rowNum + "_SCORES}}", teacherScores.isEmpty() ? "-" : teacherScores);
-            ph.put("{{ROW_" + rowNum + "_AVG}}", format1(avgScore));
-            ph.put("{{ROW_" + rowNum + "_FACTOR}}", String.format("%.3f", factor));
-            ph.put("{{ROW_" + rowNum + "_FINAL}}", format1(finalScore));
             
             rowNum++;
         }
@@ -220,7 +282,7 @@ public class ExportController {
         ph.put("{{TOTAL_ROWS}}", String.valueOf(rowNum - 1));
         
         // 渲染文档
-        String filename = encode("毕业论文(设计)答辩小组统分表-小组" + groupId + ".docx");
+        String filename = encode("毕业论文(设计)答辩小组统分表-" + groupName + ".docx");
         byte[] doc = docTemplateService.renderDoc(resolveTemplate("group-summary", GROUP_SUMMARY_TEMPLATE), ph, new HashMap<>());
         return attachment(doc, filename);
     }
@@ -336,6 +398,312 @@ public class ExportController {
                 : resolveTemplate("design-grade", DESIGN_GRADE_TEMPLATE);
         byte[] doc = docTemplateService.renderDoc(template, ph, img);
         return attachment(doc, filename);
+    }
+
+    /**
+     * 答辩组长：获取组内学生列表（用于查看成绩评定表）
+     * GET /export/leader/students
+     */
+    @GetMapping("/leader/students")
+    public ResponseEntity<?> getLeaderStudents(HttpSession session) {
+        try {
+            // 获取当前登录的教师
+            Teacher currentTeacher = (Teacher) session.getAttribute("currentTeacher");
+            if (currentTeacher == null) {
+                // 尝试从User获取Teacher
+                User currentUser = (User) session.getAttribute("currentUser");
+                if (currentUser != null && currentUser.getRole() != null && 
+                    ("TEACHER".equals(currentUser.getRole().getName()) || 
+                     "DEFENSE_LEADER".equals(currentUser.getRole().getName()))) {
+                    currentTeacher = teacherMapper.findByUserId(currentUser.getId());
+                }
+            }
+            
+            if (currentTeacher == null) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "未登录或不是教师");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+            }
+            
+            // 查找该教师作为组长的小组
+            List<DefenseGroupTeacher> allGroups = defenseGroupTeacherMapper.findAll();
+            Long groupId = null;
+            for (DefenseGroupTeacher gt : allGroups) {
+                if (gt.getTeacherId() != null && gt.getTeacherId().equals(currentTeacher.getId()) && 
+                    gt.getIsLeader() != null && gt.getIsLeader() == 1) {
+                    groupId = gt.getGroupId();
+                    break;
+                }
+            }
+            
+            if (groupId == null) {
+                Map<String, Object> result = new HashMap<>();
+                result.put("students", new java.util.ArrayList<>());
+                result.put("message", "您不是任何小组的组长");
+                return ResponseEntity.ok(result);
+            }
+            
+            // 获取该小组的所有学生
+            List<Student> students = studentMapper.findByDefenseGroupId(groupId);
+            Integer currentYear = configService.getCurrentDefenseYear();
+            if (currentYear != null) {
+                students = students.stream()
+                    .filter(s -> currentYear.equals(s.getDefenseYear()))
+                    .collect(java.util.stream.Collectors.toList());
+            }
+            
+            // 转换为简化的学生信息（用于前端显示）
+            List<Map<String, Object>> studentList = students.stream().map(s -> {
+                Map<String, Object> info = new HashMap<>();
+                info.put("id", s.getId());
+                info.put("name", s.getName());
+                info.put("studentNo", s.getStudentNo());
+                info.put("title", s.getTitle());
+                info.put("defenseType", s.getDefenseType());
+                // 检查是否有最终成绩（用于判断是否可以导出成绩评定表）
+                StudentFinalScore fs = studentFinalScoreMapper.findByStudentIdAndYear(s.getId(), s.getDefenseYear());
+                info.put("hasFinalScore", fs != null);
+                return info;
+            }).collect(java.util.stream.Collectors.toList());
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("students", studentList);
+            result.put("groupId", groupId);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "获取学生列表失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    /**
+     * 教师：获取自己所带学生的列表（用于查看成绩评定表）
+     * GET /export/teacher/students
+     */
+    @GetMapping("/teacher/students")
+    public ResponseEntity<?> getTeacherStudents(HttpSession session) {
+        try {
+            // 获取当前登录的教师
+            Teacher currentTeacher = (Teacher) session.getAttribute("currentTeacher");
+            if (currentTeacher == null) {
+                User currentUser = (User) session.getAttribute("currentUser");
+                if (currentUser != null && currentUser.getRole() != null && 
+                    "TEACHER".equals(currentUser.getRole().getName())) {
+                    currentTeacher = teacherMapper.findByUserId(currentUser.getId());
+                }
+            }
+            
+            if (currentTeacher == null) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "未登录或不是教师");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+            }
+            
+            Integer currentYear = configService.getCurrentDefenseYear();
+            // 获取该教师指导的所有学生
+            List<Student> students = studentMapper.findByAdvisorIdAndYear(currentTeacher.getId(), currentYear);
+            
+            // 转换为简化的学生信息
+            List<Map<String, Object>> studentList = students.stream().map(s -> {
+                Map<String, Object> info = new HashMap<>();
+                info.put("id", s.getId());
+                info.put("name", s.getName());
+                info.put("studentNo", s.getStudentNo());
+                info.put("title", s.getTitle());
+                info.put("defenseType", s.getDefenseType());
+                // 检查是否有最终成绩
+                StudentFinalScore fs = studentFinalScoreMapper.findByStudentIdAndYear(s.getId(), s.getDefenseYear());
+                info.put("hasFinalScore", fs != null);
+                return info;
+            }).collect(java.util.stream.Collectors.toList());
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("students", studentList);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "获取学生列表失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    /**
+     * 教师：一键打包本组所有学生的成绩评定表（自己所指导的学生）
+     * GET /export/teacher/grade/zip
+     */
+    @GetMapping("/teacher/grade/zip")
+    public ResponseEntity<?> exportTeacherGradeZip(HttpSession session) {
+        try {
+            // 获取当前登录的教师
+            Teacher currentTeacher = (Teacher) session.getAttribute("currentTeacher");
+            if (currentTeacher == null) {
+                User currentUser = (User) session.getAttribute("currentUser");
+                if (currentUser != null && currentUser.getRole() != null && 
+                    "TEACHER".equals(currentUser.getRole().getName())) {
+                    currentTeacher = teacherMapper.findByUserId(currentUser.getId());
+                }
+            }
+            
+            if (currentTeacher == null) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "未登录或不是教师");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+            }
+            
+            Integer currentYear = configService.getCurrentDefenseYear();
+            // 获取该教师指导的所有学生
+            List<Student> students = studentMapper.findByAdvisorIdAndYear(currentTeacher.getId(), currentYear);
+            
+            // 过滤出有最终成绩的学生
+            students = students.stream().filter(s -> {
+                StudentFinalScore fs = studentFinalScoreMapper.findByStudentIdAndYear(s.getId(), s.getDefenseYear());
+                return fs != null;
+            }).collect(java.util.stream.Collectors.toList());
+            
+            if (students.isEmpty()) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "没有可导出的学生成绩评定表");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+            }
+            
+            // 打包所有学生的成绩评定表
+            try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                 ZipOutputStream zos = new ZipOutputStream(baos)) {
+                for (Student stu : students) {
+                    boolean isPaper = "PAPER".equalsIgnoreCase(stu.getDefenseType());
+                    ResponseEntity<byte[]> resp = buildGradeDoc(stu.getId(), isPaper);
+                    String filename = resp.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION);
+                    String cleanName = (isPaper ? "本科毕业论文成绩评定表-" : "本科毕业设计成绩评定表-") + stu.getName() + ".docx";
+                    if (filename != null && filename.contains("filename=\"")) {
+                        int idx = filename.indexOf("filename=\"") + 10;
+                        int end = filename.indexOf("\"", idx);
+                        if (end > idx) {
+                            cleanName = filename.substring(idx, end);
+                        }
+                    }
+                    zos.putNextEntry(new ZipEntry(cleanName));
+                    zos.write(resp.getBody());
+                    zos.closeEntry();
+                }
+                zos.finish();
+                byte[] zipBytes = baos.toByteArray();
+                String zipName = encode("教师-" + currentTeacher.getName() + "-成绩评定表.zip");
+                MediaType octet = MediaType.parseMediaType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + zipName + "\"")
+                        .contentType(octet)
+                        .body(zipBytes);
+            }
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "打包导出失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    /**
+     * 教师：一键打包下载评分过的所有本组学生的成绩评定表
+     * GET /export/teacher/group/graded/zip
+     */
+    @GetMapping("/teacher/group/graded/zip")
+    public ResponseEntity<?> exportTeacherGradedGroupStudentsZip(HttpSession session) {
+        try {
+            // 获取当前登录的教师
+            Teacher currentTeacher = (Teacher) session.getAttribute("currentTeacher");
+            if (currentTeacher == null) {
+                User currentUser = (User) session.getAttribute("currentUser");
+                if (currentUser != null && currentUser.getRole() != null && 
+                    "TEACHER".equals(currentUser.getRole().getName())) {
+                    currentTeacher = teacherMapper.findByUserId(currentUser.getId());
+                }
+            }
+            
+            if (currentTeacher == null) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "未登录或不是教师");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+            }
+            
+            // 提取teacherId为final变量，供lambda表达式使用
+            final Long teacherId = currentTeacher.getId();
+            
+            // 查找该教师所在的小组
+            DefenseGroupTeacher groupTeacher = defenseGroupTeacherMapper.findByTeacherId(teacherId);
+            if (groupTeacher == null || groupTeacher.getGroupId() == null) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "您不在任何答辩小组中");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+            }
+            
+            Long groupId = groupTeacher.getGroupId();
+            Integer currentYear = configService.getCurrentDefenseYear();
+            
+            // 获取该小组的所有学生
+            List<Student> groupStudents = studentMapper.findByDefenseGroupId(groupId);
+            if (currentYear != null) {
+                final Integer year = currentYear; // 提取为final变量
+                groupStudents = groupStudents.stream()
+                    .filter(s -> year.equals(s.getDefenseYear()))
+                    .collect(java.util.stream.Collectors.toList());
+            }
+            
+            // 过滤出该教师已经评分过的学生（有TeacherScoreRecord记录）
+            List<Student> gradedStudents = groupStudents.stream().filter(s -> {
+                List<TeacherScoreRecord> records = teacherScoreRecordMapper.findByStudentIdAndYear(s.getId(), s.getDefenseYear());
+                if (records == null || records.isEmpty()) {
+                    return false;
+                }
+                // 检查是否有该教师的评分记录
+                return records.stream().anyMatch(r -> 
+                    r.getTeacherId() != null && r.getTeacherId().equals(teacherId));
+            }).collect(java.util.stream.Collectors.toList());
+            
+            // 进一步过滤：只导出有最终成绩的学生（可以导出成绩评定表）
+            gradedStudents = gradedStudents.stream().filter(s -> {
+                StudentFinalScore fs = studentFinalScoreMapper.findByStudentIdAndYear(s.getId(), s.getDefenseYear());
+                return fs != null;
+            }).collect(java.util.stream.Collectors.toList());
+            
+            if (gradedStudents.isEmpty()) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "没有可导出的已评分学生成绩评定表");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+            }
+            
+            // 打包所有已评分学生的成绩评定表
+            try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                 ZipOutputStream zos = new ZipOutputStream(baos)) {
+                for (Student stu : gradedStudents) {
+                    boolean isPaper = "PAPER".equalsIgnoreCase(stu.getDefenseType());
+                    ResponseEntity<byte[]> resp = buildGradeDoc(stu.getId(), isPaper);
+                    String filename = resp.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION);
+                    String cleanName = (isPaper ? "本科毕业论文成绩评定表-" : "本科毕业设计成绩评定表-") + stu.getName() + ".docx";
+                    if (filename != null && filename.contains("filename=\"")) {
+                        int idx = filename.indexOf("filename=\"") + 10;
+                        int end = filename.indexOf("\"", idx);
+                        if (end > idx) {
+                            cleanName = filename.substring(idx, end);
+                        }
+                    }
+                    zos.putNextEntry(new ZipEntry(cleanName));
+                    zos.write(resp.getBody());
+                    zos.closeEntry();
+                }
+                zos.finish();
+                byte[] zipBytes = baos.toByteArray();
+                String zipName = encode("教师-" + currentTeacher.getName() + "-本组已评分学生成绩评定表.zip");
+                MediaType octet = MediaType.parseMediaType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + zipName + "\"")
+                        .contentType(octet)
+                        .body(zipBytes);
+            }
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "打包导出失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
     }
 
     private ResponseEntity<byte[]> buildProcessDoc(Long studentId, boolean isPaper) {

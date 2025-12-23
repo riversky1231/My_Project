@@ -253,12 +253,10 @@
                 onclick="showView('teacher-scoring-view', this)"><i class="bi bi-pencil-square"></i> 小组打分</a>
             <a class="nav-link" id="nav-large-group-defense" href="javascript:void(0);"
                 onclick="showView('large-group-defense-view', this)"><i class="bi bi-award"></i> 大组答辩</a>
-            <a class="nav-link" id="nav-score-management" href="javascript:void(0);"
-                onclick="showView('score-management-view', this)"><i class="bi bi-table"></i> 成绩数据管理</a>
-            <a class="nav-link" id="nav-export" href="javascript:void(0);" onclick="showView('export-view', this)"><i
-                    class="bi bi-download"></i> 导出/打包</a>
             <a class="nav-link" href="javascript:void(0);" onclick="showView('export-template-view', this)"><i
                     class="bi bi-file-earmark-word"></i> 导出模板</a>
+            <a class="nav-link" id="nav-export" href="javascript:void(0);" onclick="showView('export-view', this)"><i
+                    class="bi bi-download"></i> 导出/打包</a>
             <a class="nav-link" id="nav-signature-management" href="javascript:void(0);"
                 onclick="showView('signature-view', this)"><i class="bi bi-pen"></i> 签名管理</a>
             <a class="nav-link" id="nav-settings" href="javascript:void(0);"
@@ -472,7 +470,7 @@
                             <tr>
                                 <th>学号</th>
                                 <th>姓名</th>
-                                <th>班级</th>
+                                <th>所属院系</th>
                                 <th>类型</th>
                                 <th>题目</th>
                                 <th>指导教师</th>
@@ -722,55 +720,6 @@
         </div>
 
         <!-- Score Management View (Super Admin Only) -->
-        <div id="score-management-view" class="view-container" style="display: none;">
-            <header class="header">
-                <h1>成绩数据管理</h1>
-                <div class="d-flex align-items-center">
-                    <div class="input-group me-3" style="width: 300px;">
-                        <input type="text" id="score-search-input" class="form-control" placeholder="根据学生姓名搜索..."
-                            onkeypress="if(event.key==='Enter') loadScoreRecords()">
-                        <button class="btn btn-outline-secondary" type="button" onclick="loadScoreRecords()"><i
-                                class="bi bi-search"></i></button>
-                    </div>
-                    <select class="form-select me-3" id="score-filter-year" style="width: 150px;"
-                        onchange="loadScoreRecords()">
-                        <option value="">所有年份</option>
-                    </select>
-                    <button class="btn btn-primary" onclick="openScoreRecordModal()">
-                        <i class="bi bi-plus-circle"></i> 添加成绩记录
-                    </button>
-                </div>
-            </header>
-            <div class="module">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>ID</th>
-                                <th>学生</th>
-                                <th>教师</th>
-                                <th>年份</th>
-                                <th>分项1</th>
-                                <th>分项2</th>
-                                <th>分项3</th>
-                                <th>分项4</th>
-                                <th>分项5</th>
-                                <th>分项6</th>
-                                <th>总分</th>
-                                <th>提交时间</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="score-record-list">
-                            <tr>
-                                <td colspan="13" class="text-center text-muted">加载中...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
         <!-- Export View -->
         <div id="export-view" class="view-container" style="display: none;">
             <header class="header">
@@ -846,6 +795,76 @@
                     <div class="col-md-2">
                         <button class="btn btn-outline-primary w-100" onclick="exportGroupProcessZip()">打包下载过程表</button>
                     </div>
+                </div>
+            </div>
+
+            <!-- 答辩组长：查看组内学生成绩评定表 -->
+            <div class="module" id="export-leader-grade-module" style="display: none;">
+                <div class="module-header">
+                    <h4><i class="bi bi-file-earmark-check"></i> 组内学生成绩评定表</h4>
+                    <button class="btn btn-outline-primary btn-sm" onclick="loadLeaderStudents()">
+                        <i class="bi bi-arrow-clockwise"></i> 刷新
+                    </button>
+                </div>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> 查看和导出本组所有学生的成绩评定表
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>学号</th>
+                                <th>姓名</th>
+                                <th>题目</th>
+                                <th>类型</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leader-students-list">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">点击刷新按钮加载学生列表</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 教师：查看和导出自己所带学生的成绩评定表 -->
+            <div class="module" id="export-teacher-grade-module" style="display: none;">
+                <div class="module-header">
+                    <h4><i class="bi bi-file-earmark-check"></i> 我的学生成绩评定表</h4>
+                    <button class="btn btn-outline-primary btn-sm" onclick="loadTeacherStudents()">
+                        <i class="bi bi-arrow-clockwise"></i> 刷新
+                    </button>
+                    <button class="btn btn-success btn-sm ms-2" onclick="exportTeacherGradeZip()">
+                        <i class="bi bi-download"></i> 一键打包下载（我的学生）
+                    </button>
+                    <button class="btn btn-warning btn-sm ms-2" onclick="exportTeacherGradedGroupStudentsZip()">
+                        <i class="bi bi-download"></i> 一键打包下载（本组已评分学生）
+                    </button>
+                </div>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> 查看和导出您所指导的所有学生的成绩评定表，或导出本组中您已评分过的所有学生的成绩评定表
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>学号</th>
+                                <th>姓名</th>
+                                <th>题目</th>
+                                <th>类型</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teacher-students-list">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">点击刷新按钮加载学生列表</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -1143,10 +1162,35 @@
                     <small>
                         <i class="bi bi-exclamation-triangle"></i>
                         <strong>模板占位符说明：</strong><br>
-                        • 文本占位符：{{NAME}}、{{STUDENT_NO}}、{{TITLE}}、{{SUMMARY}}、{{YEAR}}、{{MONTH}}、{{DAY}}<br>
-                        • 成绩占位符：{{ITEM1}}~{{ITEM6}}、{{TOTAL}}、{{COMMENT}}<br>
-                        • 签名占位符：{{SIGN_ADVISOR}}、{{SIGN_REVIEWER}}、{{SIGN_LEADER}}<br>
-                        • 统分表占位符：{{ROW_1_NAME}}、{{ROW_1_SCORES}}、{{ROW_1_AVG}}、{{ROW_1_FACTOR}}、{{ROW_1_FINAL}}等
+                        <strong>1. 基本信息占位符：</strong><br>
+                        • {{NAME}} - 学生姓名<br>
+                        • {{STUDENT_NO}} - 学号<br>
+                        • {{TITLE}} - 论文/设计题目<br>
+                        • {{SUMMARY}} - 摘要（设计类型）<br>
+                        • {{YEAR}}、{{MONTH}}、{{DAY}} - 日期（年、月、日）<br><br>
+                        <strong>2. 成绩占位符：</strong><br>
+                        • 论文类型：{{ITEM1}}（论文质量，满分30）、{{ITEM2}}（答辩自述报告，满分40）、{{ITEM3}}（回答问题情况，满分30）<br>
+                        • 设计类型：{{ITEM1}}~{{ITEM6}}（设计质量分项1-3各15分，答辩自述报告25分，回答问题情况分项1-2各15分）<br>
+                        • {{TOTAL}} - 总分（满分100）<br>
+                        • {{COMMENT}} - 答辩评语<br>
+                        • 成绩评定表专用：{{ADVISOR_SCORE}}（指导教师评定成绩）、{{REVIEWER_SCORE}}（评阅人评定成绩）、{{DEFENSE_SCORE}}（答辩成绩）<br>
+                        •
+                        成绩评定表加权：{{ADVISOR_30}}（指导教师30%）、{{REVIEWER_30}}（评阅人30%）、{{DEFENSE_40}}（答辩40%）、{{TOTAL_GRADE}}（总评成绩）<br><br>
+                        <strong>3. 签名占位符（图片）：</strong><br>
+                        • {{SIGN_ADVISOR}} 或 {{SIGN_ADVISOR_TEACHER}} - 指导教师签名<br>
+                        • {{SIGN_REVIEWER}} 或 {{SIGN_REVIEWER_TEACHER}} - 评阅教师签名<br>
+                        • {{SIGN_LEADER}} 或 {{SIGN_GROUP_LEADER}} - 答辩组长签名<br>
+                        • {{SIGN_DEPT_HEAD}} 或 {{SIGN_DEAN}} - 系主任签名（成绩评定表专用）<br>
+                        • {{SIGN_JUDGE}}、{{SIGN_JUDGE_1}}、{{SIGN_JUDGE_2}}、{{SIGN_JUDGE_3}} - 评委签名（过程表，最多3个）<br><br>
+                        <strong>4. 小组统分表占位符（动态评委数量）：</strong><br>
+                        • {{GROUP_NAME}} - 小组名称<br>
+                        • {{DEPT_NAME}} - 院系名称<br>
+                        • 学生行：{{STU_NAME_i}}（i为行号，从1开始）<br>
+                        • 评委列：{{JUDGE_j_SCORE_i}}（j为评委序号，i为学生行号）<br>
+                        • {{DEFENSE_SCORE_i}} - 答辩得分（第i个学生）<br>
+                        • {{FACTOR_i}} - 调节系数（第i个学生）<br>
+                        • {{FINAL_SCORE_i}} - 最后得分（第i个学生）<br>
+                        • 兼容旧格式：{{ROW_1_NAME}}、{{ROW_1_SCORES}}、{{ROW_1_AVG}}、{{ROW_1_FACTOR}}、{{ROW_1_FINAL}}等
                     </small>
                 </div>
             </div>
@@ -1201,39 +1245,6 @@
                             <img id="signature-preview" src="" alt="签名预览" style="max-height: 200px; max-width: 100%;">
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- 院系管理员：系主任签名管理 -->
-            <div class="module mt-4" id="dept-admin-signature-section" style="display: none;">
-                <div class="module-header">
-                    <h4><i class="bi bi-pen-fill"></i> 系主任签名管理</h4>
-                    <button class="btn btn-outline-primary btn-sm" onclick="loadDefenseLeaders()">
-                        <i class="bi bi-arrow-clockwise"></i> 刷新列表
-                    </button>
-                </div>
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i>
-                    <strong>说明：</strong>您可以为本院系的系主任上传签名图片。签名将用于导出成绩表时的系主任签名位置。
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>系主任姓名</th>
-                                <th>教师编号</th>
-                                <th>所属院系</th>
-                                <th>年份</th>
-                                <th>签名状态</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="defense-leader-list">
-                            <tr>
-                                <td colspan="6" class="text-center text-muted">加载中...</td>
-                            </tr>
-                        </tbody>
-                    </table>
                 </div>
             </div>
         </div>
@@ -1635,79 +1646,6 @@
         </div>
     </div>
 
-    <!-- Score Record Management Modal -->
-    <div class="modal fade" id="addScoreRecordModal" tabindex="-1" aria-labelledby="addScoreRecordModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addScoreRecordModalLabel">添加成绩记录</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="addScoreRecordForm" class="row g-3">
-                        <input type="hidden" id="scoreRecordId">
-                        <div class="col-md-4">
-                            <label for="scoreRecordStudentId" class="form-label">学生ID <span
-                                    class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="scoreRecordStudentId" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="scoreRecordTeacherId" class="form-label">教师ID <span
-                                    class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="scoreRecordTeacherId" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="scoreRecordYear" class="form-label">年份 <span
-                                    class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="scoreRecordYear" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="scoreRecordGroupId" class="form-label">小组ID（可选）</label>
-                            <input type="number" class="form-control" id="scoreRecordGroupId">
-                        </div>
-                        <div class="col-md-4">
-                            <label for="scoreRecordTotal" class="form-label">总分</label>
-                            <input type="number" class="form-control" id="scoreRecordTotal">
-                        </div>
-                        <div class="col-12">
-                            <hr>
-                            <h6>分项成绩</h6>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="scoreRecordItem1" class="form-label">分项1</label>
-                            <input type="number" class="form-control" id="scoreRecordItem1">
-                        </div>
-                        <div class="col-md-4">
-                            <label for="scoreRecordItem2" class="form-label">分项2</label>
-                            <input type="number" class="form-control" id="scoreRecordItem2">
-                        </div>
-                        <div class="col-md-4">
-                            <label for="scoreRecordItem3" class="form-label">分项3</label>
-                            <input type="number" class="form-control" id="scoreRecordItem3">
-                        </div>
-                        <div class="col-md-4">
-                            <label for="scoreRecordItem4" class="form-label">分项4</label>
-                            <input type="number" class="form-control" id="scoreRecordItem4">
-                        </div>
-                        <div class="col-md-4">
-                            <label for="scoreRecordItem5" class="form-label">分项5</label>
-                            <input type="number" class="form-control" id="scoreRecordItem5">
-                        </div>
-                        <div class="col-md-4">
-                            <label for="scoreRecordItem6" class="form-label">分项6</label>
-                            <input type="number" class="form-control" id="scoreRecordItem6">
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-primary" onclick="saveScoreRecord()">保存</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Department Management Modal -->
     <div class="modal fade" id="addDepartmentModal" tabindex="-1" aria-labelledby="addDepartmentModalLabel"
         aria-hidden="true">
@@ -1793,14 +1731,6 @@
                     }
                 }
 
-                // 成绩数据管理菜单：只有超级管理员可以看到
-                const navScoreManagement = document.getElementById('nav-score-management');
-                if (navScoreManagement) {
-                    if (userRole !== 'SUPER_ADMIN') {
-                        navScoreManagement.style.display = 'none';
-                    }
-                }
-
                 // 系统设置菜单：只有超级管理员可以看到
                 const navSettings = document.getElementById('nav-settings');
                 if (navSettings) {
@@ -1822,15 +1752,16 @@
                     navExport.style.display = 'none';
                 }
 
-                // 签名管理：只有教师（包括答辩组长）可以看到
+                // 签名管理：教师（包括答辩组长）和院系管理员可以看到，超级管理员看不到
                 const navSignatureManagement = document.getElementById('nav-signature-management');
                 if (navSignatureManagement) {
                     // 教师登录时，userType为'TEACHER'，或者userRole为'TEACHER'/'DEFENSE_LEADER'
-                    // 注意：教师登录时，userRole会被设置为'TEACHER'（见第265行）
-                    // 如果userType是'TEACHER'，说明是教师登录；如果userRole是'TEACHER'或'DEFENSE_LEADER'，也是教师
+                    // 院系管理员也可以看到签名管理，但超级管理员看不到
                     const isTeacher = userType === 'TEACHER' || userRole === 'TEACHER' || userRole === 'DEFENSE_LEADER';
-                    console.log('签名管理菜单检查 - userType:', userType, 'userRole:', userRole, 'isTeacher:', isTeacher);
-                    if (!isTeacher) {
+                    const isDeptAdmin = userRole === 'DEPT_ADMIN';
+                    const canSeeSignature = isTeacher || isDeptAdmin;
+                    console.log('签名管理菜单检查 - userType:', userType, 'userRole:', userRole, 'canSeeSignature:', canSeeSignature);
+                    if (!canSeeSignature) {
                         navSignatureManagement.style.display = 'none';
                     } else {
                         // 确保菜单显示
@@ -1843,30 +1774,32 @@
                     teacherSignatureHint.style.display = 'block';
                 }
 
-                // 小组打分和大组答辩菜单：只有教师和答辩组长可以看到
+                // 小组打分和大组答辩菜单：教师、答辩组长和超级管理员可以看到
                 const navTeacherScoring = document.getElementById('nav-teacher-scoring');
                 const navLargeGroupDefense = document.getElementById('nav-large-group-defense');
                 const isTeacherOrLeader = userType === 'TEACHER' || userRole === 'TEACHER' || userRole === 'DEFENSE_LEADER';
+                const isSuperAdmin = userRole === 'SUPER_ADMIN';
 
                 if (navTeacherScoring) {
-                    if (isTeacherOrLeader) {
+                    if (isTeacherOrLeader || isSuperAdmin) {
                         navTeacherScoring.style.display = '';
                     } else {
                         navTeacherScoring.style.display = 'none';
                     }
                 }
                 if (navLargeGroupDefense) {
-                    if (isTeacherOrLeader) {
+                    if (isTeacherOrLeader || isSuperAdmin) {
                         navLargeGroupDefense.style.display = '';
                     } else {
                         navLargeGroupDefense.style.display = 'none';
                     }
                 }
 
-                // 评阅管理菜单：只有教师和答辩组长可以看到
+                // 评阅管理菜单：教师、答辩组长和超级管理员可以看到
                 const navReviewManagement = document.getElementById('nav-review-management');
                 if (navReviewManagement) {
-                    if (isTeacherOrLeader) {
+                    const isSuperAdmin = userRole === 'SUPER_ADMIN';
+                    if (isTeacherOrLeader || isSuperAdmin) {
                         navReviewManagement.style.display = '';
                     } else {
                         navReviewManagement.style.display = 'none';
@@ -1993,24 +1926,6 @@
                 loadSettingsConfig();
             }
             if (viewId === 'signature-view') {
-                // 根据用户角色显示/隐藏相应的签名管理部分
-                const userInfoDiv = document.querySelector('.user-info');
-                const currentUserRole = userInfoDiv ? userInfoDiv.dataset.userRole : '';
-
-                // 个人签名上传部分：所有用户都可以看到
-                // 系主任签名管理部分：只有院系管理员和超级管理员可以看到
-                const deptAdminSection = document.getElementById('dept-admin-signature-section');
-                if (deptAdminSection) {
-                    if (currentUserRole === 'DEPT_ADMIN' || currentUserRole === 'SUPER_ADMIN') {
-                        deptAdminSection.style.display = 'block';
-                        // 自动加载系主任列表
-                        loadDefenseLeaders();
-                    } else {
-                        deptAdminSection.style.display = 'none';
-                    }
-                }
-            }
-            if (viewId === 'signature-view') {
                 // 签名管理页面加载时的处理
                 // 清空文件选择
                 const signatureFileInput = document.getElementById('signature-file');
@@ -2022,10 +1937,6 @@
                 if (previewArea) {
                     previewArea.style.display = 'none';
                 }
-            }
-            if (viewId === 'score-management-view') {
-                // 成绩数据管理页面加载
-                loadScoreRecords();
             }
             if (viewId === 'score-view') {
                 // 评语管理页面加载（教师和答辩组长）
@@ -2048,6 +1959,8 @@
             if (viewId === 'export-view') {
                 // 导出页面加载时，根据用户角色设置导出选项
                 setupExportOptionsByRole();
+                // 根据用户角色显示/隐藏相应的模块
+                setupExportModulesByRole();
             }
             if (viewId === 'teacher-scoring-view') {
                 // 教师小组打分页面加载
@@ -2579,26 +2492,26 @@
             const userInfoDiv = document.querySelector('.user-info');
             const userRole = userInfoDiv ? userInfoDiv.dataset.userRole : '';
             const userType = userInfoDiv ? userInfoDiv.dataset.userType : '';
-            
+
             console.log('loadStudents - userRole:', userRole, 'userType:', userType);
-            
+
             // 判断是否为教师/答辩组长（非管理员）
             const isTeacherRole = (userRole === 'TEACHER' || userRole === 'DEFENSE_LEADER' || userType === 'TEACHER');
             const isAdminRole = (userRole === 'SUPER_ADMIN' || userRole === 'DEPT_ADMIN');
-            
+
             if (isTeacherRole && !isAdminRole) {
                 // 教师/答辩组长：显示自己指导的学生，使用教师版表头和功能
                 updateStudentTableHeaderForTeacher();
                 hideAdminStudentButtons();
                 loadAdvisedStudentsForTeacher();
             } else {
-                // 管理员：显示所有学生
+                // 管理员：显示所有学生（管理员版）
                 updateStudentTableHeaderForAdmin();
                 showAdminStudentButtons();
                 loadStudentsForAdmin();
             }
         }
-        
+
         // 更新学生管理表头为教师版（显示成绩相关列）
         function updateStudentTableHeaderForTeacher() {
             const tableHead = document.querySelector('#student-management-view table thead tr');
@@ -2616,37 +2529,56 @@
                 `;
             }
         }
-        
+
         // 更新学生管理表头为管理员版
         function updateStudentTableHeaderForAdmin() {
             const tableHead = document.querySelector('#student-management-view table thead tr');
             if (tableHead) {
-                tableHead.innerHTML = `
-                    <th>学号</th>
-                    <th>姓名</th>
-                    <th>班级</th>
-                    <th>类型</th>
-                    <th>题目</th>
-                    <th>指导教师</th>
-                    <th>评阅教师</th>
-                    <th>答辩小组</th>
-                    <th>操作</th>
-                `;
+                // 检查是否是超级管理员
+                const userInfoDiv = document.querySelector('.user-info');
+                const isSuperAdmin = userInfoDiv && userInfoDiv.dataset.userRole === 'SUPER_ADMIN';
+
+                if (isSuperAdmin) {
+                    // 超级管理员：不显示"班级"列
+                    tableHead.innerHTML = `
+                        <th>学号</th>
+                        <th>姓名</th>
+                        <th>类型</th>
+                        <th>题目</th>
+                        <th>指导教师</th>
+                        <th>评阅教师</th>
+                        <th>答辩小组</th>
+                        <th>操作</th>
+                    `;
+                } else {
+                    // 普通管理员：显示"班级"列
+                    tableHead.innerHTML = `
+                        <th>学号</th>
+                        <th>姓名</th>
+                        <th>班级</th>
+                        <th>类型</th>
+                        <th>题目</th>
+                        <th>指导教师</th>
+                        <th>评阅教师</th>
+                        <th>答辩小组</th>
+                        <th>操作</th>
+                    `;
+                }
             }
         }
-        
+
         // 隐藏管理员专用按钮（添加学生等）
         function hideAdminStudentButtons() {
             const addButton = document.querySelector('#student-management-view header .btn-primary');
             if (addButton) addButton.style.display = 'none';
         }
-        
+
         // 显示管理员专用按钮
         function showAdminStudentButtons() {
             const addButton = document.querySelector('#student-management-view header .btn-primary');
             if (addButton) addButton.style.display = '';
         }
-        
+
         // 管理员加载学生列表
         async function loadStudentsForAdmin() {
             const keyword = document.getElementById('student-search-input')?.value.trim() || '';
@@ -2702,8 +2634,13 @@
             const tbody = document.getElementById('student-list');
             tbody.innerHTML = '';
 
+            // 检查是否是超级管理员
+            const userInfoDiv = document.querySelector('.user-info');
+            const isSuperAdmin = userInfoDiv && userInfoDiv.dataset.userRole === 'SUPER_ADMIN';
+            const colCount = isSuperAdmin ? 8 : 9; // 超级管理员少一列（班级）
+
             if (!students || students.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">暂无学生数据</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="${colCount}" class="text-center text-muted">暂无学生数据</td></tr>`;
                 return;
             }
 
@@ -2719,16 +2656,18 @@
             }
 
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">未找到匹配的学生</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="${colCount}" class="text-center text-muted">未找到匹配的学生</td></tr>`;
                 return;
             }
 
             filtered.forEach(student => {
+                // 超级管理员不显示"班级"列
+                const classCell = isSuperAdmin ? '' : `<td>${student.department ? student.department.name : 'N/A'}</td>`;
                 const row = `
                     <tr>
                         <td>${student.studentNo || 'N/A'}</td>
                         <td><strong>${student.name || 'N/A'}</strong></td>
-                        <td>${student.classInfo || 'N/A'}</td>
+                        ${classCell}
                         <td><span class="badge ${student.defenseType === 'PAPER' ? 'bg-info' : 'bg-warning'}">
                             ${student.defenseType === 'PAPER' ? '论文' : (student.defenseType === 'DESIGN' ? '设计' : 'N/A')}
                         </span></td>
@@ -3167,7 +3106,7 @@
             modal.show();
 
             // 模态框关闭时移除元素
-            document.getElementById('assignReviewerModal').addEventListener('hidden.bs.modal', function() {
+            document.getElementById('assignReviewerModal').addEventListener('hidden.bs.modal', function () {
                 container.remove();
             });
         }
@@ -3286,6 +3225,147 @@
             window.location.href = `/export/group/${groupId}/process/zip`;
         }
 
+        // 答辩组长：加载组内学生列表
+        async function loadLeaderStudents() {
+            const listBody = document.getElementById('leader-students-list');
+            listBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">加载中...</td></tr>';
+
+            try {
+                const response = await fetch('/export/leader/students');
+                const data = await response.json();
+
+                if (data.error) {
+                    showAlert('error', data.error);
+                    listBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">' + data.error + '</td></tr>';
+                    return;
+                }
+
+                const students = data.students || [];
+                if (students.length === 0) {
+                    listBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">' + (data.message || '暂无学生') + '</td></tr>';
+                    return;
+                }
+
+                listBody.innerHTML = '';
+                students.forEach(student => {
+                    const row = document.createElement('tr');
+                    const statusBadge = student.hasFinalScore
+                        ? '<span class="badge bg-success">可导出</span>'
+                        : '<span class="badge bg-warning">无成绩</span>';
+                    const exportBtn = student.hasFinalScore
+                        ? `<button class="btn btn-sm btn-outline-primary" onclick="exportStudentGrade(${student.id}, '${student.defenseType}')">
+                               <i class="bi bi-download"></i> 导出
+                           </button>`
+                        : '<span class="text-muted">-</span>';
+
+                    row.innerHTML = `
+                        <td>${student.studentNo || 'N/A'}</td>
+                        <td>${student.name || 'N/A'}</td>
+                        <td>${student.title || 'N/A'}</td>
+                        <td><span class="badge bg-info">${student.defenseType === 'PAPER' ? '论文' : '设计'}</span></td>
+                        <td>${statusBadge}</td>
+                        <td>${exportBtn}</td>
+                    `;
+                    listBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('加载学生列表失败:', error);
+                showAlert('error', '加载学生列表失败');
+                listBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">加载失败</td></tr>';
+            }
+        }
+
+        // 教师：加载自己所带学生列表
+        async function loadTeacherStudents() {
+            const listBody = document.getElementById('teacher-students-list');
+            listBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">加载中...</td></tr>';
+
+            try {
+                const response = await fetch('/export/teacher/students');
+                const data = await response.json();
+
+                if (data.error) {
+                    showAlert('error', data.error);
+                    listBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">' + data.error + '</td></tr>';
+                    return;
+                }
+
+                const students = data.students || [];
+                if (students.length === 0) {
+                    listBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">暂无学生</td></tr>';
+                    return;
+                }
+
+                listBody.innerHTML = '';
+                students.forEach(student => {
+                    const row = document.createElement('tr');
+                    const statusBadge = student.hasFinalScore
+                        ? '<span class="badge bg-success">可导出</span>'
+                        : '<span class="badge bg-warning">无成绩</span>';
+                    const exportBtn = student.hasFinalScore
+                        ? `<button class="btn btn-sm btn-outline-primary" onclick="exportStudentGrade(${student.id}, '${student.defenseType}')">
+                               <i class="bi bi-download"></i> 导出
+                           </button>`
+                        : '<span class="text-muted">-</span>';
+
+                    row.innerHTML = `
+                        <td>${student.studentNo || 'N/A'}</td>
+                        <td>${student.name || 'N/A'}</td>
+                        <td>${student.title || 'N/A'}</td>
+                        <td><span class="badge bg-info">${student.defenseType === 'PAPER' ? '论文' : '设计'}</span></td>
+                        <td>${statusBadge}</td>
+                        <td>${exportBtn}</td>
+                    `;
+                    listBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('加载学生列表失败:', error);
+                showAlert('error', '加载学生列表失败');
+                listBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">加载失败</td></tr>';
+            }
+        }
+
+        // 导出单个学生的成绩评定表
+        function exportStudentGrade(studentId, defenseType) {
+            const isPaper = defenseType === 'PAPER';
+            window.location.href = `/export/grade/${isPaper ? 'paper' : 'design'}/${studentId}`;
+        }
+
+        // 教师：一键打包下载所有学生的成绩评定表
+        function exportTeacherGradeZip() {
+            if (!confirm('确定要打包下载您所指导的所有学生的成绩评定表吗？')) {
+                return;
+            }
+            window.location.href = '/export/teacher/grade/zip';
+        }
+
+        // 教师：一键打包下载本组已评分学生的成绩评定表
+        function exportTeacherGradedGroupStudentsZip() {
+            if (!confirm('确定要打包下载本组中您已评分过的所有学生的成绩评定表吗？')) {
+                return;
+            }
+            window.location.href = '/export/teacher/group/graded/zip';
+        }
+
+        /**
+         * 根据用户角色设置导出模块的显示/隐藏
+         */
+        function setupExportModulesByRole() {
+            const userInfoDiv = document.querySelector('.user-info');
+            if (!userInfoDiv) return;
+
+            const userRole = userInfoDiv.dataset.userRole;
+
+            // 默认隐藏所有角色特定模块
+            const leaderGradeModule = document.getElementById('export-leader-grade-module');
+            const teacherGradeModule = document.getElementById('export-teacher-grade-module');
+
+            if (leaderGradeModule) leaderGradeModule.style.display = 'none';
+            if (teacherGradeModule) teacherGradeModule.style.display = 'none';
+
+            // 根据角色显示相应模块（已在setupExportOptionsByRole中处理，这里作为补充）
+        }
+
         /**
          * 根据用户角色设置导出选项
          */
@@ -3365,6 +3445,13 @@
                 const processZipModule = document.getElementById('export-process-zip-module');
                 if (groupZipModule) groupZipModule.style.display = 'block';
                 if (groupSummaryModule) groupSummaryModule.style.display = 'block';
+                // 显示答辩组长查看组内学生成绩评定表模块
+                const leaderGradeModule = document.getElementById('export-leader-grade-module');
+                if (leaderGradeModule) {
+                    leaderGradeModule.style.display = 'block';
+                    // 自动加载学生列表
+                    setTimeout(() => loadLeaderStudents(), 500);
+                }
                 if (processZipModule) processZipModule.style.display = 'none';
             } else if (userRole === 'TEACHER' || userType === 'TEACHER') {
                 // 教师：过程表和评定表
@@ -3382,6 +3469,13 @@
                 if (groupZipModule) groupZipModule.style.display = 'none';
                 if (groupSummaryModule) groupSummaryModule.style.display = 'none';
                 if (processZipModule) processZipModule.style.display = 'none';
+                // 显示教师查看自己所带学生成绩评定表模块
+                const teacherGradeModule = document.getElementById('export-teacher-grade-module');
+                if (teacherGradeModule) {
+                    teacherGradeModule.style.display = 'block';
+                    // 自动加载学生列表
+                    setTimeout(() => loadTeacherStudents(), 500);
+                }
             } else {
                 // 其他角色（如院系管理员）：不显示导出界面
                 // 这个在导航栏隐藏时已经处理了
@@ -3602,11 +3696,34 @@
 
         // --- Settings ---
         async function loadSettingsConfig() {
-            // 不自动填充值，让输入框保持placeholder效果
-            // 用户需要查看当前值时，可以通过点击输入框或查看按钮来获取
+            // 自动加载API Key（从数据库）
+            await loadApiKeyFromDatabase();
 
             // 加载年份列表
             loadAllYears();
+        }
+
+        async function loadApiKeyFromDatabase() {
+            try {
+                const apiKeyResp = await fetch('/admin/config/ai/key/get');
+                if (apiKeyResp.ok) {
+                    const apiKey = await apiKeyResp.text();
+                    const input = document.getElementById('cfg-api-key');
+                    if (apiKey && !apiKey.startsWith('error') && apiKey.trim().length > 0) {
+                        // 如果数据库中有值，自动回填（保持密码类型，显示为星号）
+                        input.value = apiKey.trim();
+                        input.type = 'password';
+                        input.placeholder = '已设置API Key（输入新值可更新，留空不修改）';
+                    } else {
+                        // 如果数据库中没有值，显示原始占位符
+                        input.placeholder = '请输入QWEN API KEY';
+                        input.value = '';
+                        input.type = 'password';
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load API key:', e);
+            }
         }
 
         async function loadAllYears() {
@@ -3729,13 +3846,13 @@
                 const apiKeyResp = await fetch('/admin/config/ai/key/get');
                 if (apiKeyResp.ok) {
                     const apiKey = await apiKeyResp.text();
-                    if (apiKey && !apiKey.startsWith('error')) {
+                    if (apiKey && !apiKey.startsWith('error') && apiKey.trim().length > 0) {
                         const input = document.getElementById('cfg-api-key');
                         input.type = 'text';
                         input.value = apiKey;
-                        showAlert('info', '已显示当前API Key，修改后点击保存');
+                        showAlert('info', '已显示当前API Key（从数据库加载），修改后点击保存');
                     } else {
-                        showAlert('info', '当前未设置API Key');
+                        showAlert('info', '当前数据库未设置API Key');
                     }
                 }
             } catch (e) {
@@ -3768,10 +3885,24 @@
                 showAlert('warning', '请输入 API Key 或留空不修改');
                 return;
             }
-            await postForm('/admin/config/ai/key/save', { apiKey: key });
-            // 保存后清空输入框，恢复placeholder效果
-            document.getElementById('cfg-api-key').value = '';
-            document.getElementById('cfg-api-key').type = 'password';
+            try {
+                const response = await fetch('/admin/config/ai/key/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'apiKey=' + encodeURIComponent(key)
+                });
+                const result = await response.text();
+                if (result === 'success') {
+                    showAlert('success', 'API Key 已保存到数据库');
+                    // 保存后重新加载，更新占位符
+                    await loadApiKeyFromDatabase();
+                } else {
+                    showAlert('error', result);
+                }
+            } catch (error) {
+                console.error('Save API key error:', error);
+                showAlert('error', '保存失败：' + error.message);
+            }
         }
 
         async function savePrompt(templateKey, textareaId) {
@@ -3845,320 +3976,8 @@
             }
         }
 
-        // 加载系主任列表（院系管理员）
-        async function loadDefenseLeaders() {
-            const listBody = document.getElementById('defense-leader-list');
-            listBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">加载中...</td></tr>';
-
-            try {
-                const response = await fetch('/signature/defenseLeaders');
-                const data = await response.json();
-
-                if (data.error) {
-                    showAlert('error', data.error);
-                    listBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">' + data.error + '</td></tr>';
-                    return;
-                }
-
-                const leaders = data.leaders || [];
-                if (leaders.length === 0) {
-                    listBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">暂无系主任</td></tr>';
-                    return;
-                }
-
-                listBody.innerHTML = '';
-                leaders.forEach(leader => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${leader.teacherName || 'N/A'}</td>
-                        <td>${leader.teacherNo || 'N/A'}</td>
-                        <td>${leader.departmentName || 'N/A'}</td>
-                        <td>${leader.year || new Date().getFullYear()}</td>
-                        <td>
-                            <span class="badge bg-secondary" id="signature-status-${leader.teacherId}">未上传</span>
-                        </td>
-                        <td>
-                            <div class="btn-group">
-                                <input type="file" class="d-none" id="leader-signature-${leader.teacherId}" 
-                                       accept="image/*" onchange="uploadDefenseLeaderSignature(${leader.teacherId}, this.files[0])">
-                                <button class="btn btn-sm btn-outline-primary" 
-                                        onclick="document.getElementById('leader-signature-${leader.teacherId}').click()">
-                                    <i class="bi bi-upload"></i> 上传签名
-                                </button>
-                            </div>
-                        </td>
-                    `;
-                    listBody.appendChild(row);
-                });
-            } catch (error) {
-                console.error('加载系主任列表失败:', error);
-                showAlert('error', '加载系主任列表失败');
-                listBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">加载失败</td></tr>';
-            }
-        }
-
-        // 上传系主任签名
-        async function uploadDefenseLeaderSignature(teacherId, file) {
-            if (!file) return;
-
-            const fd = new FormData();
-            fd.append('file', file);
-            fd.append('teacherId', teacherId);
-
-            toggleLoading(true);
-            try {
-                const response = await fetch('/signature/upload/defenseLeader', {
-                    method: 'POST',
-                    body: fd
-                });
-                const result = await response.text();
-
-                if (result.startsWith('error')) {
-                    showAlert('error', result.substring(6));
-                } else if (result.startsWith('success')) {
-                    showAlert('success', '系主任签名上传成功！');
-                    // 更新签名状态
-                    const statusBadge = document.getElementById(`signature-status-${teacherId}`);
-                    if (statusBadge) {
-                        statusBadge.textContent = '已上传';
-                        statusBadge.className = 'badge bg-success';
-                    }
-                    // 清空文件选择
-                    const fileInput = document.getElementById(`leader-signature-${teacherId}`);
-                    if (fileInput) fileInput.value = '';
-                } else {
-                    showAlert('error', '上传失败：' + result);
-                }
-            } catch (error) {
-                console.error('上传系主任签名失败:', error);
-                showAlert('error', '上传失败：' + error.message);
-            } finally {
-                toggleLoading(false);
-            }
-        }
 
         // --- Score Management Functions (Super Admin) ---
-        async function loadScoreRecords() {
-            const keyword = document.getElementById('score-search-input')?.value.trim() || '';
-            const year = document.getElementById('score-filter-year')?.value || '';
-
-            // 加载年份列表
-            try {
-                const yearsResp = await fetch('/admin/config/years/list');
-                if (yearsResp.ok) {
-                    const years = await yearsResp.json();
-                    const yearSelect = document.getElementById('score-filter-year');
-                    const currentValue = yearSelect.value;
-                    yearSelect.innerHTML = '<option value="">所有年份</option>';
-                    years.forEach(y => {
-                        const option = document.createElement('option');
-                        option.value = y;
-                        option.textContent = y;
-                        if (y == currentValue) option.selected = true;
-                        yearSelect.appendChild(option);
-                    });
-                }
-            } catch (e) {
-                console.error('Failed to load years:', e);
-            }
-
-            try {
-                let url = '/defense/score/records/list';
-                if (year) {
-                    url += '?year=' + year;
-                }
-                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error('获取成绩记录失败');
-                }
-                const records = await response.json();
-                renderScoreRecordTable(records, keyword);
-            } catch (error) {
-                console.error('Load score records error:', error);
-                showAlert('error', error.message || '获取成绩记录失败');
-                document.getElementById('score-record-list').innerHTML =
-                    '<tr><td colspan="13" class="text-center text-danger">加载失败: ' + (error.message || '未知错误') + '</td></tr>';
-            }
-        }
-
-        function renderScoreRecordTable(records, keyword) {
-            const tbody = document.getElementById('score-record-list');
-            tbody.innerHTML = '';
-
-            if (!records || records.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="13" class="text-center text-muted">暂无成绩记录</td></tr>';
-                return;
-            }
-
-            // 搜索过滤 - 只根据学生名称搜索
-            let filtered = records;
-            if (keyword) {
-                const kw = keyword.toLowerCase();
-                filtered = records.filter(r =>
-                    r.student && r.student.name && r.student.name.toLowerCase().includes(kw)
-                );
-            }
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="13" class="text-center text-muted">未找到匹配的记录</td></tr>';
-                return;
-            }
-
-            filtered.forEach(record => {
-                const studentName = record.student ? (record.student.studentNo + ' - ' + record.student.name) : 'ID: ' + record.studentId;
-                const teacherName = record.teacher ? (record.teacher.teacherNo + ' - ' + record.teacher.name) : 'ID: ' + record.teacherId;
-                const defenseType = record.student && record.student.defenseType ? record.student.defenseType : 'N/A';
-
-                const row = `
-                    <tr>
-                        <td>${record.id || 'N/A'}</td>
-                        <td>${studentName}</td>
-                        <td>${teacherName}</td>
-                        <td>${record.year || 'N/A'}</td>
-                        <td>${record.item1Score != null ? record.item1Score : '-'}</td>
-                        <td>${record.item2Score != null ? record.item2Score : '-'}</td>
-                        <td>${record.item3Score != null ? record.item3Score : '-'}</td>
-                        <td>${record.item4Score != null ? record.item4Score : '-'}</td>
-                        <td>${record.item5Score != null ? record.item5Score : '-'}</td>
-                        <td>${record.item6Score != null ? record.item6Score : '-'}</td>
-                        <td><strong>${record.totalScore != null ? record.totalScore : '-'}</strong></td>
-                        <td>${record.submitTime ? new Date(record.submitTime).toLocaleString() : '-'}</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary" onclick='openScoreRecordModal(${JSON.stringify(record)})'>
-                                <i class="bi bi-pencil-square"></i> 编辑
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteScoreRecord(${record.id})">
-                                <i class="bi bi-trash"></i> 删除
-                            </button>
-                        </td>
-                    </tr>
-                `;
-                tbody.innerHTML += row;
-            });
-        }
-
-        async function deleteScoreRecord(id) {
-            if (!confirm('确定要删除这条成绩记录吗？')) {
-                return;
-            }
-
-            toggleLoading(true);
-            try {
-                const response = await fetch(`/defense/score/records/${id}`, {
-                    method: 'DELETE'
-                });
-                const result = await response.text();
-
-                if (result === 'success') {
-                    showAlert('success', '成绩记录删除成功');
-                    loadScoreRecords();
-                } else {
-                    showAlert('error', result.startsWith('error:') ? result.substring(6) : '删除失败');
-                }
-            } catch (error) {
-                console.error(error);
-                showAlert('error', '删除失败，请检查网络连接');
-            } finally {
-                toggleLoading(false);
-            }
-        }
-
-        function openScoreRecordModal(record = null) {
-            const modal = new bootstrap.Modal(document.getElementById('addScoreRecordModal'));
-            const form = document.getElementById('addScoreRecordForm');
-            const modalLabel = document.getElementById('addScoreRecordModalLabel');
-
-            // 重置表单
-            form.reset();
-            document.getElementById('scoreRecordId').value = '';
-
-            if (record) {
-                // 编辑模式
-                modalLabel.textContent = '编辑成绩记录';
-                document.getElementById('scoreRecordId').value = record.id;
-                document.getElementById('scoreRecordStudentId').value = record.studentId || '';
-                document.getElementById('scoreRecordTeacherId').value = record.teacherId || '';
-                document.getElementById('scoreRecordYear').value = record.year || '';
-                document.getElementById('scoreRecordGroupId').value = record.defenseGroupId || '';
-                document.getElementById('scoreRecordItem1').value = record.item1Score || '';
-                document.getElementById('scoreRecordItem2').value = record.item2Score || '';
-                document.getElementById('scoreRecordItem3').value = record.item3Score || '';
-                document.getElementById('scoreRecordItem4').value = record.item4Score || '';
-                document.getElementById('scoreRecordItem5').value = record.item5Score || '';
-                document.getElementById('scoreRecordItem6').value = record.item6Score || '';
-                document.getElementById('scoreRecordTotal').value = record.totalScore || '';
-            } else {
-                // 新增模式
-                modalLabel.textContent = '添加成绩记录';
-            }
-
-            modal.show();
-        }
-
-        async function saveScoreRecord() {
-            const form = document.getElementById('addScoreRecordForm');
-            if (!form.checkValidity()) {
-                form.reportValidity();
-                return;
-            }
-
-            const recordId = document.getElementById('scoreRecordId').value;
-            const record = {
-                id: recordId ? parseInt(recordId) : null,
-                studentId: parseInt(document.getElementById('scoreRecordStudentId').value),
-                teacherId: parseInt(document.getElementById('scoreRecordTeacherId').value),
-                year: parseInt(document.getElementById('scoreRecordYear').value),
-                defenseGroupId: document.getElementById('scoreRecordGroupId').value ? parseInt(document.getElementById('scoreRecordGroupId').value) : null,
-                item1Score: document.getElementById('scoreRecordItem1').value ? parseInt(document.getElementById('scoreRecordItem1').value) : null,
-                item2Score: document.getElementById('scoreRecordItem2').value ? parseInt(document.getElementById('scoreRecordItem2').value) : null,
-                item3Score: document.getElementById('scoreRecordItem3').value ? parseInt(document.getElementById('scoreRecordItem3').value) : null,
-                item4Score: document.getElementById('scoreRecordItem4').value ? parseInt(document.getElementById('scoreRecordItem4').value) : null,
-                item5Score: document.getElementById('scoreRecordItem5').value ? parseInt(document.getElementById('scoreRecordItem5').value) : null,
-                item6Score: document.getElementById('scoreRecordItem6').value ? parseInt(document.getElementById('scoreRecordItem6').value) : null,
-                totalScore: document.getElementById('scoreRecordTotal').value ? parseInt(document.getElementById('scoreRecordTotal').value) : null
-            };
-
-            if (!record.studentId || !record.teacherId || !record.year) {
-                showAlert('warning', '请填写学生ID、教师ID和年份');
-                return;
-            }
-
-            toggleLoading(true);
-            try {
-                let result;
-                if (recordId) {
-                    // 更新
-                    const response = await fetch('/defense/score/records/update', {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(record)
-                    });
-                    result = await response.text();
-                } else {
-                    // 创建
-                    const response = await fetch('/defense/score/teacher/save', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(record)
-                    });
-                    result = await response.text();
-                }
-
-                if (result === 'success') {
-                    showAlert('success', recordId ? '成绩记录更新成功' : '成绩记录添加成功');
-                    bootstrap.Modal.getInstance(document.getElementById('addScoreRecordModal')).hide();
-                    loadScoreRecords();
-                } else {
-                    showAlert('error', result.startsWith('error:') ? result.substring(6) : '操作失败');
-                }
-            } catch (error) {
-                console.error(error);
-                showAlert('error', '操作失败，请检查网络连接');
-            } finally {
-                toggleLoading(false);
-            }
-        }
-
         // --- Score View Functions (Teacher/Defense Leader) ---
         async function loadCurrentYearForScore() {
             try {
@@ -5713,11 +5532,64 @@
 
                 // 显示教师和小组信息
                 document.getElementById('ts-teacher-info').textContent = data.teacherName ? `教师：${data.teacherName}` : '';
-                document.getElementById('ts-group-info').textContent = data.groupName ? `小组：${data.groupName}` : '';
 
-                const students = data.students || [];
+                // 检查是否是超级管理员（返回groups数组）
+                let students = [];
+                const isSuperAdmin = data.isSuperAdmin && data.groups;
+
+                if (isSuperAdmin) {
+                    // 超级管理员：显示所有小组的所有学生
+                    document.getElementById('ts-group-info').textContent = '所有小组';
+                    // 更新表头，添加"小组"列，但不显示"班级"列
+                    const tableHead = document.querySelector('#teacher-scoring-view table thead tr');
+                    if (tableHead && !tableHead.querySelector('th:first-child').textContent.includes('小组')) {
+                        tableHead.innerHTML = `
+                            <th>小组</th>
+                            <th>学号</th>
+                            <th>姓名</th>
+                            <th>类型</th>
+                            <th>题目</th>
+                            <th>打分进度</th>
+                            <th>平均分</th>
+                            <th>调节系数</th>
+                            <th>最终答辩成绩</th>
+                            <th>我的打分</th>
+                            <th>操作</th>
+                        `;
+                    }
+                    data.groups.forEach(group => {
+                        if (group.students && group.students.length > 0) {
+                            group.students.forEach(s => {
+                                s.groupName = group.groupName; // 添加小组名称
+                                students.push(s);
+                            });
+                        }
+                    });
+                } else {
+                    // 普通教师：显示自己所在小组的学生
+                    document.getElementById('ts-group-info').textContent = data.groupName ? `小组：${data.groupName}` : '';
+                    // 恢复表头（如果没有小组列）
+                    const tableHead = document.querySelector('#teacher-scoring-view table thead tr');
+                    if (tableHead && tableHead.querySelector('th:first-child').textContent.includes('小组')) {
+                        tableHead.innerHTML = `
+                            <th>学号</th>
+                            <th>姓名</th>
+                            <th>班级</th>
+                            <th>类型</th>
+                            <th>题目</th>
+                            <th>打分进度</th>
+                            <th>平均分</th>
+                            <th>调节系数</th>
+                            <th>最终答辩成绩</th>
+                            <th>我的打分</th>
+                            <th>操作</th>
+                        `;
+                    }
+                    students = data.students || [];
+                }
+
                 if (students.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">您尚未分配到任何小组，或小组内没有学生</td></tr>';
+                    tbody.innerHTML = `<tr><td colspan="${isSuperAdmin ? '11' : '11'}" class="text-center text-muted">暂无学生数据</td></tr>`;
                     return;
                 }
 
@@ -5747,10 +5619,14 @@
                     }
 
                     const row = document.createElement('tr');
+                    // 超级管理员显示小组名称，但不显示"班级"列
+                    const groupNameCell = isSuperAdmin && s.groupName ? `<td><span class="badge bg-info">${s.groupName}</span></td>` : '';
+                    const classCell = isSuperAdmin ? '' : `<td>${s.classInfo || ''}</td>`;
                     row.innerHTML = `
+                        ${groupNameCell}
                         <td>${s.studentNo || ''}</td>
                         <td>${s.name || ''}</td>
-                        <td>${s.classInfo || ''}</td>
+                        ${classCell}
                         <td><span class="badge ${defenseTypeBadge}">${defenseTypeText}</span></td>
                         <td>${s.title || ''}</td>
                         <td><span class="badge ${progressBadge}">${progress}</span></td>
