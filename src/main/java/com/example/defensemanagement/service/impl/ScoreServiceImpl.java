@@ -296,6 +296,43 @@ public class ScoreServiceImpl implements ScoreService {
         List<DefenseGroupTeacher> groupTeachers = defenseGroupTeacherMapper.findByGroupId(groupId);
         int totalTeachers = groupTeachers != null ? groupTeachers.size() : 0;
         
+        // 找到小组第一名（平均分最高的学生），并计算统一的调节系数
+        Student topStudent = null;
+        double topAvgScore = -1;
+        
+        for (Student s : students) {
+            List<TeacherScoreRecord> records = teacherScoreRecordMapper.findByStudentIdAndYear(s.getId(), year);
+            if (records != null && records.size() >= totalTeachers && totalTeachers > 0) {
+                double avgScore = records.stream()
+                        .filter(r -> r.getTotalScore() != null)
+                        .mapToInt(TeacherScoreRecord::getTotalScore)
+                        .average()
+                        .orElse(0.0);
+                if (avgScore > topAvgScore) {
+                    topAvgScore = avgScore;
+                    topStudent = s;
+                }
+            }
+        }
+        
+        // 计算小组统一的调节系数
+        Double groupAdjustmentFactor = null;
+        if (topStudent != null && topAvgScore > 0) {
+            // 获取小组第一名的大组答辩成绩
+            List<LargeGroupScore> largeScores = largeGroupScoreMapper.findByStudentIdAndYear(topStudent.getId(), year);
+            if (largeScores != null && !largeScores.isEmpty()) {
+                double largeGroupAvgScore = largeScores.stream()
+                        .filter(ls -> ls.getScore() != null)
+                        .mapToInt(LargeGroupScore::getScore)
+                        .average()
+                        .orElse(0.0);
+                // 调节系数 = 大组答辩平均分 / 小组第一名的小组平均分
+                groupAdjustmentFactor = round(largeGroupAvgScore / topAvgScore, 3);
+            }
+        }
+        
+        result.put("groupAdjustmentFactor", groupAdjustmentFactor);
+        
         // 为每个学生获取打分状态
         List<Map<String, Object>> studentList = new java.util.ArrayList<>();
         for (Student s : students) {
@@ -328,18 +365,28 @@ public class ScoreServiceImpl implements ScoreService {
             studentInfo.put("hasScored", hasScored);
             studentInfo.put("myScore", myScore);
             
-            // 计算平均分（如果所有教师都已打分）
-            if (records != null && records.size() == totalTeachers && totalTeachers > 0) {
-                double avgScore = records.stream()
+            // 计算该学生的小组平均分
+            Double studentAvgScore = null;
+            if (records != null && records.size() >= totalTeachers && totalTeachers > 0) {
+                studentAvgScore = round(records.stream()
                         .filter(r -> r.getTotalScore() != null)
                         .mapToInt(TeacherScoreRecord::getTotalScore)
                         .average()
-                        .orElse(0.0);
-                studentInfo.put("avgScore", round(avgScore, 1));
+                        .orElse(0.0), 1);
+                studentInfo.put("avgScore", studentAvgScore);
                 studentInfo.put("allScored", true);
             } else {
                 studentInfo.put("avgScore", null);
                 studentInfo.put("allScored", false);
+            }
+            
+            // 使用小组统一的调节系数计算最终答辩成绩
+            studentInfo.put("adjustmentFactor", groupAdjustmentFactor);
+            if (groupAdjustmentFactor != null && studentAvgScore != null) {
+                double finalDefenseScore = round(studentAvgScore * groupAdjustmentFactor, 1);
+                studentInfo.put("finalDefenseScore", finalDefenseScore);
+            } else {
+                studentInfo.put("finalDefenseScore", null);
             }
             
             studentList.add(studentInfo);
@@ -435,16 +482,25 @@ public class ScoreServiceImpl implements ScoreService {
                 candidate.put("totalTeachersCount", totalTeachers);
                 
                 // 计算大组答辩平均分
+                Double largeGroupAvgScore = null;
                 if (largeScores != null && !largeScores.isEmpty()) {
                     double largeAvg = largeScores.stream()
                             .filter(ls -> ls.getScore() != null)
                             .mapToInt(LargeGroupScore::getScore)
                             .average()
                             .orElse(0.0);
-                    candidate.put("largeGroupAvgScore", round(largeAvg, 1));
+                    largeGroupAvgScore = round(largeAvg, 1);
+                    candidate.put("largeGroupAvgScore", largeGroupAvgScore);
                 } else {
                     candidate.put("largeGroupAvgScore", null);
                 }
+                
+                // 计算调节系数（大组答辩平均分 / 小组平均分，保留3位小数）
+                Double adjustmentFactor = null;
+                if (largeGroupAvgScore != null && topAvgScore > 0) {
+                    adjustmentFactor = round(largeGroupAvgScore / topAvgScore, 3);
+                }
+                candidate.put("adjustmentFactor", adjustmentFactor);
                 
                 // 获取当前教师对该候选人的打分
                 Integer myLargeGroupScore = null;
@@ -483,6 +539,112 @@ public class ScoreServiceImpl implements ScoreService {
         } else {
             existing.setScore(score);
             largeGroupScoreMapper.update(existing);
+        }
+        
+        // 自动更新该小组的调节系数和所有学生的最终答辩成绩
+        updateGroupAdjustmentFactor(studentId, year);
+    }
+    
+    /**
+     * 更新小组的调节系数和所有学生的最终答辩成绩
+     * @param topStudentId 小组第一名学生的ID（参与大组答辩的学生）
+     * @param year 答辩年份
+     */
+    private void updateGroupAdjustmentFactor(Long topStudentId, Integer year) {
+        // 获取学生信息
+        Student topStudent = studentMapper.findById(topStudentId);
+        if (topStudent == null || topStudent.getDefenseGroupId() == null) {
+            return;
+        }
+        
+        Long groupId = topStudent.getDefenseGroupId();
+        
+        // 计算大组答辩平均分
+        List<LargeGroupScore> largeScores = largeGroupScoreMapper.findByStudentIdAndYear(topStudentId, year);
+        if (largeScores == null || largeScores.isEmpty()) {
+            return;
+        }
+        
+        double largeGroupAvgScore = largeScores.stream()
+                .filter(ls -> ls.getScore() != null)
+                .mapToInt(LargeGroupScore::getScore)
+                .average()
+                .orElse(0.0);
+        
+        // 计算该学生在小组中的平均分
+        List<TeacherScoreRecord> records = teacherScoreRecordMapper.findByStudentIdAndYear(topStudentId, year);
+        if (records == null || records.isEmpty()) {
+            return;
+        }
+        
+        double topStudentGroupAvgScore = records.stream()
+                .filter(r -> r.getTotalScore() != null)
+                .mapToInt(TeacherScoreRecord::getTotalScore)
+                .average()
+                .orElse(0.0);
+        
+        if (topStudentGroupAvgScore <= 0) {
+            return;
+        }
+        
+        // 计算调节系数（保留3位小数）
+        double adjustmentFactor = round(largeGroupAvgScore / topStudentGroupAvgScore, 3);
+        
+        // 获取小组内所有学生
+        List<Student> students = studentMapper.findByDefenseGroupId(groupId);
+        if (students == null || students.isEmpty()) {
+            return;
+        }
+        
+        // 过滤年份
+        students = students.stream()
+                .filter(s -> s.getDefenseYear() != null && s.getDefenseYear().equals(year))
+                .collect(java.util.stream.Collectors.toList());
+        
+        // 更新每个学生的调节系数和最终答辩成绩
+        for (Student stu : students) {
+            // 计算该学生在小组中的平均分
+            List<TeacherScoreRecord> stuRecords = teacherScoreRecordMapper.findByStudentIdAndYear(stu.getId(), year);
+            if (stuRecords == null || stuRecords.isEmpty()) {
+                continue;
+            }
+            
+            double stuGroupAvgScore = stuRecords.stream()
+                    .filter(r -> r.getTotalScore() != null)
+                    .mapToInt(TeacherScoreRecord::getTotalScore)
+                    .average()
+                    .orElse(0.0);
+            
+            // 更新/插入学生最终成绩
+            StudentFinalScore finalScore = studentFinalScoreMapper.findByStudentIdAndYear(stu.getId(), year);
+            if (finalScore == null) {
+                finalScore = new StudentFinalScore();
+                finalScore.setStudentId(stu.getId());
+                finalScore.setYear(year);
+                studentFinalScoreMapper.insert(finalScore);
+            }
+            
+            finalScore.setGroupAvgScore((int) Math.round(stuGroupAvgScore));
+            finalScore.setAdjustmentFactor(adjustmentFactor);
+            
+            // 计算最终答辩成绩 = 小组平均分 × 调节系数
+            double finalDefenseScore = round(stuGroupAvgScore * adjustmentFactor, 1);
+            finalScore.setFinalDefenseScore(finalDefenseScore);
+            
+            // 仅小组第一名记录大组答辩成绩
+            if (stu.getId().equals(topStudentId)) {
+                finalScore.setLargeGroupScore((int) Math.round(largeGroupAvgScore));
+            }
+            
+            // 如果已有导师/评阅成绩，则计算总评成绩（30%、3 0%、40%）
+            if (finalScore.getAdvisorScore() != null && finalScore.getReviewerScore() != null) {
+                double totalGrade = finalScore.getAdvisorScore() * 0.3
+                        + finalScore.getReviewerScore() * 0.3
+                        + finalDefenseScore * 0.4;
+                finalScore.setTotalGrade(round(totalGrade, 1));
+            }
+            
+            studentFinalScoreMapper.update(finalScore);
         }
     }
 

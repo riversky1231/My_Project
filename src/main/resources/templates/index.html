@@ -1345,12 +1345,14 @@
                                 <th>题目</th>
                                 <th>打分进度</th>
                                 <th>平均分</th>
+                                <th>调节系数</th>
+                                <th>最终答辩成绩</th>
                                 <th>我的打分</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
                         <tbody id="ts-student-list">
-                            <tr><td colspan="9" class="text-center text-muted">加载中...</td></tr>
+                            <tr><td colspan="11" class="text-center text-muted">加载中...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -1467,11 +1469,12 @@
                                 <th>小组平均分</th>
                                 <th>大组打分进度</th>
                                 <th>大组平均分</th>
+                                <th>调节系数</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
                         <tbody id="lg-candidate-list">
-                            <tr><td colspan="9" class="text-center text-muted">加载中...</td></tr>
+                            <tr><td colspan="10" class="text-center text-muted">加载中...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -5617,6 +5620,8 @@
                     const progress = `${s.scoredTeachersCount || 0}/${s.totalTeachersCount || 0}`;
                     const progressBadge = s.scoredTeachersCount >= s.totalTeachersCount ? 'bg-success' : 'bg-secondary';
                     const avgScore = s.avgScore != null ? s.avgScore.toFixed(1) : '-';
+                    const adjustmentFactor = s.adjustmentFactor != null ? s.adjustmentFactor.toFixed(3) : '-';
+                    const finalDefenseScore = s.finalDefenseScore != null ? s.finalDefenseScore.toFixed(1) : '-';
                     const myScore = s.myScore != null ? s.myScore.totalScore : null;
                     const hasScored = s.hasScored;
                     
@@ -5642,6 +5647,8 @@
                         <td>${s.title || ''}</td>
                         <td><span class="badge ${progressBadge}">${progress}</span></td>
                         <td>${avgScore}</td>
+                        <td><strong class="text-primary">${adjustmentFactor}</strong></td>
+                        <td><strong class="text-success">${finalDefenseScore}</strong></td>
                         <td>${hasScored ? `<span class="badge bg-success">${myScore}</span>` : '<span class="badge bg-secondary">未打分</span>'}</td>
                         <td>
                             <button class="btn btn-sm ${hasScored ? 'btn-outline-warning' : 'btn-outline-primary'}" 
@@ -5818,6 +5825,7 @@
                     const lgProgressBadge = c.largeGroupScoredCount >= c.totalTeachersCount && c.totalTeachersCount > 0 ? 'bg-success' : 'bg-secondary';
                     const groupAvgScore = c.groupAvgScore != null ? c.groupAvgScore.toFixed(1) : '-';
                     const lgAvgScore = c.largeGroupAvgScore != null ? c.largeGroupAvgScore.toFixed(1) : '-';
+                    const adjustmentFactor = c.adjustmentFactor != null ? c.adjustmentFactor.toFixed(3) : '-';
                     const hasScored = c.myLargeGroupScore != null;
                     
                     const row = document.createElement('tr');
@@ -5830,6 +5838,7 @@
                         <td><strong>${groupAvgScore}</strong></td>
                         <td><span class="badge ${lgProgressBadge}">${lgProgress}</span></td>
                         <td>${lgAvgScore}</td>
+                        <td><strong class="text-primary">${adjustmentFactor}</strong></td>
                         <td>
                             <button class="btn btn-sm ${hasScored ? 'btn-outline-warning' : 'btn-outline-primary'}" 
                                 onclick="openLargeGroupScoringModal(${c.studentId}, '${c.studentNo}', '${c.studentName}', '${c.groupName || ''}', ${c.groupAvgScore || 'null'}, ${c.myLargeGroupScore || 'null'})"
