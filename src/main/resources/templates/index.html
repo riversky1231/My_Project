@@ -658,46 +658,6 @@
             </header>
             <div class="module mb-3">
                 <div class="module-header">
-                    <h4><i class="bi bi-pen"></i> 教师打分</h4>
-                </div>
-                <div class="row g-2">
-                    <div class="col-md-2">
-                        <input class="form-control" id="score-student-id" placeholder="学生ID"
-                            onchange="loadStudentForScore(this.value)">
-                    </div>
-                    <div class="col-md-2">
-                        <input class="form-control" id="score-teacher-id" placeholder="教师ID" readonly>
-                        <small class="text-muted">当前登录教师</small>
-                    </div>
-                    <div class="col-md-2"><input class="form-control" id="score-year" placeholder="年份"></div>
-                    <div class="col-md-2"><input class="form-control" id="score-total" placeholder="总分(整数)"></div>
-                    <div class="col-md-2"><input class="form-control" id="score-group-id" placeholder="小组ID(可选)"></div>
-                    <div class="col-md-2">
-                        <button class="btn btn-outline-primary w-100" id="auto-split-btn" onclick="autoSplitDesign()"
-                            style="display: none;">设计类一键拆分</button>
-                    </div>
-                </div>
-                <div class="mt-2 row g-2" id="score-items-container">
-                    <div class="col-md-2"><input class="form-control" id="item1" placeholder="项1"></div>
-                    <div class="col-md-2"><input class="form-control" id="item2" placeholder="项2"></div>
-                    <div class="col-md-2"><input class="form-control" id="item3" placeholder="项3"></div>
-                    <div class="col-md-2"><input class="form-control" id="item4" placeholder="项4"
-                            style="display: none;"></div>
-                    <div class="col-md-2"><input class="form-control" id="item5" placeholder="项5"
-                            style="display: none;"></div>
-                    <div class="col-md-2"><input class="form-control" id="item6" placeholder="项6"
-                            style="display: none;"></div>
-                </div>
-                <div class="mt-2">
-                    <small class="text-muted">提示：请先选择学生，系统会根据论文/设计类型自动调整评分项</small>
-                </div>
-                <div class="mt-2">
-                    <button class="btn btn-primary" onclick="saveTeacherScore()">提交打分</button>
-                </div>
-            </div>
-
-            <div class="module mb-3">
-                <div class="module-header">
                     <h4><i class="bi bi-journal-check"></i> 导师/评阅成绩</h4>
                 </div>
                 <div class="row g-2">
@@ -714,38 +674,6 @@
                     <div class="col-md-2"><input class="form-control" id="reviewer-score" placeholder="评阅成绩"></div>
                     <div class="col-md-2">
                         <button class="btn btn-outline-primary w-100" onclick="setReviewer()">保存评阅成绩</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="module">
-                <div class="module-header">
-                    <h4><i class="bi bi-diagram-3"></i> 小组汇总/调节系数</h4>
-                </div>
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i>
-                    <strong>说明：</strong>每个小组的第一名要参加大组答辩，大组答辩成绩除以小组答辩成绩产生调节系数（精度为小数点后3位），调节系数乘上所有同学在小组内答辩成绩为最终的答辩成绩（精度为小数点后1位）。
-                </div>
-                <div class="row g-2">
-                    <div class="col-md-3"><input class="form-control" id="finalize-group-id" placeholder="小组ID"></div>
-                    <div class="col-md-2"><input class="form-control" id="finalize-year" placeholder="年份"></div>
-                    <div class="col-md-2"><input class="form-control" id="finalize-large-score"
-                            placeholder="大组答辩得分(可选)">
-                    </div>
-                    <div class="col-md-2">
-                        <button class="btn btn-primary w-100" onclick="finalizeGroup()">计算汇总</button>
-                    </div>
-                    <div class="col-md-2">
-                        <button class="btn btn-outline-info w-100" onclick="viewAdjustmentFactor()">查看调节系数</button>
-                    </div>
-                </div>
-                <div id="adjustment-factor-result" class="mt-3" style="display: none;">
-                    <div class="alert alert-success">
-                        <h6>调节系数信息：</h6>
-                        <p class="mb-1"><strong>调节系数：</strong><span id="factor-value"></span></p>
-                        <p class="mb-1"><strong>小组平均分：</strong><span id="group-avg-value"></span></p>
-                        <p class="mb-1"><strong>大组答辩得分：</strong><span id="large-group-value"></span></p>
-                        <p class="mb-0"><strong>最终答辩成绩：</strong><span id="final-defense-value"></span></p>
                     </div>
                 </div>
             </div>
@@ -1100,40 +1028,6 @@
                     </div>
                     <div class="col-md-2"><button class="btn btn-outline-primary w-100"
                             onclick="setDate('GRADE_DATE')">保存评定日期</button></div>
-                </div>
-            </div>
-
-            <div class="module mb-3">
-                <div class="module-header">
-                    <h4><i class="bi bi-clipboard-check"></i> 本科毕业论文答辩成绩表配置</h4>
-                </div>
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i> 设置3个评价指标的具体描述内容及对应的评分权值
-                </div>
-                <div id="paper-evaluation-items">
-                    <!-- 动态加载论文评价指标 -->
-                </div>
-                <div class="mt-3">
-                    <button class="btn btn-primary" onclick="saveEvaluationItems('PAPER')">
-                        <i class="bi bi-save"></i> 保存论文评价指标配置
-                    </button>
-                </div>
-            </div>
-
-            <div class="module mb-3">
-                <div class="module-header">
-                    <h4><i class="bi bi-clipboard-check"></i> 本科毕业设计答辩成绩表配置</h4>
-                </div>
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i> 设置3个评价指标的具体描述内容及对应的评分权值
-                </div>
-                <div id="design-evaluation-items">
-                    <!-- 动态加载设计评价指标 -->
-                </div>
-                <div class="mt-3">
-                    <button class="btn btn-primary" onclick="saveEvaluationItems('DESIGN')">
-                        <i class="bi bi-save"></i> 保存设计评价指标配置
-                    </button>
                 </div>
             </div>
 
@@ -2931,70 +2825,6 @@
         // addMember() removed: members are derived from Student records (t_student.defense_group_id)
 
         // --- Score & Evaluate ---
-        async function saveTeacherScore() {
-            const payload = {
-                studentId: document.getElementById('score-student-id').value,
-                teacherId: document.getElementById('score-teacher-id').value,
-                year: parseInt(document.getElementById('score-year').value),
-                defenseGroupId: document.getElementById('score-group-id').value || null,
-                totalScore: parseInt(document.getElementById('score-total').value) || null,
-                item1Score: parseInt(document.getElementById('item1').value) || null,
-                item2Score: parseInt(document.getElementById('item2').value) || null,
-                item3Score: parseInt(document.getElementById('item3').value) || null,
-                item4Score: parseInt(document.getElementById('item4').value) || null,
-                item5Score: parseInt(document.getElementById('item5').value) || null,
-                item6Score: parseInt(document.getElementById('item6').value) || null
-            };
-            if (!payload.studentId || !payload.teacherId || !payload.year) {
-                showAlert('warning', '请填写学生ID、教师ID、年份');
-                return;
-            }
-            toggleLoading(true);
-            try {
-                const resp = await fetch('/defense/score/teacher/save', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const text = await resp.text();
-                showAlert(text === 'success' ? 'success' : 'error', text);
-            } catch (e) {
-                showAlert('error', '提交失败');
-            } finally {
-                toggleLoading(false);
-            }
-        }
-
-        async function autoSplitDesign() {
-            const studentId = document.getElementById('score-student-id').value;
-            const teacherId = document.getElementById('score-teacher-id').value;
-            const year = document.getElementById('score-year').value;
-            const totalScore = document.getElementById('score-total').value;
-            const groupId = document.getElementById('score-group-id').value;
-            if (!studentId || !teacherId || !year || !totalScore) {
-                showAlert('warning', '请填学生ID/教师ID/年份/总分');
-                return;
-            }
-            toggleLoading(true);
-            try {
-                const params = new URLSearchParams({
-                    studentId, teacherId, year, totalScore
-                });
-                if (groupId) params.append('defenseGroupId', groupId);
-                const resp = await fetch('/defense/score/design/autoSplit', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: params.toString()
-                });
-                const text = await resp.text();
-                showAlert(text === 'success' ? 'success' : 'error', text);
-            } catch (e) {
-                showAlert('error', '拆分失败');
-            } finally {
-                toggleLoading(false);
-            }
-        }
-
         async function setAdvisor() {
             const studentId = document.getElementById('advisor-student-id').value;
             const year = document.getElementById('advisor-year').value;
@@ -3009,35 +2839,6 @@
             const score = document.getElementById('reviewer-score').value;
             if (!studentId || !year || !score) return showAlert('warning', '请填写完整信息');
             await postForm('/defense/score/reviewer/set', { studentId, year, score });
-        }
-
-        async function finalizeGroup() {
-            const groupId = document.getElementById('finalize-group-id').value;
-            const year = document.getElementById('finalize-year').value;
-            const largeGroupScore = document.getElementById('finalize-large-score').value;
-            if (!groupId || !year) return showAlert('warning', '请填写小组ID和年份');
-            const params = new URLSearchParams({ groupId, year });
-            if (largeGroupScore) params.append('largeGroupScore', largeGroupScore);
-            toggleLoading(true);
-            try {
-                const resp = await fetch('/defense/score/group/finalize', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: params.toString()
-                });
-                const text = await resp.text();
-                if (text === 'success') {
-                    showAlert('success', '小组汇总计算成功！');
-                    // 自动显示调节系数
-                    await viewAdjustmentFactor();
-                } else {
-                    showAlert('error', text);
-                }
-            } catch (e) {
-                showAlert('error', '汇总失败');
-            } finally {
-                toggleLoading(false);
-            }
         }
 
         // --- Export ---
@@ -3402,142 +3203,6 @@
 
             // 加载年份列表
             loadAllYears();
-
-            // 加载评价指标配置
-            loadEvaluationItems('PAPER');
-            loadEvaluationItems('DESIGN');
-        }
-
-        async function loadEvaluationItems(defenseType) {
-            try {
-                const response = await fetch(`/admin/config/evaluation/list?type=${defenseType}`);
-                if (!response.ok) {
-                    throw new Error('获取评价指标失败');
-                }
-                const items = await response.json();
-                renderEvaluationItems(defenseType, items);
-            } catch (error) {
-                console.error('Load evaluation items error:', error);
-                // 如果失败，显示默认的3个指标
-                const defaultItems = defenseType === 'PAPER' ? [
-                    { id: null, itemName: '论文质量', weight: 0.5 },
-                    { id: null, itemName: '答辩的自述报告', weight: 0.25 },
-                    { id: null, itemName: '回答问题的情况', weight: 0.25 }
-                ] : [
-                    { id: null, itemName: '设计质量', weight: 0.5 },
-                    { id: null, itemName: '答辩的自述报告成绩', weight: 0.25 },
-                    { id: null, itemName: '回答问题的情况', weight: 0.25 }
-                ];
-                renderEvaluationItems(defenseType, defaultItems);
-            }
-        }
-
-        function renderEvaluationItems(defenseType, items) {
-            const container = document.getElementById(`${defenseType.toLowerCase()}-evaluation-items`);
-            if (!container) return;
-
-            // 确保只有3个指标
-            const displayItems = items.slice(0, 3);
-            while (displayItems.length < 3) {
-                displayItems.push({ id: null, itemName: '', weight: 0 });
-            }
-
-            container.innerHTML = '';
-            displayItems.forEach((item, index) => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'row g-2 mb-2';
-                itemDiv.innerHTML = `
-                    <div class="col-md-6">
-                        <label class="form-label">指标${index + 1}描述</label>
-                        <input type="text" class="form-control eval-item-name" data-type="${defenseType}" data-index="${index}" 
-                               value="${item.itemName || ''}" placeholder="请输入指标描述">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">评分权值 (0-1)</label>
-                        <input type="number" step="0.01" min="0" max="1" class="form-control eval-item-weight" 
-                               data-type="${defenseType}" data-index="${index}" 
-                               value="${item.weight || 0}" placeholder="0.00">
-                    </div>
-                    <div class="col-md-3 d-flex align-items-end">
-                        <div class="form-control-plaintext">
-                            <small class="text-muted">满分: <span class="max-score-${defenseType}-${index}">${item.weight ? (item.weight * 100).toFixed(0) : 0}</span> 分</small>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(itemDiv);
-            });
-
-            // 添加权值变化监听，自动计算满分
-            container.querySelectorAll('.eval-item-weight').forEach(input => {
-                input.addEventListener('input', function () {
-                    const weight = parseFloat(this.value) || 0;
-                    const index = this.dataset.index;
-                    const maxScoreSpan = container.querySelector(`.max-score-${defenseType}-${index}`);
-                    if (maxScoreSpan) {
-                        maxScoreSpan.textContent = (weight * 100).toFixed(0);
-                    }
-                });
-            });
-        }
-
-        async function saveEvaluationItems(defenseType) {
-            const container = document.getElementById(`${defenseType.toLowerCase()}-evaluation-items`);
-            if (!container) return;
-
-            const items = [];
-            for (let i = 0; i < 3; i++) {
-                const nameInput = container.querySelector(`.eval-item-name[data-type="${defenseType}"][data-index="${i}"]`);
-                const weightInput = container.querySelector(`.eval-item-weight[data-type="${defenseType}"][data-index="${i}"]`);
-
-                if (!nameInput || !weightInput) continue;
-
-                const itemName = nameInput.value.trim();
-                const weight = parseFloat(weightInput.value);
-
-                if (!itemName) {
-                    showAlert('warning', `请填写指标${i + 1}的描述`);
-                    return;
-                }
-
-                if (isNaN(weight) || weight < 0 || weight > 1) {
-                    showAlert('warning', `指标${i + 1}的权值必须在0-1之间`);
-                    return;
-                }
-
-                items.push({
-                    itemName: itemName,
-                    weight: weight
-                });
-            }
-
-            // 检查权值总和是否为1
-            const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
-            if (Math.abs(totalWeight - 1.0) > 0.01) {
-                if (!confirm(`权值总和为 ${totalWeight.toFixed(2)}，不等于1.0，是否继续保存？`)) {
-                    return;
-                }
-            }
-
-            toggleLoading(true);
-            try {
-                const response = await fetch(`/admin/config/evaluation/save?type=${defenseType}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(items)
-                });
-                const result = await response.text();
-
-                if (result === 'success') {
-                    showAlert('success', `${defenseType === 'PAPER' ? '论文' : '设计'}评价指标配置保存成功`);
-                } else {
-                    showAlert('error', result.startsWith('error:') ? result.substring(6) : '保存失败');
-                }
-            } catch (error) {
-                console.error(error);
-                showAlert('error', '保存失败，请检查网络连接');
-            } finally {
-                toggleLoading(false);
-            }
         }
 
         async function loadAllYears() {
@@ -4549,59 +4214,6 @@
                         await loadStudentForComment();
                     }
                 }, 500);
-            }
-        }
-
-        // 根据学生ID加载学生信息，动态显示评分项
-        async function loadStudentForScore(studentId) {
-            if (!studentId) return;
-
-            try {
-                const response = await fetch(`/department/student/list`);
-                if (!response.ok) return;
-                const students = await response.json();
-                const student = students.find(s => s.id == studentId);
-
-                if (student) {
-                    // 根据defenseType显示不同的评分项
-                    updateScoreInputsByType(student.defenseType);
-                }
-            } catch (e) {
-                console.error('Failed to load student:', e);
-            }
-        }
-
-        function updateScoreInputsByType(defenseType) {
-            const item4Input = document.getElementById('item4');
-            const item5Input = document.getElementById('item5');
-            const item6Input = document.getElementById('item6');
-            const autoSplitBtn = document.querySelector('button[onclick="autoSplitDesign()"]');
-
-            if (defenseType === 'PAPER') {
-                // 论文类型：只显示3项
-                if (item4Input) item4Input.style.display = 'none';
-                if (item5Input) item5Input.style.display = 'none';
-                if (item6Input) item6Input.style.display = 'none';
-                if (autoSplitBtn) autoSplitBtn.style.display = 'none';
-
-                // 更新placeholder
-                document.getElementById('item1').placeholder = '论文质量';
-                document.getElementById('item2').placeholder = '自述报告';
-                document.getElementById('item3').placeholder = '回答问题';
-            } else if (defenseType === 'DESIGN') {
-                // 设计类型：显示6项
-                if (item4Input) item4Input.style.display = 'block';
-                if (item5Input) item5Input.style.display = 'block';
-                if (item6Input) item6Input.style.display = 'block';
-                if (autoSplitBtn) autoSplitBtn.style.display = 'block';
-
-                // 更新placeholder
-                document.getElementById('item1').placeholder = '设计质量1';
-                document.getElementById('item2').placeholder = '设计质量2';
-                document.getElementById('item3').placeholder = '设计质量3';
-                document.getElementById('item4').placeholder = '自述报告';
-                document.getElementById('item5').placeholder = '回答问题1';
-                document.getElementById('item6').placeholder = '回答问题2';
             }
         }
 
