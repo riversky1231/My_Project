@@ -6,6 +6,8 @@ import com.example.defensemanagement.entity.Teacher;
 import com.example.defensemanagement.mapper.StudentMapper;
 import com.example.defensemanagement.mapper.DefenseGroupMapper;
 import com.example.defensemanagement.mapper.TeacherMapper;
+import com.example.defensemanagement.mapper.TeacherScoreRecordMapper;
+import com.example.defensemanagement.mapper.StudentFinalScoreMapper;
 import com.example.defensemanagement.service.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,12 @@ public class StudentServiceImpl implements StudentService {
 
     @Autowired
     private DefenseGroupMapper defenseGroupMapper;
+
+    @Autowired
+    private TeacherScoreRecordMapper teacherScoreRecordMapper;
+
+    @Autowired
+    private StudentFinalScoreMapper studentFinalScoreMapper;
 
     @Override
     public Student findById(Long studentId) {
@@ -81,6 +89,15 @@ public class StudentServiceImpl implements StudentService {
             throw new IllegalArgumentException("指导教师不存在：" + teacherId);
         }
 
+        // 如果修改了指导教师，需要级联删除原指导教师的打分记录和成绩
+        Long oldAdvisorId = student.getAdvisorTeacherId();
+        if (oldAdvisorId != null && !oldAdvisorId.equals(teacherId) && student.getDefenseYear() != null) {
+            // 删除原指导教师的打分记录
+            teacherScoreRecordMapper.deleteByStudentIdAndTeacherId(studentId, oldAdvisorId, student.getDefenseYear());
+            // 清空最终成绩表中的指导教师成绩
+            studentFinalScoreMapper.clearAdvisorScore(studentId, student.getDefenseYear());
+        }
+
         student.setAdvisorTeacherId(teacherId);
         return studentMapper.update(student) > 0;
     }
@@ -97,6 +114,15 @@ public class StudentServiceImpl implements StudentService {
         Teacher teacher = teacherMapper.findById(teacherId);
         if (teacher == null) {
             throw new IllegalArgumentException("评阅教师不存在：" + teacherId);
+        }
+
+        // 如果修改了评阅教师，需要级联删除原评阅教师的打分记录和成绩
+        Long oldReviewerId = student.getReviewerTeacherId();
+        if (oldReviewerId != null && !oldReviewerId.equals(teacherId) && student.getDefenseYear() != null) {
+            // 删除原评阅教师的打分记录
+            teacherScoreRecordMapper.deleteByStudentIdAndTeacherId(studentId, oldReviewerId, student.getDefenseYear());
+            // 清空最终成绩表中的评阅教师成绩
+            studentFinalScoreMapper.clearReviewerScore(studentId, student.getDefenseYear());
         }
 
         student.setReviewerTeacherId(teacherId);

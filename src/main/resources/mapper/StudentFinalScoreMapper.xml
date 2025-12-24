@@ -61,5 +61,17 @@
         WHERE id = #{id}
     </update>
 
+    <update id="clearAdvisorScore">
+        UPDATE student_final_score
+        SET advisor_score = NULL, total_grade = NULL
+        WHERE student_id = #{studentId} AND year = #{year}
+    </update>
+
+    <update id="clearReviewerScore">
+        UPDATE student_final_score
+        SET reviewer_score = NULL, total_grade = NULL
+        WHERE student_id = #{studentId} AND year = #{year}
+    </update>
+
 </mapper>
 

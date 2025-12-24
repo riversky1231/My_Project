@@ -2,6 +2,7 @@ package com.example.defensemanagement.mapper;
 
 import com.example.defensemanagement.entity.TeacherScoreRecord;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 @Mapper
@@ -27,4 +28,7 @@ public interface TeacherScoreRecordMapper {
     int update(TeacherScoreRecord record);
 
     int deleteById(Long id); // 删除记录
+    
+    // 删除指定学生和教师的打分记录（用于修改指导教师/评阅教师时级联删除）
+    int deleteByStudentIdAndTeacherId(@Param("studentId") Long studentId, @Param("teacherId") Long teacherId, @Param("year") Integer year);
 }

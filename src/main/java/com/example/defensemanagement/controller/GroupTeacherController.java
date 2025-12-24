@@ -73,6 +73,21 @@ public class GroupTeacherController {
                 && u.getDepartmentId() != null && !u.getDepartmentId().equals(t.getDepartmentId())) {
             return "error:只能分配本院系教师";
         }
+        
+        // 检查该教师是否已经属于其他小组
+        DefenseGroupTeacher existing = defenseGroupTeacherMapper.findByTeacherId(teacherId);
+        if (existing != null && !existing.getGroupId().equals(groupId)) {
+            // 教师已经属于其他小组，返回错误信息
+            DefenseGroup existingGroup = defenseGroupMapper.findById(existing.getGroupId());
+            String groupName = existingGroup != null ? existingGroup.getName() : "其他小组";
+            return "error:该教师已经属于" + groupName + "，一个教师不能加入两个小组";
+        }
+        
+        // 如果教师已经在当前小组，直接返回成功（避免重复插入）
+        if (existing != null && existing.getGroupId().equals(groupId)) {
+            return "success";
+        }
+        
         defenseGroupTeacherMapper.insert(groupId, teacherId, 0);
         return "success";
     }

@@ -5,12 +5,14 @@ import com.example.defensemanagement.entity.User;
 import com.example.defensemanagement.entity.Teacher;
 import com.example.defensemanagement.entity.DefenseGroup;
 import com.example.defensemanagement.entity.StudentFinalScore;
+import com.example.defensemanagement.entity.TeacherScoreRecord;
 import com.example.defensemanagement.service.StudentService;
 import com.example.defensemanagement.service.ConfigService;
 import com.example.defensemanagement.service.ScoreService;
 import com.example.defensemanagement.mapper.DefenseGroupMapper;
 import com.example.defensemanagement.mapper.TeacherMapper;
 import com.example.defensemanagement.mapper.StudentFinalScoreMapper;
+import com.example.defensemanagement.mapper.TeacherScoreRecordMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -45,6 +47,9 @@ public class StudentController {
     
     @Autowired
     private ScoreService scoreService;
+    
+    @Autowired
+    private TeacherScoreRecordMapper teacherScoreRecordMapper;
 
     // 检查院系管理员或超级管理员权限的辅助方法
     private String checkDeptAdmin(HttpSession session) {
@@ -446,8 +451,13 @@ public class StudentController {
     @PostMapping("/teacher/setAdvisorScore")
     @ResponseBody
     public String setAdvisorScoreByTeacher(@RequestParam Long studentId, @RequestParam Integer score, HttpSession session) {
+        // 检查是否是超级管理员
+        User currentUser = (User) session.getAttribute("currentUser");
+        boolean isSuperAdmin = currentUser != null && currentUser.getRole() != null && 
+                               "SUPER_ADMIN".equals(currentUser.getRole().getName());
+        
         Teacher teacher = getTeacherFromSession(session);
-        if (teacher == null) {
+        if (teacher == null && !isSuperAdmin) {
             return "error:请先登录教师账号";
         }
         
@@ -456,13 +466,17 @@ public class StudentController {
             return "error:请先设置当前答辩年份";
         }
         
-        // 验证该学生是否是当前教师指导的
+        // 验证该学生是否存在
         Student student = studentService.findById(studentId);
         if (student == null) {
             return "error:学生不存在";
         }
-        if (student.getAdvisorTeacherId() == null || !student.getAdvisorTeacherId().equals(teacher.getId())) {
-            return "error:您不是该学生的指导教师";
+        
+        // 如果不是超级管理员，验证该学生是否是当前教师指导的
+        if (!isSuperAdmin && teacher != null) {
+            if (student.getAdvisorTeacherId() == null || !student.getAdvisorTeacherId().equals(teacher.getId())) {
+                return "error:您不是该学生的指导教师";
+            }
         }
         
         try {
@@ -584,6 +598,15 @@ public class StudentController {
                     info.put("advisorTeacherNo", null);
                 }
                 
+                // 设置评阅人信息
+                if (s.getReviewer() != null) {
+                    info.put("reviewerName", s.getReviewer().getName());
+                    info.put("reviewerTeacherNo", s.getReviewer().getTeacherNo());
+                } else {
+                    info.put("reviewerName", null);
+                    info.put("reviewerTeacherNo", null);
+                }
+                
                 // 设置答辩小组信息
                 info.put("defenseGroupId", s.getDefenseGroupId());
                 if (s.getDefenseGroup() != null) {
@@ -622,8 +645,13 @@ public class StudentController {
     @PostMapping("/teacher/setReviewerScore")
     @ResponseBody
     public String setReviewerScoreByTeacher(@RequestParam Long studentId, @RequestParam Integer score, HttpSession session) {
+        // 检查是否是超级管理员
+        User currentUser = (User) session.getAttribute("currentUser");
+        boolean isSuperAdmin = currentUser != null && currentUser.getRole() != null && 
+                               "SUPER_ADMIN".equals(currentUser.getRole().getName());
+        
         Teacher teacher = getTeacherFromSession(session);
-        if (teacher == null) {
+        if (teacher == null && !isSuperAdmin) {
             return "error:请先登录教师账号";
         }
         
@@ -632,17 +660,181 @@ public class StudentController {
             return "error:请先设置当前答辩年份";
         }
         
-        // 验证该学生是否是当前教师评阅的
+        // 验证该学生是否存在
         Student student = studentService.findById(studentId);
         if (student == null) {
             return "error:学生不存在";
         }
-        if (student.getReviewerTeacherId() == null || !student.getReviewerTeacherId().equals(teacher.getId())) {
-            return "error:您不是该学生的评阅人";
+        
+        // 如果不是超级管理员，验证该学生是否是当前教师评阅的
+        if (!isSuperAdmin && teacher != null) {
+            if (student.getReviewerTeacherId() == null || !student.getReviewerTeacherId().equals(teacher.getId())) {
+                return "error:您不是该学生的评阅人";
+            }
         }
         
         try {
             scoreService.setReviewerScore(studentId, currentYear, score);
+            return "success";
+        } catch (Exception e) {
+            return "error:" + e.getMessage();
+        }
+    }
+    
+    /**
+     * 获取学生的指导教师或评阅人的打分记录（用于超级管理员修改分项分数）
+     * GET /department/student/teacher/scoreRecord?studentId=1&type=advisor/reviewer
+     */
+    @GetMapping("/teacher/scoreRecord")
+    @ResponseBody
+    public Map<String, Object> getTeacherScoreRecord(@RequestParam Long studentId, @RequestParam String type, HttpSession session) {
+        Map<String, Object> result = new HashMap<>();
+        
+        // 检查是否是超级管理员
+        User currentUser = (User) session.getAttribute("currentUser");
+        boolean isSuperAdmin = currentUser != null && currentUser.getRole() != null && 
+                               "SUPER_ADMIN".equals(currentUser.getRole().getName());
+        
+        if (!isSuperAdmin) {
+            result.put("error", "权限不足");
+            return result;
+        }
+        
+        Integer currentYear = configService.getCurrentDefenseYear();
+        if (currentYear == null) {
+            result.put("error", "请先设置当前答辩年份");
+            return result;
+        }
+        
+        Student student = studentService.findById(studentId);
+        if (student == null) {
+            result.put("error", "学生不存在");
+            return result;
+        }
+        
+        Long teacherId = null;
+        if ("advisor".equals(type)) {
+            teacherId = student.getAdvisorTeacherId();
+        } else if ("reviewer".equals(type)) {
+            teacherId = student.getReviewerTeacherId();
+        } else {
+            result.put("error", "类型参数错误，应为advisor或reviewer");
+            return result;
+        }
+        
+        if (teacherId == null) {
+            result.put("error", "该学生未分配" + ("advisor".equals(type) ? "指导教师" : "评阅人"));
+            return result;
+        }
+        
+        // 查找该教师的打分记录
+        TeacherScoreRecord record = teacherScoreRecordMapper.findByStudentIdAndTeacherIdAndYear(studentId, teacherId, currentYear);
+        if (record == null) {
+            result.put("error", "未找到打分记录");
+            return result;
+        }
+        
+        result.put("record", record);
+        result.put("student", student);
+        Teacher teacher = teacherMapper.findById(teacherId);
+        if (teacher != null) {
+            result.put("teacherName", teacher.getName());
+        }
+        return result;
+    }
+    
+    /**
+     * 更新教师的打分记录（用于超级管理员和院系管理员修改分项分数）
+     * POST /department/student/teacher/updateScoreRecord
+     */
+    @PostMapping("/teacher/updateScoreRecord")
+    @ResponseBody
+    public String updateTeacherScoreRecord(
+            @RequestParam Long studentId,
+            @RequestParam String type,
+            @RequestParam(required = false) Integer item1,
+            @RequestParam(required = false) Integer item2,
+            @RequestParam(required = false) Integer item3,
+            @RequestParam(required = false) Integer item4,
+            @RequestParam(required = false) Integer item5,
+            @RequestParam(required = false) Integer item6,
+            HttpSession session) {
+        
+        // 检查是否是超级管理员或院系管理员
+        String permissionError = checkDeptAdmin(session);
+        if (permissionError != null) {
+            return permissionError;
+        }
+        
+        Integer currentYear = configService.getCurrentDefenseYear();
+        if (currentYear == null) {
+            return "error:请先设置当前答辩年份";
+        }
+        
+        Student student = studentService.findById(studentId);
+        if (student == null) {
+            return "error:学生不存在";
+        }
+        
+        Long teacherId = null;
+        if ("advisor".equals(type)) {
+            teacherId = student.getAdvisorTeacherId();
+        } else if ("reviewer".equals(type)) {
+            teacherId = student.getReviewerTeacherId();
+        } else {
+            return "error:类型参数错误";
+        }
+        
+        if (teacherId == null) {
+            return "error:该学生未分配" + ("advisor".equals(type) ? "指导教师" : "评阅人");
+        }
+        
+        // 查找该教师的打分记录（如果没有记录，创建新记录）
+        TeacherScoreRecord record = teacherScoreRecordMapper.findByStudentIdAndTeacherIdAndYear(studentId, teacherId, currentYear);
+        boolean isNewRecord = false;
+        if (record == null) {
+            // 创建新记录
+            record = new TeacherScoreRecord();
+            record.setStudentId(studentId);
+            record.setTeacherId(teacherId);
+            record.setYear(currentYear);
+            record.setDefenseGroupId(student.getDefenseGroupId());
+            record.setSubmitTime(java.time.LocalDateTime.now());
+            isNewRecord = true;
+        }
+        
+        // 更新分项分数
+        if (item1 != null) record.setItem1Score(item1);
+        if (item2 != null) record.setItem2Score(item2);
+        if (item3 != null) record.setItem3Score(item3);
+        if (item4 != null) record.setItem4Score(item4);
+        if (item5 != null) record.setItem5Score(item5);
+        if (item6 != null) record.setItem6Score(item6);
+        
+        // 重新计算总分
+        int total = (record.getItem1Score() != null ? record.getItem1Score() : 0) +
+                   (record.getItem2Score() != null ? record.getItem2Score() : 0) +
+                   (record.getItem3Score() != null ? record.getItem3Score() : 0) +
+                   (record.getItem4Score() != null ? record.getItem4Score() : 0) +
+                   (record.getItem5Score() != null ? record.getItem5Score() : 0) +
+                   (record.getItem6Score() != null ? record.getItem6Score() : 0);
+        record.setTotalScore(total);
+        
+        // 保存或更新记录
+        try {
+            if (isNewRecord) {
+                teacherScoreRecordMapper.insert(record);
+            } else {
+                teacherScoreRecordMapper.update(record);
+            }
+            
+            // 更新StudentFinalScore中的对应成绩
+            if ("advisor".equals(type)) {
+                scoreService.setAdvisorScore(studentId, currentYear, total);
+            } else {
+                scoreService.setReviewerScore(studentId, currentYear, total);
+            }
+            
             return "success";
         } catch (Exception e) {
             return "error:" + e.getMessage();

@@ -17,7 +17,7 @@ CREATE TABLE `archive_session`  (
                                     `archive_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '归档数据(JSON格式)',
                                     `created_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
                                     PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '归档会话表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '归档会话表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of archive_session
@@ -36,7 +36,7 @@ CREATE TABLE `comment`  (
                             PRIMARY KEY (`id`) USING BTREE,
                             INDEX `idx_group_id`(`group_id` ASC) USING BTREE,
                             CONSTRAINT `comment_ibfk_1` FOREIGN KEY (`group_id`) REFERENCES `defense_group` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '小组评语表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '小组评语表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of comment
@@ -57,7 +57,7 @@ CREATE TABLE `defense_group`  (
                                   `created_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
                                   `updated_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
                                   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '答辩小组表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '答辩小组表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of defense_group
@@ -84,18 +84,22 @@ CREATE TABLE `defense_group_teacher`  (
                                           INDEX `teacher_id`(`teacher_id` ASC) USING BTREE,
                                           CONSTRAINT `defense_group_teacher_ibfk_1` FOREIGN KEY (`group_id`) REFERENCES `defense_group` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
                                           CONSTRAINT `defense_group_teacher_ibfk_2` FOREIGN KEY (`teacher_id`) REFERENCES `teacher` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '答辩小组教师关联表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 25 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '答辩小组教师关联表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of defense_group_teacher
 -- ----------------------------
-INSERT INTO `defense_group_teacher` VALUES (1, 1, 1, 1, '2025-12-18 12:38:58');
-INSERT INTO `defense_group_teacher` VALUES (2, 1, 2, 0, '2025-12-18 12:38:58');
+INSERT INTO `defense_group_teacher` VALUES (1, 1, 1, 0, '2025-12-18 12:38:58');
+INSERT INTO `defense_group_teacher` VALUES (2, 1, 2, 1, '2025-12-18 12:38:58');
 INSERT INTO `defense_group_teacher` VALUES (3, 2, 3, 1, '2025-12-18 12:38:58');
 INSERT INTO `defense_group_teacher` VALUES (4, 2, 4, 0, '2025-12-18 12:38:58');
 INSERT INTO `defense_group_teacher` VALUES (5, 3, 5, 1, '2025-12-18 12:38:58');
 INSERT INTO `defense_group_teacher` VALUES (6, 4, 6, 1, '2025-12-18 12:38:58');
 INSERT INTO `defense_group_teacher` VALUES (7, 5, 7, 1, '2025-12-18 12:38:58');
+INSERT INTO `defense_group_teacher` VALUES (21, 4, 11, 0, '2025-12-24 21:26:35');
+INSERT INTO `defense_group_teacher` VALUES (22, 5, 10, 0, '2025-12-24 21:26:42');
+INSERT INTO `defense_group_teacher` VALUES (23, 5, 9, 0, '2025-12-24 21:26:47');
+INSERT INTO `defense_group_teacher` VALUES (24, 3, 8, 0, '2025-12-24 21:28:27');
 
 -- ----------------------------
 -- Table structure for defense_leader
@@ -113,7 +117,7 @@ CREATE TABLE `defense_leader`  (
                                    INDEX `idx_department_year`(`department_id` ASC, `year` ASC) USING BTREE,
                                    CONSTRAINT `defense_leader_ibfk_1` FOREIGN KEY (`teacher_id`) REFERENCES `teacher` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
                                    CONSTRAINT `defense_leader_ibfk_2` FOREIGN KEY (`department_id`) REFERENCES `department` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '答辩组长表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 8 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '答辩组长表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of defense_leader
@@ -139,7 +143,7 @@ CREATE TABLE `department`  (
                                `updated_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
                                PRIMARY KEY (`id`) USING BTREE,
                                UNIQUE INDEX `code`(`code` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '院系表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 7 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '院系表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of department
@@ -149,6 +153,25 @@ INSERT INTO `department` VALUES (2, '软件学院', 'SE', '软件学院', '2025-
 INSERT INTO `department` VALUES (3, '信息与通信工程学院', 'ICE', '信息与通信工程', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 INSERT INTO `department` VALUES (4, '人工智能学院', 'AI', '人工智能学院', '2025-12-18 12:38:58', '2025-12-18 19:49:01');
 INSERT INTO `department` VALUES (5, '网络空间安全学院', 'NSC', '网络空间安全学院', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+
+-- ----------------------------
+-- Table structure for department_head_signature
+-- ----------------------------
+DROP TABLE IF EXISTS `department_head_signature`;
+CREATE TABLE `department_head_signature`  (
+                                              `id` bigint NOT NULL AUTO_INCREMENT,
+                                              `department_id` bigint NOT NULL COMMENT '院系ID',
+                                              `signature_path` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '系主任签名图片路径',
+                                              `created_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                                              `updated_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                                              PRIMARY KEY (`id`) USING BTREE,
+                                              UNIQUE INDEX `uk_department`(`department_id` ASC) USING BTREE,
+                                              CONSTRAINT `department_head_signature_ibfk_1` FOREIGN KEY (`department_id`) REFERENCES `department` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '系主任签名表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of department_head_signature
+-- ----------------------------
 
 -- ----------------------------
 -- Table structure for evaluation_item
@@ -164,7 +187,7 @@ CREATE TABLE `evaluation_item`  (
                                     `created_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
                                     PRIMARY KEY (`id`) USING BTREE,
                                     INDEX `idx_type`(`defense_type` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '评分指标配置' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '评分指标配置' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of evaluation_item
@@ -180,6 +203,40 @@ INSERT INTO `evaluation_item` VALUES (8, 'DESIGN', '回答问题1', 0.15, 15, 5,
 INSERT INTO `evaluation_item` VALUES (9, 'DESIGN', '回答问题2', 0.15, 15, 6, '2025-12-18 12:38:58');
 
 -- ----------------------------
+-- Table structure for large_group_score
+-- ----------------------------
+DROP TABLE IF EXISTS `large_group_score`;
+CREATE TABLE `large_group_score`  (
+                                      `id` bigint NOT NULL AUTO_INCREMENT,
+                                      `student_id` bigint NOT NULL COMMENT '学生ID（小组第一名）',
+                                      `teacher_id` bigint NOT NULL COMMENT '评分教师ID',
+                                      `year` int NOT NULL COMMENT '答辩年份',
+                                      `score` int NOT NULL COMMENT '大组答辩总分（满分100分）',
+                                      `created_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                                      `updated_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                                      PRIMARY KEY (`id`) USING BTREE,
+                                      UNIQUE INDEX `uk_student_teacher_year`(`student_id` ASC, `teacher_id` ASC, `year` ASC) USING BTREE,
+                                      INDEX `idx_student_year`(`student_id` ASC, `year` ASC) USING BTREE,
+                                      INDEX `idx_teacher_year`(`teacher_id` ASC, `year` ASC) USING BTREE,
+                                      CONSTRAINT `large_group_score_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `t_student` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+                                      CONSTRAINT `large_group_score_ibfk_2` FOREIGN KEY (`teacher_id`) REFERENCES `teacher` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 11 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '大组答辩成绩表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of large_group_score
+-- ----------------------------
+INSERT INTO `large_group_score` VALUES (1, 2, 1, 2024, 83, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `large_group_score` VALUES (2, 3, 2, 2024, 93, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `large_group_score` VALUES (3, 7, 3, 2025, 96, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `large_group_score` VALUES (4, 9, 1, 2024, 88, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `large_group_score` VALUES (5, 11, 2, 2024, 90, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `large_group_score` VALUES (6, 3, 1, 2024, 93, '2025-12-24 18:32:12', '2025-12-24 18:32:12');
+INSERT INTO `large_group_score` VALUES (7, 11, 1, 2024, 94, '2025-12-24 18:32:18', '2025-12-24 18:32:18');
+INSERT INTO `large_group_score` VALUES (8, 6, 1, 2024, 93, '2025-12-24 18:32:25', '2025-12-24 18:32:25');
+INSERT INTO `large_group_score` VALUES (9, 9, 2, 2024, 99, '2025-12-24 21:37:15', '2025-12-24 21:37:15');
+INSERT INTO `large_group_score` VALUES (10, 6, 2, 2024, 93, '2025-12-24 21:37:22', '2025-12-24 21:37:22');
+
+-- ----------------------------
 -- Table structure for role
 -- ----------------------------
 DROP TABLE IF EXISTS `role`;
@@ -190,7 +247,7 @@ CREATE TABLE `role`  (
                          `created_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
                          PRIMARY KEY (`id`) USING BTREE,
                          UNIQUE INDEX `name`(`name` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '角色表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '角色表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of role
@@ -199,6 +256,32 @@ INSERT INTO `role` VALUES (1, 'SUPER_ADMIN', '超级管理员', '2025-12-18 12:3
 INSERT INTO `role` VALUES (2, 'DEPT_ADMIN', '院系管理员', '2025-12-18 12:38:58');
 INSERT INTO `role` VALUES (3, 'DEFENSE_LEADER', '答辩组长', '2025-12-18 12:38:58');
 INSERT INTO `role` VALUES (4, 'TEACHER', '教师', '2025-12-18 12:38:58');
+
+-- ----------------------------
+-- Table structure for student_comment
+-- ----------------------------
+DROP TABLE IF EXISTS `student_comment`;
+CREATE TABLE `student_comment`  (
+                                    `id` bigint NOT NULL AUTO_INCREMENT,
+                                    `student_id` bigint NOT NULL COMMENT '学生ID',
+                                    `year` int NOT NULL COMMENT '答辩年份',
+                                    `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '答辩小组评语内容',
+                                    `created_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                                    `updated_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                                    PRIMARY KEY (`id`) USING BTREE,
+                                    UNIQUE INDEX `uk_student_year`(`student_id` ASC, `year` ASC) USING BTREE,
+                                    INDEX `idx_student`(`student_id` ASC) USING BTREE,
+                                    CONSTRAINT `student_comment_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `t_student` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '学生答辩评语表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of student_comment
+-- ----------------------------
+INSERT INTO `student_comment` VALUES (1, 2, 2024, '该生设计思路清晰，实现方案合理，演示效果良好，答辩表现优秀。', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `student_comment` VALUES (2, 3, 2024, '论文选题具有实际意义，研究方法科学，数据分析充分，答辩表达清晰。', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `student_comment` VALUES (3, 4, 2024, '设计作品功能完整，技术实现到位，用户体验良好，答辩回答问题准确。', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `student_comment` VALUES (4, 5, 2024, '论文研究深入，理论分析透彻，实验验证充分，答辩表现优秀。', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `student_comment` VALUES (5, 6, 2024, '设计创新性强，技术方案合理，实现效果良好，答辩回答问题准确。', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 
 -- ----------------------------
 -- Table structure for student_final_score
@@ -219,21 +302,21 @@ CREATE TABLE `student_final_score`  (
                                         PRIMARY KEY (`id`) USING BTREE,
                                         UNIQUE INDEX `uk_student_year`(`student_id` ASC, `year` ASC) USING BTREE,
                                         CONSTRAINT `student_final_score_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `t_student` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '学生最终成绩' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 12 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '学生最终成绩' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of student_final_score
 -- ----------------------------
-INSERT INTO `student_final_score` VALUES (2, 2, 2024, 88, 86, 83.00, 85.60, 0.980, 85, 83, '2025-12-18 12:38:58');
-INSERT INTO `student_final_score` VALUES (3, 3, 2024, 92, 90, 93.00, 92.00, 1.020, 91, 93, '2025-12-18 12:38:58');
-INSERT INTO `student_final_score` VALUES (4, 4, 2024, 85, 84, 82.00, 83.40, 0.970, 82, 80, '2025-12-18 12:38:58');
-INSERT INTO `student_final_score` VALUES (5, 5, 2024, 90, 90, 82.00, 86.00, 1.000, 82, NULL, '2025-12-18 12:38:58');
-INSERT INTO `student_final_score` VALUES (6, 6, 2024, 84, 82, 78.00, 80.80, 0.950, 82, 78, '2025-12-18 12:38:58');
+INSERT INTO `student_final_score` VALUES (2, 2, 2024, 86, 79, 84.70, 83.40, 1.027, 83, 83, '2025-12-18 12:38:58');
+INSERT INTO `student_final_score` VALUES (3, 3, 2024, 92, 90, 93.00, 91.80, 0.995, 94, 93, '2025-12-18 12:38:58');
+INSERT INTO `student_final_score` VALUES (4, 4, 2024, 85, 84, 74.60, 80.50, 0.995, 75, 80, '2025-12-18 12:38:58');
+INSERT INTO `student_final_score` VALUES (5, 5, 2024, 90, 90, 77.00, 84.80, 0.939, 82, NULL, '2025-12-18 12:38:58');
+INSERT INTO `student_final_score` VALUES (6, 6, 2024, 84, 82, 93.00, 87.00, 1.057, 88, 93, '2025-12-18 12:38:58');
 INSERT INTO `student_final_score` VALUES (7, 7, 2025, 95, 94, 96.00, 95.60, 1.030, 93, 96, '2025-12-18 12:38:58');
 INSERT INTO `student_final_score` VALUES (8, 8, 2025, 90, 89, 85.00, 87.20, 0.980, 87, 85, '2025-12-18 12:38:58');
-INSERT INTO `student_final_score` VALUES (9, 9, 2024, 87, 85, 88.00, 86.60, 1.010, 87, 88, '2025-12-18 12:38:58');
-INSERT INTO `student_final_score` VALUES (10, 10, 2024, 89, 88, 86.00, 87.50, 0.990, 87, 86, '2025-12-18 12:38:58');
-INSERT INTO `student_final_score` VALUES (11, 11, 2024, 91, 89, 90.00, 90.20, 1.020, 88, 90, '2025-12-18 12:38:58');
+INSERT INTO `student_final_score` VALUES (9, 9, 2024, 87, 85, 93.50, 89.00, 1.027, 91, 94, '2025-12-18 12:38:58');
+INSERT INTO `student_final_score` VALUES (10, 10, 2024, 89, 88, 89.60, 88.90, 0.995, 90, 86, '2025-12-18 12:38:58');
+INSERT INTO `student_final_score` VALUES (11, 11, 2024, 91, 89, 92.00, 90.80, 0.939, 98, 92, '2025-12-18 12:38:58');
 
 -- ----------------------------
 -- Table structure for system_config
@@ -245,12 +328,12 @@ CREATE TABLE `system_config`  (
                                   `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '描述',
                                   `updated_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
                                   PRIMARY KEY (`config_key`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '系统配置' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '系统配置' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of system_config
 -- ----------------------------
-INSERT INTO `system_config` VALUES ('CURRENT_DEFENSE_YEAR', '2024', '当前答辩年份', '2025-12-18 12:38:58');
+INSERT INTO `system_config` VALUES ('CURRENT_DEFENSE_YEAR', '2024', '当前答辩年份', '2025-12-23 18:17:31');
 INSERT INTO `system_config` VALUES ('DEFENSE_DATE_DAY', '20', '答辩日期-日', '2025-12-18 12:38:58');
 INSERT INTO `system_config` VALUES ('DEFENSE_DATE_MONTH', '6', '答辩日期-月', '2025-12-18 12:38:58');
 INSERT INTO `system_config` VALUES ('DEFENSE_DATE_YEAR', '2025', '答辩日期-年', '2025-12-18 12:38:58');
@@ -259,7 +342,7 @@ INSERT INTO `system_config` VALUES ('GRADE_DATE_DAY', '28', '成绩评定日期-
 INSERT INTO `system_config` VALUES ('GRADE_DATE_MONTH', '6', '成绩评定日期-月', '2025-12-18 12:38:58');
 INSERT INTO `system_config` VALUES ('GRADE_DATE_YEAR', '2025', '成绩评定日期-年', '2025-12-18 12:38:58');
 INSERT INTO `system_config` VALUES ('PAPER_PROMPT_TEMPLATE', '请根据论文题目、摘要与答辩表现生成简洁有力的评语。', '论文评语提示词', '2025-12-18 12:38:58');
-INSERT INTO `system_config` VALUES ('QWEN_API_KEY', 'PLEASE_SET_REAL_KEY', 'QWEN 大模型 API Key', '2025-12-18 12:38:58');
+INSERT INTO `system_config` VALUES ('QWEN_API_KEY', 'sk-115af915697b44df899340c9e39b13f4', 'QWEN 大模型 API Key', '2025-12-23 19:33:55');
 
 -- ----------------------------
 -- Table structure for t_student
@@ -292,21 +375,21 @@ CREATE TABLE `t_student`  (
                               CONSTRAINT `t_student_ibfk_1` FOREIGN KEY (`advisor_teacher_id`) REFERENCES `teacher` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
                               CONSTRAINT `t_student_ibfk_2` FOREIGN KEY (`reviewer_teacher_id`) REFERENCES `teacher` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
                               CONSTRAINT `t_student_ibfk_3` FOREIGN KEY (`defense_group_id`) REFERENCES `defense_group` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 11 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '学生表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 12 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '学生表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_student
 -- ----------------------------
 INSERT INTO `t_student` VALUES (2, '20210002', '周雨桐', '计科2002', 1, 2, 1, 'DESIGN', '智能助老 APP 设计', '便捷健康监测与陪伴。', 1, 2024, '13800000001', 'zhouyt@example.com', '2025-06-20', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-INSERT INTO `t_student` VALUES (3, '20210003', '陈思琪', '软工2001', 2, 3, 4, 'PAPER', '微服务网关安全加固', '零信任与熔断策略结合。', 2, 2024, '13800000002', 'chensq@example.com', '2025-06-20', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-INSERT INTO `t_student` VALUES (4, '20210004', '王俊凯', '软工2001', 2, 4, 3, 'DESIGN', '校园二手交易平台', '交易、信誉与物流一体化。', 2, 2024, '13800000003', 'wangjk@example.com', '2025-06-20', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-INSERT INTO `t_student` VALUES (5, '20210005', '李怡然', '信通2001', 3, 5, 1, 'PAPER', '5G 上行调度优化', '毫米波场景资源分配。', 3, 2024, '13800000004', 'liyr@example.com', '2025-06-20', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-INSERT INTO `t_student` VALUES (6, '20210006', '赵梓涵', '信通2002', 3, 5, 2, 'DESIGN', '低功耗传感网关', '面向智慧城市的边缘采集。', 4, 2024, '13800000005', 'zhaozh@example.com', '2025-06-20', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `t_student` VALUES (3, '20210003', '陈思琪', '软工2001', 1, 3, 4, 'PAPER', '微服务网关安全加固', '零信任与熔断策略结合。', 2, 2024, '13800000002', 'chensq@example.com', '2025-06-20', '2025-12-18 12:38:58', '2025-12-24 21:24:17');
+INSERT INTO `t_student` VALUES (4, '20210004', '王俊凯', '软工2001', 1, 4, 3, 'DESIGN', '校园二手交易平台', '交易、信誉与物流一体化。', 2, 2024, '13800000003', 'wangjk@example.com', '2025-06-20', '2025-12-18 12:38:58', '2025-12-24 21:24:20');
+INSERT INTO `t_student` VALUES (5, '20210005', '李怡然', '信通2001', 1, 5, 8, 'PAPER', '5G 上行调度优化', '毫米波场景资源分配。', 3, 2024, '13800000004', 'liyr@example.com', '2025-06-20', '2025-12-18 12:38:58', '2025-12-24 21:29:45');
+INSERT INTO `t_student` VALUES (6, '20210006', '赵梓涵', '信通2002', 1, 6, 11, 'DESIGN', '低功耗传感网关', '面向智慧城市的边缘采集。', 4, 2024, '13800000005', 'zhaozh@example.com', '2025-06-20', '2025-12-18 12:38:58', '2025-12-24 21:30:06');
 INSERT INTO `t_student` VALUES (7, '20210007', '吴昊', 'AI2101', 4, 6, 7, 'PAPER', '大模型蒸馏与压缩', '蒸馏策略与结构化剪枝。', 5, 2025, '13800000006', 'wuhao@example.com', '2025-06-20', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 INSERT INTO `t_student` VALUES (8, '20210008', '张可欣', 'AI2102', 4, 7, 6, 'DESIGN', '视觉导航小车', '目标检测与路径规划集成。', 5, 2025, '13800000007', 'zhangkx@example.com', '2025-06-20', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-INSERT INTO `t_student` VALUES (9, '20210009', '刘明', '计科2001', 1, 1, 2, 'PAPER', '区块链共识算法优化', '提升共识效率与安全性。', 1, 2024, '13800000008', 'liuming@example.com', '2025-06-20', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-INSERT INTO `t_student` VALUES (10, '20210010', '陈静', '软工2002', 2, 3, 4, 'DESIGN', '在线教育平台设计', '支持多终端实时互动。', 2, 2024, '13800000009', 'chenjing@example.com', '2025-06-20', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-INSERT INTO `t_student` VALUES (11, '20210011', '杨帆', '信通2003', 3, 5, 8, 'PAPER', '物联网安全协议研究', '轻量级加密与认证机制。', 3, 2024, '13800000010', 'yangfan@example.com', '2025-06-20', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `t_student` VALUES (9, '20210009', '刘明', '计科2001', 1, 1, 2, 'PAPER', '区块链共识算法优化', '提升共识效率与安全性。', 1, 2024, '13800000008', 'liuming@example.com', '2025-06-20', '2025-12-18 12:38:58', '2025-12-24 21:25:01');
+INSERT INTO `t_student` VALUES (10, '20210010', '陈静', '软工2002', 1, 3, 4, 'DESIGN', '在线教育平台设计', '支持多终端实时互动。', 2, 2024, '13800000009', 'chenjing@example.com', '2025-06-20', '2025-12-18 12:38:58', '2025-12-24 21:25:08');
+INSERT INTO `t_student` VALUES (11, '20210011', '杨帆', '信通2003', 1, 8, 5, 'PAPER', '物联网安全协议研究', '轻量级加密与认证机制。', 3, 2024, '13800000010', 'yangfan@example.com', '2025-06-20', '2025-12-18 12:38:58', '2025-12-24 21:29:51');
 
 -- ----------------------------
 -- Table structure for teacher
@@ -332,14 +415,13 @@ CREATE TABLE `teacher`  (
                             INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
                             CONSTRAINT `teacher_ibfk_1` FOREIGN KEY (`department_id`) REFERENCES `department` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
                             CONSTRAINT `teacher_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '教师表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 12 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '教师表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of teacher
--- 注意：teacher_no 和 user 表的 username 应该一致，用于统一登录管理
 -- ----------------------------
-INSERT INTO `teacher` VALUES (1, 'T001', '张教授', 1, '教授', 'zhang@example.com', '13900010001', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 1, 5, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-INSERT INTO `teacher` VALUES (2, 'T002', '李副教授', 1, '副教授', 'li@example.com', '13900010002', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 1, 6, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `teacher` VALUES (1, 'T001', '张教授', 1, '教授', 'zhang@example.com', NULL, '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 1, 5, '2025-12-18 12:38:58', '2025-12-23 15:11:39');
+INSERT INTO `teacher` VALUES (2, 'T002', '李副教授', 1, '副教授', 'li@example.com', NULL, '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 1, 6, '2025-12-18 12:38:58', '2025-12-23 15:11:47');
 INSERT INTO `teacher` VALUES (3, 'T003', '王讲师', 2, '讲师', 'wang@example.com', '13900020003', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 1, 7, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 INSERT INTO `teacher` VALUES (4, 'T004', '赵老师', 2, '副教授', 'zhao@example.com', '13900020004', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 1, 8, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 INSERT INTO `teacher` VALUES (5, 'T005', '钱博士', 3, '讲师', 'qian@example.com', '13900030005', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 1, 9, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
@@ -347,7 +429,8 @@ INSERT INTO `teacher` VALUES (6, 'T006', '孙博士', 4, '副教授', 'sun@examp
 INSERT INTO `teacher` VALUES (7, 'T007', '郑老师', 4, '讲师', 'zheng@example.com', '13900040007', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 1, 11, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 INSERT INTO `teacher` VALUES (8, 'T008', '周老师', 1, '讲师', 'zhou@example.com', '13900010008', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 1, 12, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 INSERT INTO `teacher` VALUES (9, 'T009', '吴老师', 2, '副教授', 'wu@example.com', '13900020009', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 1, 13, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-INSERT INTO `teacher` VALUES (10, 'T010', '徐老师', 3, '讲师', 'xu@example.com', '13900030010', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 1, 14, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `teacher` VALUES (10, 'T010', '徐老师', 3, '讲师', 'xu@example.com', '13900030010', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 1, NULL, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `teacher` VALUES (11, 'T015', '张老师', 1, NULL, 'zhang@example.com', NULL, '$2a$10$2LiCF0JzmmIAor5RXQUAZu.QR5tWVJxnn7K0cnUuC.Lk5sSQt3sTq', 1, 15, '2025-12-23 14:53:44', '2025-12-23 15:05:27');
 
 -- ----------------------------
 -- Table structure for teacher_score_record
@@ -374,19 +457,30 @@ CREATE TABLE `teacher_score_record`  (
                                          INDEX `teacher_id`(`teacher_id` ASC) USING BTREE,
                                          CONSTRAINT `teacher_score_record_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `t_student` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
                                          CONSTRAINT `teacher_score_record_ibfk_2` FOREIGN KEY (`teacher_id`) REFERENCES `teacher` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 11 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '教师打分记录' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 22 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '教师打分记录' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of teacher_score_record
 -- ----------------------------
-INSERT INTO `teacher_score_record` VALUES (3, 2, 1, 1, 2024, 13, 13, 12, NULL, NULL, NULL, 80, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-INSERT INTO `teacher_score_record` VALUES (4, 2, 1, 2, 2024, 14, 14, 13, NULL, NULL, NULL, 85, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (3, 2, 1, 1, 2024, 13, 13, 12, 14, 13, 14, 79, '2025-12-24 09:28:43', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (4, 2, 1, 2, 2024, 14, 14, 13, 20, 12, 13, 86, '2025-12-24 17:27:01', '2025-12-18 12:38:58');
 INSERT INTO `teacher_score_record` VALUES (5, 3, 2, 3, 2024, 46, 24, 23, NULL, NULL, NULL, 93, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-INSERT INTO `teacher_score_record` VALUES (6, 4, 2, 4, 2024, 13, 14, 13, NULL, NULL, NULL, 82, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (6, 4, 2, 4, 2024, 13, 14, 13, 22, 13, 11, 86, '2025-12-24 18:23:09', '2025-12-18 12:38:58');
 INSERT INTO `teacher_score_record` VALUES (7, 5, 3, 5, 2024, 41, 21, 20, NULL, NULL, NULL, 82, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 INSERT INTO `teacher_score_record` VALUES (8, 6, 4, 5, 2024, 12, 12, 11, NULL, NULL, NULL, 76, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 INSERT INTO `teacher_score_record` VALUES (9, 7, 5, 6, 2025, 47, 24, 24, NULL, NULL, NULL, 95, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 INSERT INTO `teacher_score_record` VALUES (10, 8, 5, 7, 2025, 13, 14, 14, NULL, NULL, NULL, 85, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (11, 3, 2, 4, 2024, 47, 24, 23, NULL, NULL, NULL, 94, '2025-12-24 18:22:52', '2025-12-24 18:22:52');
+INSERT INTO `teacher_score_record` VALUES (12, 10, 2, 4, 2024, 12, 13, 14, 21, 9, 11, 80, '2025-12-24 18:23:25', '2025-12-24 18:23:24');
+INSERT INTO `teacher_score_record` VALUES (13, 4, 2, 3, 2024, 9, 9, 9, 19, 9, 9, 64, '2025-12-24 18:24:15', '2025-12-24 18:24:15');
+INSERT INTO `teacher_score_record` VALUES (14, 10, 2, 3, 2024, 15, 15, 15, 25, 15, 15, 100, '2025-12-24 18:24:25', '2025-12-24 18:24:25');
+INSERT INTO `teacher_score_record` VALUES (15, 11, 3, 5, 2024, 50, 23, 25, NULL, NULL, NULL, 98, '2025-12-24 18:26:36', '2025-12-24 18:26:36');
+INSERT INTO `teacher_score_record` VALUES (16, 6, 4, 6, 2024, 14, 14, 14, 23, 14, 14, 93, '2025-12-24 18:27:15', '2025-12-24 18:27:14');
+INSERT INTO `teacher_score_record` VALUES (17, 9, 1, 2, 2024, 46, 21, 21, NULL, NULL, NULL, 88, '2025-12-24 18:30:32', '2025-12-24 18:30:31');
+INSERT INTO `teacher_score_record` VALUES (18, 9, 1, 1, 2024, 50, 23, 21, NULL, NULL, NULL, 94, '2025-12-24 18:30:53', '2025-12-24 18:30:53');
+INSERT INTO `teacher_score_record` VALUES (19, 5, 3, 8, 2024, 50, 20, 21, NULL, NULL, NULL, 91, '2025-12-24 21:31:53', '2025-12-24 21:31:53');
+INSERT INTO `teacher_score_record` VALUES (20, 11, 3, 8, 2024, 48, 22, 23, NULL, NULL, NULL, 93, '2025-12-24 21:32:02', '2025-12-24 21:32:01');
+INSERT INTO `teacher_score_record` VALUES (21, 6, 4, 11, 2024, 13, 13, 15, 24, 15, 15, 95, '2025-12-24 21:33:06', '2025-12-24 21:33:06');
 
 -- ----------------------------
 -- Table structure for user
@@ -411,18 +505,17 @@ CREATE TABLE `user`  (
                          INDEX `idx_department_id`(`department_id` ASC) USING BTREE,
                          CONSTRAINT `user_ibfk_1` FOREIGN KEY (`role_id`) REFERENCES `role` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
                          CONSTRAINT `user_ibfk_2` FOREIGN KEY (`department_id`) REFERENCES `department` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 14 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '用户表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 16 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '用户表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of user
--- 注意：对于教师用户，username 应该与 teacher 表的 teacher_no 一致
 -- ----------------------------
-INSERT INTO `user` VALUES (1, 'admin', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '超级管理员', NULL, NULL, 1, 1, NULL, '2025-12-18 12:38:58', '2025-12-18 12:39:58');
-INSERT INTO `user` VALUES (2, 'cs_admin', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '计院管理员', 'cs_admin@example.com', '13800000001', 1, 2, 1, '2025-12-18 12:38:58', '2025-12-18 12:40:00');
+INSERT INTO `user` VALUES (1, 'admin', '$2a$10$OJU0o3Fw0h03uOyubGypyeX2OlxAb9Zlxfm5CKGRl1ybvrcxnvGky', '超级管理员', '', NULL, 1, 1, 1, '2025-12-18 12:38:58', '2025-12-23 16:17:31');
+INSERT INTO `user` VALUES (2, 'cs_admin', '$2a$10$tVBf3h/9H.XjXnUNDQ85wukXmhJflZrjw7yJo9jP0f9hQt5o1TrbO', '计院管理员', 'cs_admin@example.com', '13800000001', 1, 2, 1, '2025-12-18 12:38:58', '2025-12-23 15:11:53');
 INSERT INTO `user` VALUES (3, 'se_admin', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '软院管理员', 'se_admin@example.com', '13800000002', 1, 2, 2, '2025-12-18 12:38:58', '2025-12-18 12:40:03');
 INSERT INTO `user` VALUES (4, 'ice_admin', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '信通管理员', 'ice_admin@example.com', '13800000003', 1, 2, 3, '2025-12-18 12:38:58', '2025-12-18 12:40:06');
-INSERT INTO `user` VALUES (5, 'T001', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '张教授', 'zhang@example.com', '13900010001', 1, 4, 1, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-INSERT INTO `user` VALUES (6, 'T002', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '李副教授', 'li@example.com', '13900010002', 1, 4, 1, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `user` VALUES (5, 'T001', '$2a$10$kW60xeovCtfW.8ypPg.tXuRtESt0O2Uyc91JmnR9PdY.RSTxMg.R.', '张教授', 'zhang@example.com', '13900010001', 1, 4, 1, '2025-12-18 12:38:58', '2025-12-23 15:11:39');
+INSERT INTO `user` VALUES (6, 'T002', '$2a$10$GuThW0QCkFfr1vgPrcPCmuCUt9fZnIZYuST/4jL6aFXX0K9t7ESci', '李副教授', 'li@example.com', '13900010002', 1, 4, 1, '2025-12-18 12:38:58', '2025-12-23 15:11:47');
 INSERT INTO `user` VALUES (7, 'T003', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '王讲师', 'wang@example.com', '13900020003', 1, 4, 2, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 INSERT INTO `user` VALUES (8, 'T004', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '赵老师', 'zhao@example.com', '13900020004', 1, 4, 2, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 INSERT INTO `user` VALUES (9, 'T005', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '钱博士', 'qian@example.com', '13900030005', 1, 4, 3, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
@@ -430,80 +523,6 @@ INSERT INTO `user` VALUES (10, 'T006', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt
 INSERT INTO `user` VALUES (11, 'T007', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '郑老师', 'zheng@example.com', '13900040007', 1, 4, 4, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 INSERT INTO `user` VALUES (12, 'T008', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '周老师', 'zhou@example.com', '13900010008', 1, 4, 1, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 INSERT INTO `user` VALUES (13, 'T009', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '吴老师', 'wu@example.com', '13900020009', 1, 4, 2, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-INSERT INTO `user` VALUES (14, 'T010', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '徐老师', 'xu@example.com', '13900030010', 1, 4, 3, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-
--- ----------------------------
--- Table structure for large_group_score
--- ----------------------------
-DROP TABLE IF EXISTS `large_group_score`;
-CREATE TABLE `large_group_score`  (
-                                      `id` bigint NOT NULL AUTO_INCREMENT,
-                                      `student_id` bigint NOT NULL COMMENT '学生ID（小组第一名）',
-                                      `teacher_id` bigint NOT NULL COMMENT '评分教师ID',
-                                      `year` int NOT NULL COMMENT '答辩年份',
-                                      `score` int NOT NULL COMMENT '大组答辩总分（满分100分）',
-                                      `created_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-                                      `updated_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-                                      PRIMARY KEY (`id`) USING BTREE,
-                                      UNIQUE INDEX `uk_student_teacher_year`(`student_id` ASC, `teacher_id` ASC, `year` ASC) USING BTREE,
-                                      INDEX `idx_student_year`(`student_id` ASC, `year` ASC) USING BTREE,
-                                      INDEX `idx_teacher_year`(`teacher_id` ASC, `year` ASC) USING BTREE,
-                                      CONSTRAINT `large_group_score_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `t_student` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
-                                      CONSTRAINT `large_group_score_ibfk_2` FOREIGN KEY (`teacher_id`) REFERENCES `teacher` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '大组答辩成绩表' ROW_FORMAT = Dynamic;
-
--- ----------------------------
--- Records of large_group_score
--- ----------------------------
-INSERT INTO `large_group_score` VALUES (1, 2, 1, 2024, 83, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-INSERT INTO `large_group_score` VALUES (2, 3, 2, 2024, 93, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-INSERT INTO `large_group_score` VALUES (3, 7, 3, 2025, 96, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-INSERT INTO `large_group_score` VALUES (4, 9, 1, 2024, 88, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-INSERT INTO `large_group_score` VALUES (5, 11, 2, 2024, 90, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-
--- ----------------------------
--- Table structure for student_comment
--- ----------------------------
-DROP TABLE IF EXISTS `student_comment`;
-CREATE TABLE `student_comment`  (
-                                    `id` bigint NOT NULL AUTO_INCREMENT,
-                                    `student_id` bigint NOT NULL COMMENT '学生ID',
-                                    `year` int NOT NULL COMMENT '答辩年份',
-                                    `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '答辩小组评语内容',
-                                    `created_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-                                    `updated_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-                                    PRIMARY KEY (`id`) USING BTREE,
-                                    UNIQUE INDEX `uk_student_year`(`student_id` ASC, `year` ASC) USING BTREE,
-                                    INDEX `idx_student`(`student_id` ASC) USING BTREE,
-                                    CONSTRAINT `student_comment_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `t_student` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '学生答辩评语表' ROW_FORMAT = Dynamic;
-
--- ----------------------------
--- Records of student_comment
--- ----------------------------
-INSERT INTO `student_comment` VALUES (1, 2, 2024, '该生设计思路清晰，实现方案合理，演示效果良好，答辩表现优秀。', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-INSERT INTO `student_comment` VALUES (2, 3, 2024, '论文选题具有实际意义，研究方法科学，数据分析充分，答辩表达清晰。', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-INSERT INTO `student_comment` VALUES (3, 4, 2024, '设计作品功能完整，技术实现到位，用户体验良好，答辩回答问题准确。', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-INSERT INTO `student_comment` VALUES (4, 5, 2024, '论文研究深入，理论分析透彻，实验验证充分，答辩表现优秀。', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-INSERT INTO `student_comment` VALUES (5, 6, 2024, '设计创新性强，技术方案合理，实现效果良好，答辩回答问题准确。', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-
--- ----------------------------
--- Table structure for department_head_signature
--- ----------------------------
-DROP TABLE IF EXISTS `department_head_signature`;
-CREATE TABLE `department_head_signature`  (
-                                              `id` bigint NOT NULL AUTO_INCREMENT,
-                                              `department_id` bigint NOT NULL COMMENT '院系ID',
-                                              `signature_path` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '系主任签名图片路径',
-                                              `created_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-                                              `updated_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-                                              PRIMARY KEY (`id`) USING BTREE,
-                                              UNIQUE INDEX `uk_department`(`department_id` ASC) USING BTREE,
-                                              CONSTRAINT `department_head_signature_ibfk_1` FOREIGN KEY (`department_id`) REFERENCES `department` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '系主任签名表' ROW_FORMAT = Dynamic;
-
--- ----------------------------
--- Records of department_head_signature
--- ----------------------------
+INSERT INTO `user` VALUES (15, 'T010', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '张老师', 'zhang@example.com', NULL, 1, 4, 2, '2025-12-23 14:53:44', '2025-12-24 18:28:40');
 
 SET FOREIGN_KEY_CHECKS = 1;

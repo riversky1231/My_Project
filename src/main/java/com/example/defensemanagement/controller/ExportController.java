@@ -391,8 +391,31 @@ public class ExportController {
         ph.put("{{DEFENSE_40}}", format1(defenseScore * 0.4));
         ph.put("{{TOTAL_GRADE}}", format1(fs.getTotalGrade() == null ? 0 : fs.getTotalGrade()));
 
-        // 成绩评定表：需要系主任签名
-        fillSignatures(img, stu, true, false);
+        // 成绩评定表：需要评语（论文和设计类型都需要评语）
+        List<TeacherScoreRecord> records = teacherScoreRecordMapper.findByStudentIdAndYear(studentId, year);
+        double factor = fs.getAdjustmentFactor() != null ? fs.getAdjustmentFactor() : 1.0;
+        if (isPaper) {
+            // 论文类型：需要评语
+            AvgScores avg = avgPaper(records);
+            double item1Scaled = avg.item1Scaled(factor);
+            double item2Scaled = avg.item2Scaled(factor);
+            double item3Scaled = avg.item3Scaled(factor);
+            double totalFromItems = item1Scaled + item2Scaled + item3Scaled;
+            ph.put("{{COMMENT}}", generateComment("PAPER_PROMPT", stu, totalFromItems, factor));
+        } else {
+            // 设计类型：需要评语
+            double totalScore = fs.getFinalDefenseScore() != null ? fs.getFinalDefenseScore() : 0.0;
+            ph.put("{{COMMENT}}", generateComment("DESIGN_PROMPT", stu, totalScore, factor));
+        }
+
+        // 成绩评定表：需要指导教师、评阅教师、答辩组长和系主任签名
+        try {
+            fillSignatures(img, stu, true, false);
+        } catch (Exception e) {
+            // 签名加载失败不影响导出，只记录日志
+            System.err.println("警告：加载签名失败: " + e.getMessage());
+        }
+        
         String filename = encode((isPaper ? "本科毕业论文成绩评定表-" : "本科毕业设计成绩评定表-") + stu.getName() + ".docx");
         String template = isPaper ? resolveTemplate("paper-grade", PAPER_GRADE_TEMPLATE)
                 : resolveTemplate("design-grade", DESIGN_GRADE_TEMPLATE);
@@ -747,23 +770,44 @@ public class ExportController {
 
     private void fillPaperScores(Map<String, String> ph, List<TeacherScoreRecord> records, double factor, StudentFinalScore fs, Student stu) {
         AvgScores avg = avgPaper(records);
-        ph.put("{{ITEM1}}", formatInt(avg.item1Scaled(factor)));
-        ph.put("{{ITEM2}}", formatInt(avg.item2Scaled(factor)));
-        ph.put("{{ITEM3}}", formatInt(avg.item3Scaled(factor)));
-        ph.put("{{TOTAL}}", format1(fs == null || fs.getFinalDefenseScore() == null ? avg.totalScaled(factor) : fs.getFinalDefenseScore()));
-        ph.put("{{COMMENT}}", generateComment("PAPER_PROMPT", stu, avg.totalScaled(factor), factor));
+        // 计算各个分项（应用调节系数）
+        double item1Scaled = avg.item1Scaled(factor);
+        double item2Scaled = avg.item2Scaled(factor);
+        double item3Scaled = avg.item3Scaled(factor);
+        
+        // 总分应该等于各个分项的和（确保一致性）
+        double totalFromItems = item1Scaled + item2Scaled + item3Scaled;
+        
+        ph.put("{{ITEM1}}", formatInt(item1Scaled));
+        ph.put("{{ITEM2}}", formatInt(item2Scaled));
+        ph.put("{{ITEM3}}", formatInt(item3Scaled));
+        // 总分使用各个分项的和，确保一致性
+        ph.put("{{TOTAL}}", format1(totalFromItems));
+        ph.put("{{COMMENT}}", generateComment("PAPER_PROMPT", stu, totalFromItems, factor));
     }
 
     private void fillDesignScores(Map<String, String> ph, List<TeacherScoreRecord> records, double factor, StudentFinalScore fs, Student stu) {
         AvgScores avg = avgDesign(records);
-        ph.put("{{ITEM1}}", formatInt(avg.item1Scaled(factor)));
-        ph.put("{{ITEM2}}", formatInt(avg.item2Scaled(factor)));
-        ph.put("{{ITEM3}}", formatInt(avg.item3Scaled(factor)));
-        ph.put("{{ITEM4}}", formatInt(avg.item4Scaled(factor)));
-        ph.put("{{ITEM5}}", formatInt(avg.item5Scaled(factor)));
-        ph.put("{{ITEM6}}", formatInt(avg.item6Scaled(factor)));
-        ph.put("{{TOTAL}}", format1(fs == null || fs.getFinalDefenseScore() == null ? avg.totalScaled(factor) : fs.getFinalDefenseScore()));
-        ph.put("{{COMMENT}}", generateComment("DESIGN_PROMPT", stu, avg.totalScaled(factor), factor));
+        // 计算各个分项（应用调节系数）
+        double item1Scaled = avg.item1Scaled(factor);
+        double item2Scaled = avg.item2Scaled(factor);
+        double item3Scaled = avg.item3Scaled(factor);
+        double item4Scaled = avg.item4Scaled(factor);
+        double item5Scaled = avg.item5Scaled(factor);
+        double item6Scaled = avg.item6Scaled(factor);
+        
+        // 总分应该等于各个分项的和（确保一致性）
+        double totalFromItems = item1Scaled + item2Scaled + item3Scaled + item4Scaled + item5Scaled + item6Scaled;
+        
+        ph.put("{{ITEM1}}", formatInt(item1Scaled));
+        ph.put("{{ITEM2}}", formatInt(item2Scaled));
+        ph.put("{{ITEM3}}", formatInt(item3Scaled));
+        ph.put("{{ITEM4}}", formatInt(item4Scaled));
+        ph.put("{{ITEM5}}", formatInt(item5Scaled));
+        ph.put("{{ITEM6}}", formatInt(item6Scaled));
+        // 总分使用各个分项的和，确保一致性
+        ph.put("{{TOTAL}}", format1(totalFromItems));
+        ph.put("{{COMMENT}}", generateComment("DESIGN_PROMPT", stu, totalFromItems, factor));
     }
 
     private AvgScores avgPaper(List<TeacherScoreRecord> records) {
@@ -861,6 +905,9 @@ public class ExportController {
             if (bytes != null) {
                 img.put("{{SIGN_ADVISOR}}", bytes);
                 img.put("{{SIGN_ADVISOR_TEACHER}}", bytes); // 兼容性占位符
+                System.out.println("已加载指导教师签名: teacher_" + stu.getAdvisorTeacherId() + ", 大小: " + bytes.length);
+            } else {
+                System.out.println("警告：未找到指导教师签名: teacher_" + stu.getAdvisorTeacherId());
             }
         }
         
@@ -870,10 +917,13 @@ public class ExportController {
             if (bytes != null) {
                 img.put("{{SIGN_REVIEWER}}", bytes);
                 img.put("{{SIGN_REVIEWER_TEACHER}}", bytes); // 兼容性占位符
+                System.out.println("已加载评阅教师签名: teacher_" + stu.getReviewerTeacherId() + ", 大小: " + bytes.length);
+            } else {
+                System.out.println("警告：未找到评阅教师签名: teacher_" + stu.getReviewerTeacherId());
             }
         }
         
-        // 答辩组长签名（用于答辩成绩表）
+        // 答辩组长签名（用于答辩成绩表和成绩评定表）
         if (stu.getDefenseGroupId() != null) {
             try {
                 DefenseGroupTeacher leader = defenseGroupTeacherMapper.findLeaderByGroupId(stu.getDefenseGroupId());
@@ -882,9 +932,17 @@ public class ExportController {
                     if (bytes != null) {
                         img.put("{{SIGN_LEADER}}", bytes);
                         img.put("{{SIGN_GROUP_LEADER}}", bytes); // 兼容性占位符
+                        System.out.println("已加载答辩组长签名: teacher_" + leader.getTeacherId() + ", 大小: " + bytes.length);
+                    } else {
+                        System.out.println("警告：未找到答辩组长签名: teacher_" + leader.getTeacherId());
                     }
+                } else {
+                    System.out.println("警告：未找到答辩组长，小组ID: " + stu.getDefenseGroupId());
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                System.out.println("警告：加载答辩组长签名时出错: " + e.getMessage());
+                e.printStackTrace();
+            }
         }
         
         // 系主任签名（用于成绩评定表）
@@ -950,8 +1008,14 @@ public class ExportController {
             java.nio.file.Path p = basePath.resolve("signatures").resolve(namePrefix + "." + ext);
             if (Files.exists(p)) {
                 try {
-                    return Files.readAllBytes(p);
-                } catch (Exception ignored) {}
+                    byte[] bytes = Files.readAllBytes(p);
+                    System.out.println("找到签名文件: " + p.toString() + ", 大小: " + bytes.length);
+                    return bytes;
+                } catch (Exception e) {
+                    System.out.println("读取签名文件失败: " + p.toString() + ", 错误: " + e.getMessage());
+                }
+            } else {
+                System.out.println("签名文件不存在: " + p.toString());
             }
         }
         
@@ -963,18 +1027,30 @@ public class ExportController {
                 Teacher teacher = teacherMapper.findById(teacherId);
                 if (teacher != null && teacher.getUserId() != null) {
                     String userPrefix = "user_" + teacher.getUserId();
+                    System.out.println("尝试查找user_格式签名: " + userPrefix);
                     for (String ext : exts) {
                         java.nio.file.Path p = basePath.resolve("signatures").resolve(userPrefix + "." + ext);
                         if (Files.exists(p)) {
                             try {
-                                return Files.readAllBytes(p);
-                            } catch (Exception ignored) {}
+                                byte[] bytes = Files.readAllBytes(p);
+                                System.out.println("找到user_格式签名文件: " + p.toString() + ", 大小: " + bytes.length);
+                                return bytes;
+                            } catch (Exception e) {
+                                System.out.println("读取user_格式签名文件失败: " + p.toString() + ", 错误: " + e.getMessage());
+                            }
+                        } else {
+                            System.out.println("user_格式签名文件不存在: " + p.toString());
                         }
                     }
+                } else {
+                    System.out.println("教师不存在或没有关联的userId: teacherId=" + teacherId);
                 }
-            } catch (NumberFormatException ignored) {}
+            } catch (NumberFormatException e) {
+                System.out.println("解析teacherId失败: " + namePrefix);
+            }
         }
         
+        System.out.println("未找到签名: " + namePrefix);
         return null;
     }
 

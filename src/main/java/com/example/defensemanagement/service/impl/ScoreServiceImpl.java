@@ -461,6 +461,16 @@ public class ScoreServiceImpl implements ScoreService {
                     studentInfo.put("allScored", false);
                 }
                 
+                // 获取学生的最终成绩信息（调节系数和最终答辩成绩）
+                StudentFinalScore fs = studentFinalScoreMapper.findByStudentIdAndYear(s.getId(), year);
+                if (fs != null) {
+                    studentInfo.put("adjustmentFactor", fs.getAdjustmentFactor());
+                    studentInfo.put("finalDefenseScore", fs.getFinalDefenseScore());
+                } else {
+                    studentInfo.put("adjustmentFactor", null);
+                    studentInfo.put("finalDefenseScore", null);
+                }
+                
                 studentList.add(studentInfo);
             }
             

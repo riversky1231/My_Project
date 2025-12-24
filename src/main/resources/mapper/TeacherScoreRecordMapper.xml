@@ -121,5 +121,10 @@
         DELETE FROM teacher_score_record WHERE id = #{id}
     </delete>
 
+    <delete id="deleteByStudentIdAndTeacherId">
+        DELETE FROM teacher_score_record 
+        WHERE student_id = #{studentId} AND teacher_id = #{teacherId} AND year = #{year}
+    </delete>
+
 </mapper>
 

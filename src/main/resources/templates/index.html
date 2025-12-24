@@ -253,8 +253,6 @@
                 onclick="showView('teacher-scoring-view', this)"><i class="bi bi-pencil-square"></i> 小组打分</a>
             <a class="nav-link" id="nav-large-group-defense" href="javascript:void(0);"
                 onclick="showView('large-group-defense-view', this)"><i class="bi bi-award"></i> 大组答辩</a>
-            <a class="nav-link" href="javascript:void(0);" onclick="showView('export-template-view', this)"><i
-                    class="bi bi-file-earmark-word"></i> 导出模板</a>
             <a class="nav-link" id="nav-export" href="javascript:void(0);" onclick="showView('export-view', this)"><i
                     class="bi bi-download"></i> 导出/打包</a>
             <a class="nav-link" id="nav-signature-management" href="javascript:void(0);"
@@ -516,13 +514,14 @@
                                 <th>题目</th>
                                 <th>指导教师</th>
                                 <th>指导教师评定成绩</th>
+                                <th>评阅人</th>
                                 <th>评阅人评定成绩</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
                         <tbody id="review-student-list">
                             <tr>
-                                <td colspan="9" class="text-center text-muted">加载中...</td>
+                                <td colspan="10" class="text-center text-muted">加载中...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -865,117 +864,6 @@
                             </tr>
                         </tbody>
                     </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Export Template View -->
-        <div id="export-template-view" class="view-container" style="display: none;">
-            <header class="header">
-                <h1><i class="bi bi-file-earmark-word"></i> 导出模板预览</h1>
-                <p class="text-muted mb-0">实时预览答辩成绩表导出效果</p>
-            </header>
-
-            <div class="row">
-                <!-- 左侧控制面板 -->
-                <div class="col-md-4">
-                    <div class="module">
-                        <div class="module-header">
-                            <h4><i class="bi bi-sliders"></i> 数据控制</h4>
-                        </div>
-                        <div class="p-3">
-                            <!-- 学生选择 -->
-                            <div class="mb-3">
-                                <label class="form-label">选择学生</label>
-                                <select class="form-select" id="template-student-select"
-                                    onchange="updateTemplatePreview()">
-                                    <option value="1">20210101 - 张三 (论文)</option>
-                                    <option value="2">20210102 - 李四 (设计)</option>
-                                    <option value="3">20210103 - 王五 (论文)</option>
-                                </select>
-                            </div>
-
-                            <!-- 答辩类型选择（先选择，用于过滤模板类型） -->
-                            <div class="mb-3">
-                                <label class="form-label">答辩类型</label>
-                                <select class="form-select" id="template-type-select"
-                                    onchange="filterTemplateTypesByDefenseType()">
-                                    <option value="PAPER">论文</option>
-                                    <option value="DESIGN">设计</option>
-                                </select>
-                            </div>
-
-                            <!-- 模板类型选择（根据答辩类型动态过滤） -->
-                            <div class="mb-3">
-                                <label class="form-label">模板类型</label>
-                                <select class="form-select" id="template-doc-type-select"
-                                    onchange="updateTemplatePreview()">
-                                    <!-- 选项将通过JavaScript动态生成 -->
-                                </select>
-                            </div>
-
-                            <!-- 调节系数 -->
-                            <div class="mb-3">
-                                <label class="form-label">调节系数</label>
-                                <input type="number" class="form-control" id="template-factor-input" value="1.0"
-                                    step="0.1" min="0.5" max="1.5" onchange="updateTemplatePreview()">
-                                <small class="text-muted">范围: 0.5 - 1.5</small>
-                            </div>
-
-                            <!-- 评语选项 -->
-                            <div class="mb-3">
-                                <label class="form-label">评语来源</label>
-                                <select class="form-select" id="template-comment-source"
-                                    onchange="updateTemplatePreview()">
-                                    <option value="saved">已保存评语</option>
-                                    <option value="ai">AI生成评语</option>
-                                    <option value="custom">自定义评语</option>
-                                </select>
-                            </div>
-
-                            <div class="mb-3" id="template-custom-comment-div" style="display: none;">
-                                <label class="form-label">自定义评语</label>
-                                <textarea class="form-control" id="template-custom-comment" rows="4"
-                                    onchange="updateTemplatePreview()">请输入自定义评语...</textarea>
-                            </div>
-
-                            <!-- 签名选项 -->
-                            <div class="mb-3">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="template-show-signatures"
-                                        checked onchange="updateTemplatePreview()">
-                                    <label class="form-check-label">显示签名</label>
-                                </div>
-                            </div>
-
-                            <!-- 说明 -->
-                            <div class="alert alert-info mt-4">
-                                <small>
-                                    <i class="bi bi-info-circle"></i>
-                                    <strong>说明:</strong><br>
-                                    • 这是一个预览页面，使用 Mock 数据<br>
-                                    • 实际导出请使用"导出/打包"功能<br>
-                                    • 调整参数可实时预览效果
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 右侧文档预览 -->
-                <div class="col-md-8">
-                    <div class="module">
-                        <div class="module-header d-flex justify-content-between align-items-center">
-                            <h4><i class="bi bi-eye"></i> 文档预览</h4>
-                            <span class="badge bg-primary" id="template-doc-type-badge">论文答辩成绩表</span>
-                        </div>
-                        <div class="p-3">
-                            <div id="template-doc-preview"
-                                style="background: white; border: 2px solid var(--border-color); border-radius: 0.5rem; padding: 2rem; min-height: 600px; box-shadow: 0 0 20px rgba(0,0,0,0.1);">
-                                <!-- 文档内容将通过 JavaScript 动态生成 -->
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -1948,14 +1836,6 @@
                 // 可以在这里加载当前年份
                 loadCurrentYearForDashboard();
             }
-            if (viewId === 'export-template-view') {
-                // 导出模板页面加载
-                // 延迟一下确保DOM完全加载
-                setTimeout(() => {
-                    // 先根据默认答辩类型过滤模板选项
-                    filterTemplateTypesByDefenseType();
-                }, 100);
-            }
             if (viewId === 'export-view') {
                 // 导出页面加载时，根据用户角色设置导出选项
                 setupExportOptionsByRole();
@@ -2662,7 +2542,7 @@
 
             filtered.forEach(student => {
                 // 超级管理员不显示"班级"列
-                const classCell = isSuperAdmin ? '' : `<td>${student.department ? student.department.name : 'N/A'}</td>`;
+                const classCell = isSuperAdmin ? '' : `<td>${student.classInfo || 'N/A'}</td>`;
                 const row = `
                     <tr>
                         <td>${student.studentNo || 'N/A'}</td>
@@ -2714,33 +2594,6 @@
                 document.getElementById('defenseYear').value = new Date().getFullYear();
             }
 
-            // 加载教师列表
-            try {
-                const teacherResp = await fetch('/department/group/teachers');
-                if (teacherResp.ok) {
-                    const teachers = await teacherResp.json();
-                    const advisorSelect = document.getElementById('advisorTeacher');
-                    const reviewerSelect = document.getElementById('reviewerTeacher');
-
-                    advisorSelect.innerHTML = '<option value="">未分配</option>';
-                    reviewerSelect.innerHTML = '<option value="">未分配</option>';
-
-                    teachers.forEach(t => {
-                        const opt1 = document.createElement('option');
-                        opt1.value = t.id;
-                        opt1.textContent = `${t.teacherNo} - ${t.name}`;
-                        advisorSelect.appendChild(opt1);
-
-                        const opt2 = document.createElement('option');
-                        opt2.value = t.id;
-                        opt2.textContent = `${t.teacherNo} - ${t.name}`;
-                        reviewerSelect.appendChild(opt2);
-                    });
-                }
-            } catch (e) {
-                console.error('Failed to load teachers:', e);
-            }
-
             // 加载答辩小组列表
             try {
                 const groupResp = await fetch('/department/student/groups');
@@ -2786,9 +2639,107 @@
                 document.getElementById('reviewerTeacher').value = student.reviewerTeacherId || '';
                 document.getElementById('defenseGroup').value = student.defenseGroupId || '';
                 document.getElementById('defenseYear').value = student.defenseYear || '';
+
+                // 编辑模式：根据学生所在小组加载教师列表
+                if (student.defenseGroupId) {
+                    try {
+                        const groupTeachersResp = await fetch(`/department/group/${student.defenseGroupId}/teachers`);
+                        if (groupTeachersResp.ok) {
+                            const groupTeachers = await groupTeachersResp.json();
+                            // 提取教师信息（DefenseGroupTeacher对象包含teacher属性）
+                            const teachers = groupTeachers.map(gt => gt.teacher).filter(t => t != null);
+
+                            const advisorSelect = document.getElementById('advisorTeacher');
+                            const reviewerSelect = document.getElementById('reviewerTeacher');
+
+                            // 保存当前选中的值
+                            const currentAdvisor = advisorSelect.value;
+                            const currentReviewer = reviewerSelect.value;
+
+                            advisorSelect.innerHTML = '<option value="">未分配</option>';
+                            reviewerSelect.innerHTML = '<option value="">未分配</option>';
+
+                            teachers.forEach(t => {
+                                const opt1 = document.createElement('option');
+                                opt1.value = t.id;
+                                opt1.textContent = `${t.teacherNo} - ${t.name}`;
+                                advisorSelect.appendChild(opt1);
+
+                                const opt2 = document.createElement('option');
+                                opt2.value = t.id;
+                                opt2.textContent = `${t.teacherNo} - ${t.name}`;
+                                reviewerSelect.appendChild(opt2);
+                            });
+
+                            // 恢复选中的值
+                            if (currentAdvisor) advisorSelect.value = currentAdvisor;
+                            if (currentReviewer) reviewerSelect.value = currentReviewer;
+                        }
+                    } catch (e) {
+                        console.error('Failed to load group teachers:', e);
+                    }
+                } else {
+                    // 没有小组，加载所有教师
+                    try {
+                        const teacherResp = await fetch('/department/group/teachers');
+                        if (teacherResp.ok) {
+                            const teachers = await teacherResp.json();
+                            const advisorSelect = document.getElementById('advisorTeacher');
+                            const reviewerSelect = document.getElementById('reviewerTeacher');
+
+                            advisorSelect.innerHTML = '<option value="">未分配</option>';
+                            reviewerSelect.innerHTML = '<option value="">未分配</option>';
+
+                            teachers.forEach(t => {
+                                const opt1 = document.createElement('option');
+                                opt1.value = t.id;
+                                opt1.textContent = `${t.teacherNo} - ${t.name}`;
+                                advisorSelect.appendChild(opt1);
+
+                                const opt2 = document.createElement('option');
+                                opt2.value = t.id;
+                                opt2.textContent = `${t.teacherNo} - ${t.name}`;
+                                reviewerSelect.appendChild(opt2);
+                            });
+
+                            // 恢复选中的值
+                            if (student.advisorTeacherId) advisorSelect.value = student.advisorTeacherId;
+                            if (student.reviewerTeacherId) reviewerSelect.value = student.reviewerTeacherId;
+                        }
+                    } catch (e) {
+                        console.error('Failed to load teachers:', e);
+                    }
+                }
             } else {
                 // 新增模式
                 modalLabel.textContent = '添加新学生';
+
+                // 新增模式：加载所有教师
+                try {
+                    const teacherResp = await fetch('/department/group/teachers');
+                    if (teacherResp.ok) {
+                        const teachers = await teacherResp.json();
+                        const advisorSelect = document.getElementById('advisorTeacher');
+                        const reviewerSelect = document.getElementById('reviewerTeacher');
+
+                        advisorSelect.innerHTML = '<option value="">未分配</option>';
+                        reviewerSelect.innerHTML = '<option value="">未分配</option>';
+
+                        teachers.forEach(t => {
+                            const opt1 = document.createElement('option');
+                            opt1.value = t.id;
+                            opt1.textContent = `${t.teacherNo} - ${t.name}`;
+                            advisorSelect.appendChild(opt1);
+
+                            const opt2 = document.createElement('option');
+                            opt2.value = t.id;
+                            opt2.textContent = `${t.teacherNo} - ${t.name}`;
+                            reviewerSelect.appendChild(opt2);
+                        });
+                    }
+                } catch (e) {
+                    console.error('Failed to load teachers:', e);
+                }
             }
 
             modal.show();
@@ -2908,8 +2859,8 @@
             students.forEach(s => {
                 const defenseTypeText = s.defenseType === 'PAPER' ? '论文' : '设计';
                 const defenseTypeBadge = s.defenseType === 'PAPER' ? 'bg-info' : 'bg-warning';
-                const advisorScore = s.advisorScore != null ? s.advisorScore : '未评分';
-                const reviewerScore = s.reviewerScore != null ? s.reviewerScore : '未评分';
+                const advisorScore = s.advisorScore != null ? s.advisorScore : '--';
+                const reviewerScore = s.reviewerScore != null ? s.reviewerScore : '--';
                 const reviewerInfo = s.reviewerName ? `${s.reviewerName}` : '未指定';
 
                 const row = document.createElement('tr');
@@ -2949,7 +2900,7 @@
         // 加载评阅管理页面（教师作为评阅人的学生列表）
         async function loadReviewedStudents() {
             const tbody = document.getElementById('review-student-list');
-            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">加载中...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">加载中...</td></tr>';
 
             try {
                 const response = await fetch('/department/student/teacher/reviewed');
@@ -2958,7 +2909,7 @@
                 console.log('教师评阅学生数据:', data);
 
                 if (data.error) {
-                    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-warning">${data.error}</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="10" class="text-center text-warning">${data.error}</td></tr>`;
                     return;
                 }
 
@@ -2967,9 +2918,13 @@
 
                 const students = data.students || [];
                 if (students.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">您还没有被指定为任何学生的评阅人</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">您还没有被指定为任何学生的评阅人</td></tr>';
                     return;
                 }
+
+                // 检查是否是超级管理员
+                const userInfoDiv = document.querySelector('.user-info');
+                const isSuperAdmin = userInfoDiv && userInfoDiv.dataset.userRole === 'SUPER_ADMIN';
 
                 tbody.innerHTML = '';
                 students.forEach(s => {
@@ -2978,8 +2933,26 @@
                     const advisorScore = s.advisorScore != null ? s.advisorScore : '未评分';
                     const reviewerScore = s.reviewerScore != null ? s.reviewerScore : '未评分';
                     const advisorInfo = s.advisorName ? `${s.advisorName}` : '未指定';
+                    const reviewerInfo = s.reviewerName ? `${s.reviewerName}` : '未指定';
 
                     const row = document.createElement('tr');
+                    // 超级管理员可以修改指导教师和评阅人评定成绩
+                    const advisorScoreCell = isSuperAdmin ?
+                        `<td>
+                            <span class="badge ${s.advisorScore != null ? 'bg-success' : 'bg-secondary'}">${advisorScore}</span>
+                            <button class="btn btn-sm btn-outline-primary ms-1" onclick="openAdvisorScoreModalForSuperAdmin(${s.id}, '${s.name}', ${s.advisorScore || 'null'}, '${s.defenseType}')">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                        </td>` :
+                        `<td><span class="badge ${s.advisorScore != null ? 'bg-success' : 'bg-secondary'}">${advisorScore}</span></td>`;
+                    const reviewerScoreCell = `<td>
+                            <span class="badge ${s.reviewerScore != null ? 'bg-success' : 'bg-secondary'}">
+                                ${reviewerScore}
+                            </span>
+                            <button class="btn btn-sm btn-outline-primary ms-1" onclick="openReviewerScoreModalForSuperAdmin(${s.id}, '${s.name}', ${s.reviewerScore || 'null'}, '${s.defenseType}')">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                        </td>`;
                     row.innerHTML = `
                         <td>${s.studentNo || ''}</td>
                         <td><strong>${s.name || ''}</strong></td>
@@ -2987,15 +2960,9 @@
                         <td><span class="badge ${defenseTypeBadge}">${defenseTypeText}</span></td>
                         <td>${s.title || ''}</td>
                         <td>${advisorInfo}</td>
-                        <td><span class="badge ${s.advisorScore != null ? 'bg-success' : 'bg-secondary'}">${advisorScore}</span></td>
-                        <td>
-                            <span class="badge ${s.reviewerScore != null ? 'bg-success' : 'bg-secondary'}">
-                                ${reviewerScore}
-                            </span>
-                            <button class="btn btn-sm btn-outline-primary ms-1" onclick="openReviewerScoreModal(${s.id}, '${s.name}', ${s.reviewerScore || 'null'})">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                        </td>
+                        ${advisorScoreCell}
+                        <td>${reviewerInfo}</td>
+                        ${reviewerScoreCell}
                         <td>
                             <span class="badge bg-primary">${s.defenseGroupName || '未分配'}</span>
                         </td>
@@ -3004,7 +2971,7 @@
                 });
             } catch (error) {
                 console.error('加载评阅学生失败:', error);
-                tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="10" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
             }
         }
 
@@ -3144,7 +3111,7 @@
             }
         }
 
-        // 打开评阅人评定成绩模态框
+        // 打开评阅人评定成绩模态框（普通教师）
         function openReviewerScoreModal(studentId, studentName, currentScore) {
             const score = prompt(`请输入学生 "${studentName}" 的评阅人评定成绩 (0-100):\n当前成绩: ${currentScore || '未评分'}`, currentScore || '');
             if (score === null) return; // 用户取消
@@ -3154,6 +3121,398 @@
                 return;
             }
             submitReviewerScore(studentId, scoreNum);
+        }
+
+        // 打开评阅人评定成绩模态框（超级管理员，显示所有打分项）
+        async function openReviewerScoreModalForSuperAdmin(studentId, studentName, currentScore, defenseType) {
+            try {
+                // 获取教师的打分记录
+                const response = await fetch(`/department/student/teacher/scoreRecord?studentId=${studentId}&type=reviewer`);
+                if (!response.ok) {
+                    showAlert('error', '获取打分记录失败');
+                    return;
+                }
+                const data = await response.json();
+                if (data.error) {
+                    showAlert('error', data.error);
+                    return;
+                }
+
+                const record = data.record;
+                const teacherName = data.teacherName || '评阅人';
+
+                // 构建模态框HTML
+                let modalHtml = `
+                    <div class="modal fade" id="reviewerScoreModalForSuperAdmin" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">修改评阅人评定成绩 - ${studentName}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p><strong>评阅人：</strong>${teacherName}</p>
+                                    <form id="reviewerScoreFormForSuperAdmin">
+                                        <input type="hidden" id="rs-modal-student-id" value="${studentId}">
+                                        <input type="hidden" id="rs-modal-defense-type" value="${defenseType}">
+                `;
+
+                if (defenseType === 'PAPER') {
+                    modalHtml += `
+                        <div class="mb-3">
+                            <label class="form-label">论文质量 (满分50)</label>
+                            <input type="number" class="form-control" id="rs-item1" min="0" max="50" value="${record.item1Score || 0}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">自述报告 (满分25)</label>
+                            <input type="number" class="form-control" id="rs-item2" min="0" max="25" value="${record.item2Score || 0}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">回答问题 (满分25)</label>
+                            <input type="number" class="form-control" id="rs-item3" min="0" max="25" value="${record.item3Score || 0}">
+                        </div>
+                    `;
+                } else {
+                    modalHtml += `
+                        <div class="mb-3">
+                            <label class="form-label">设计质量1 (满分15)</label>
+                            <input type="number" class="form-control" id="rs-item1" min="0" max="15" value="${record.item1Score || 0}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">设计质量2 (满分15)</label>
+                            <input type="number" class="form-control" id="rs-item2" min="0" max="15" value="${record.item2Score || 0}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">设计质量3 (满分15)</label>
+                            <input type="number" class="form-control" id="rs-item3" min="0" max="15" value="${record.item3Score || 0}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">自述报告 (满分25)</label>
+                            <input type="number" class="form-control" id="rs-item4" min="0" max="25" value="${record.item4Score || 0}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">回答问题1 (满分15)</label>
+                            <input type="number" class="form-control" id="rs-item5" min="0" max="15" value="${record.item5Score || 0}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">回答问题2 (满分15)</label>
+                            <input type="number" class="form-control" id="rs-item6" min="0" max="15" value="${record.item6Score || 0}">
+                        </div>
+                    `;
+                }
+
+                modalHtml += `
+                        <div class="mb-3">
+                            <label class="form-label"><strong>总分</strong></label>
+                            <input type="number" class="form-control" id="rs-total-score" readonly value="${record.totalScore || 0}">
+                        </div>
+                                    </form>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                    <button type="button" class="btn btn-primary" onclick="submitReviewerScoreForSuperAdmin()">保存</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // 移除旧的模态框（如果存在）
+                const oldModal = document.getElementById('reviewerScoreModalForSuperAdmin');
+                if (oldModal) {
+                    oldModal.remove();
+                }
+
+                // 添加新的模态框
+                const container = document.createElement('div');
+                container.innerHTML = modalHtml;
+                document.body.appendChild(container);
+
+                // 绑定总分自动计算
+                const inputs = defenseType === 'PAPER' ?
+                    ['rs-item1', 'rs-item2', 'rs-item3'] :
+                    ['rs-item1', 'rs-item2', 'rs-item3', 'rs-item4', 'rs-item5', 'rs-item6'];
+                inputs.forEach(id => {
+                    const input = document.getElementById(id);
+                    if (input) {
+                        input.addEventListener('input', updateReviewerScoreTotal);
+                    }
+                });
+
+                // 显示模态框
+                const modal = new bootstrap.Modal(document.getElementById('reviewerScoreModalForSuperAdmin'));
+                modal.show();
+
+                // 模态框关闭时移除元素
+                document.getElementById('reviewerScoreModalForSuperAdmin').addEventListener('hidden.bs.modal', function () {
+                    container.remove();
+                });
+            } catch (error) {
+                console.error('打开评阅人成绩模态框失败:', error);
+                showAlert('error', '打开模态框失败');
+            }
+        }
+
+        // 更新评阅人打分总分
+        function updateReviewerScoreTotal() {
+            const defenseType = document.getElementById('rs-modal-defense-type').value;
+            let total = 0;
+
+            if (defenseType === 'PAPER') {
+                const item1 = parseInt(document.getElementById('rs-item1').value) || 0;
+                const item2 = parseInt(document.getElementById('rs-item2').value) || 0;
+                const item3 = parseInt(document.getElementById('rs-item3').value) || 0;
+                total = item1 + item2 + item3;
+            } else {
+                const item1 = parseInt(document.getElementById('rs-item1').value) || 0;
+                const item2 = parseInt(document.getElementById('rs-item2').value) || 0;
+                const item3 = parseInt(document.getElementById('rs-item3').value) || 0;
+                const item4 = parseInt(document.getElementById('rs-item4').value) || 0;
+                const item5 = parseInt(document.getElementById('rs-item5').value) || 0;
+                const item6 = parseInt(document.getElementById('rs-item6').value) || 0;
+                total = item1 + item2 + item3 + item4 + item5 + item6;
+            }
+
+            document.getElementById('rs-total-score').value = total;
+        }
+
+        // 提交评阅人打分（超级管理员）
+        async function submitReviewerScoreForSuperAdmin() {
+            const studentId = document.getElementById('rs-modal-student-id').value;
+            const defenseType = document.getElementById('rs-modal-defense-type').value;
+
+            let params = new URLSearchParams();
+            params.append('studentId', studentId);
+            params.append('type', 'reviewer');
+
+            if (defenseType === 'PAPER') {
+                params.append('item1', document.getElementById('rs-item1').value || 0);
+                params.append('item2', document.getElementById('rs-item2').value || 0);
+                params.append('item3', document.getElementById('rs-item3').value || 0);
+            } else {
+                params.append('item1', document.getElementById('rs-item1').value || 0);
+                params.append('item2', document.getElementById('rs-item2').value || 0);
+                params.append('item3', document.getElementById('rs-item3').value || 0);
+                params.append('item4', document.getElementById('rs-item4').value || 0);
+                params.append('item5', document.getElementById('rs-item5').value || 0);
+                params.append('item6', document.getElementById('rs-item6').value || 0);
+            }
+
+            try {
+                const response = await fetch('/department/student/teacher/updateScoreRecord', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: params.toString()
+                });
+                const result = await response.text();
+
+                if (result === 'success') {
+                    showAlert('success', '评阅人评定成绩更新成功！');
+                    bootstrap.Modal.getInstance(document.getElementById('reviewerScoreModalForSuperAdmin')).hide();
+                    loadReviewedStudents();
+                } else {
+                    showAlert('error', '更新失败：' + result);
+                }
+            } catch (error) {
+                console.error('更新评阅人成绩失败:', error);
+                showAlert('error', '更新失败，请重试');
+            }
+        }
+
+        // 打开指导教师评定成绩模态框（超级管理员，显示所有打分项）
+        async function openAdvisorScoreModalForSuperAdmin(studentId, studentName, currentScore, defenseType) {
+            try {
+                // 获取教师的打分记录
+                const response = await fetch(`/department/student/teacher/scoreRecord?studentId=${studentId}&type=advisor`);
+                if (!response.ok) {
+                    showAlert('error', '获取打分记录失败');
+                    return;
+                }
+                const data = await response.json();
+                if (data.error) {
+                    showAlert('error', data.error);
+                    return;
+                }
+
+                const record = data.record;
+                const teacherName = data.teacherName || '指导教师';
+
+                // 构建模态框HTML（与评阅人类似）
+                let modalHtml = `
+                    <div class="modal fade" id="advisorScoreModalForSuperAdmin" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">修改指导教师评定成绩 - ${studentName}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p><strong>指导教师：</strong>${teacherName}</p>
+                                    <form id="advisorScoreFormForSuperAdmin">
+                                        <input type="hidden" id="as-modal-student-id" value="${studentId}">
+                                        <input type="hidden" id="as-modal-defense-type" value="${defenseType}">
+                `;
+
+                if (defenseType === 'PAPER') {
+                    modalHtml += `
+                        <div class="mb-3">
+                            <label class="form-label">论文质量 (满分50)</label>
+                            <input type="number" class="form-control" id="as-item1" min="0" max="50" value="${record.item1Score || 0}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">自述报告 (满分25)</label>
+                            <input type="number" class="form-control" id="as-item2" min="0" max="25" value="${record.item2Score || 0}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">回答问题 (满分25)</label>
+                            <input type="number" class="form-control" id="as-item3" min="0" max="25" value="${record.item3Score || 0}">
+                        </div>
+                    `;
+                } else {
+                    modalHtml += `
+                        <div class="mb-3">
+                            <label class="form-label">设计质量1 (满分15)</label>
+                            <input type="number" class="form-control" id="as-item1" min="0" max="15" value="${record.item1Score || 0}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">设计质量2 (满分15)</label>
+                            <input type="number" class="form-control" id="as-item2" min="0" max="15" value="${record.item2Score || 0}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">设计质量3 (满分15)</label>
+                            <input type="number" class="form-control" id="as-item3" min="0" max="15" value="${record.item3Score || 0}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">自述报告 (满分25)</label>
+                            <input type="number" class="form-control" id="as-item4" min="0" max="25" value="${record.item4Score || 0}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">回答问题1 (满分15)</label>
+                            <input type="number" class="form-control" id="as-item5" min="0" max="15" value="${record.item5Score || 0}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">回答问题2 (满分15)</label>
+                            <input type="number" class="form-control" id="as-item6" min="0" max="15" value="${record.item6Score || 0}">
+                        </div>
+                    `;
+                }
+
+                modalHtml += `
+                        <div class="mb-3">
+                            <label class="form-label"><strong>总分</strong></label>
+                            <input type="number" class="form-control" id="as-total-score" readonly value="${record.totalScore || 0}">
+                        </div>
+                                    </form>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                    <button type="button" class="btn btn-primary" onclick="submitAdvisorScoreForSuperAdmin()">保存</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // 移除旧的模态框（如果存在）
+                const oldModal = document.getElementById('advisorScoreModalForSuperAdmin');
+                if (oldModal) {
+                    oldModal.remove();
+                }
+
+                // 添加新的模态框
+                const container = document.createElement('div');
+                container.innerHTML = modalHtml;
+                document.body.appendChild(container);
+
+                // 绑定总分自动计算
+                const inputs = defenseType === 'PAPER' ?
+                    ['as-item1', 'as-item2', 'as-item3'] :
+                    ['as-item1', 'as-item2', 'as-item3', 'as-item4', 'as-item5', 'as-item6'];
+                inputs.forEach(id => {
+                    const input = document.getElementById(id);
+                    if (input) {
+                        input.addEventListener('input', updateAdvisorScoreTotal);
+                    }
+                });
+
+                // 显示模态框
+                const modal = new bootstrap.Modal(document.getElementById('advisorScoreModalForSuperAdmin'));
+                modal.show();
+
+                // 模态框关闭时移除元素
+                document.getElementById('advisorScoreModalForSuperAdmin').addEventListener('hidden.bs.modal', function () {
+                    container.remove();
+                });
+            } catch (error) {
+                console.error('打开指导教师成绩模态框失败:', error);
+                showAlert('error', '打开模态框失败');
+            }
+        }
+
+        // 更新指导教师打分总分
+        function updateAdvisorScoreTotal() {
+            const defenseType = document.getElementById('as-modal-defense-type').value;
+            let total = 0;
+
+            if (defenseType === 'PAPER') {
+                const item1 = parseInt(document.getElementById('as-item1').value) || 0;
+                const item2 = parseInt(document.getElementById('as-item2').value) || 0;
+                const item3 = parseInt(document.getElementById('as-item3').value) || 0;
+                total = item1 + item2 + item3;
+            } else {
+                const item1 = parseInt(document.getElementById('as-item1').value) || 0;
+                const item2 = parseInt(document.getElementById('as-item2').value) || 0;
+                const item3 = parseInt(document.getElementById('as-item3').value) || 0;
+                const item4 = parseInt(document.getElementById('as-item4').value) || 0;
+                const item5 = parseInt(document.getElementById('as-item5').value) || 0;
+                const item6 = parseInt(document.getElementById('as-item6').value) || 0;
+                total = item1 + item2 + item3 + item4 + item5 + item6;
+            }
+
+            document.getElementById('as-total-score').value = total;
+        }
+
+        // 提交指导教师打分（超级管理员）
+        async function submitAdvisorScoreForSuperAdmin() {
+            const studentId = document.getElementById('as-modal-student-id').value;
+            const defenseType = document.getElementById('as-modal-defense-type').value;
+
+            let params = new URLSearchParams();
+            params.append('studentId', studentId);
+            params.append('type', 'advisor');
+
+            if (defenseType === 'PAPER') {
+                params.append('item1', document.getElementById('as-item1').value || 0);
+                params.append('item2', document.getElementById('as-item2').value || 0);
+                params.append('item3', document.getElementById('as-item3').value || 0);
+            } else {
+                params.append('item1', document.getElementById('as-item1').value || 0);
+                params.append('item2', document.getElementById('as-item2').value || 0);
+                params.append('item3', document.getElementById('as-item3').value || 0);
+                params.append('item4', document.getElementById('as-item4').value || 0);
+                params.append('item5', document.getElementById('as-item5').value || 0);
+                params.append('item6', document.getElementById('as-item6').value || 0);
+            }
+
+            try {
+                const response = await fetch('/department/student/teacher/updateScoreRecord', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: params.toString()
+                });
+                const result = await response.text();
+
+                if (result === 'success') {
+                    showAlert('success', '指导教师评定成绩更新成功！');
+                    bootstrap.Modal.getInstance(document.getElementById('advisorScoreModalForSuperAdmin')).hide();
+                    loadReviewedStudents();
+                } else {
+                    showAlert('error', '更新失败：' + result);
+                }
+            } catch (error) {
+                console.error('更新指导教师成绩失败:', error);
+                showAlert('error', '更新失败，请重试');
+            }
         }
 
         // 提交评阅人评定成绩
@@ -4660,857 +5019,6 @@
             }, 4000);
         }
 
-        // ==================== 导出模板预览功能 ====================
-
-        // Mock 数据
-        const templateMockData = {
-            students: {
-                1: {
-                    id: 1,
-                    studentNo: '20210101',
-                    name: '张三',
-                    title: '基于深度学习的图像识别系统研究与实现',
-                    summary: '本文研究了深度学习在图像识别领域的应用，设计并实现了一个高效的图像识别系统。系统采用卷积神经网络架构，在多个数据集上取得了良好的识别效果。',
-                    defenseType: 'PAPER',
-                    defenseYear: 2024,
-                    classInfo: '计算机2101班',
-                    advisorName: '王教授',
-                    reviewerName: '李副教授',
-                    leaderName: '赵老师'
-                },
-                2: {
-                    id: 2,
-                    studentNo: '20210102',
-                    name: '李四',
-                    title: '智能家居控制系统的设计与开发',
-                    summary: '本设计实现了一个基于物联网技术的智能家居控制系统，包括硬件设计、软件开发和移动端应用。系统具有远程控制、场景联动等功能。',
-                    defenseType: 'DESIGN',
-                    defenseYear: 2024,
-                    classInfo: '计算机2102班',
-                    advisorName: '陈教授',
-                    reviewerName: '刘副教授',
-                    leaderName: '周老师'
-                },
-                3: {
-                    id: 3,
-                    studentNo: '20210103',
-                    name: '王五',
-                    title: '区块链技术在供应链管理中的应用研究',
-                    summary: '本文探讨了区块链技术在供应链管理中的应用价值，提出了一种基于区块链的供应链溯源方案，并通过实验验证了方案的可行性。',
-                    defenseType: 'PAPER',
-                    defenseYear: 2024,
-                    classInfo: '计算机2103班',
-                    advisorName: '孙教授',
-                    reviewerName: '吴副教授',
-                    leaderName: '郑老师'
-                }
-            },
-            scores: {
-                1: { item1: 45, item2: 22, item3: 23, total: 90 },
-                2: { item1: 15, item2: 16, item3: 17, item4: 22, item5: 12, item6: 11, total: 93 },
-                3: { item1: 48, item2: 24, item3: 24, total: 96 }
-            },
-            comments: {
-                saved: {
-                    1: '该生论文选题具有较强的理论意义和实用价值，研究方法科学合理，论文结构完整，逻辑清晰。答辩过程中能够准确阐述研究内容，回答问题思路清晰，表现优秀。同意通过答辩。',
-                    2: '该生设计方案合理，系统功能完整，技术实现规范。设计文档详实，答辩表现良好，能够清楚地阐述设计思路和技术细节。同意通过答辩。',
-                    3: '该生论文研究深入，创新性强，具有一定的学术价值。论文写作规范，数据详实。答辩中展现出扎实的专业基础和良好的科研素养。同意通过答辩，建议评为优秀。'
-                },
-                ai: {
-                    1: '该生的毕业论文选题新颖，具有较强的实践意义。论文结构合理，内容充实，研究方法得当。在答辩过程中，能够清晰地阐述研究思路和主要成果，对评委提出的问题回答准确，表现出良好的专业素养。综合评价为优秀，同意通过答辩。',
-                    2: '该生的毕业设计完成质量较高，系统设计合理，功能实现完整。设计文档规范，技术路线清晰。答辩中能够熟练演示系统功能，对技术细节掌握扎实。综合表现良好，同意通过答辩。',
-                    3: '该生论文研究问题明确，理论分析透彻，实验设计科学。论文撰写规范，数据分析充分。答辩表现出色，能够深入回答专业问题，展现出较强的研究能力。综合评价优秀，同意通过答辩。'
-                }
-            }
-        };
-
-        // 所有可用的模板类型
-        const allTemplateTypes = [
-            { value: 'score-paper', text: '本科毕业论文答辩成绩表', defenseType: 'PAPER' },
-            { value: 'score-design', text: '本科毕业设计答辩成绩表', defenseType: 'DESIGN' },
-            { value: 'grade-paper', text: '本科毕业论文成绩评定表', defenseType: 'PAPER' },
-            { value: 'grade-design', text: '本科毕业设计成绩评定表', defenseType: 'DESIGN' },
-            { value: 'group-summary', text: '毕业论文(设计)答辩小组统分表', defenseType: 'BOTH' },
-            { value: 'process-paper', text: '毕业论文答辩成绩无评语过程表', defenseType: 'PAPER' },
-            { value: 'process-design', text: '毕业设计答辩成绩无评语过程表', defenseType: 'DESIGN' }
-        ];
-
-        // 根据答辩类型过滤模板类型选项
-        function filterTemplateTypesByDefenseType() {
-            const defenseType = document.getElementById('template-type-select').value;
-            const docTypeSelect = document.getElementById('template-doc-type-select');
-            const currentValue = docTypeSelect.value;
-
-            // 清空现有选项
-            docTypeSelect.innerHTML = '';
-
-            // 根据答辩类型过滤选项
-            const filteredOptions = allTemplateTypes.filter(option => {
-                return option.defenseType === 'BOTH' || option.defenseType === defenseType;
-            });
-
-            // 添加过滤后的选项
-            filteredOptions.forEach(option => {
-                const opt = document.createElement('option');
-                opt.value = option.value;
-                opt.textContent = option.text;
-                docTypeSelect.appendChild(opt);
-            });
-
-            // 如果当前选中的值不在新选项中，选择第一个选项
-            if (!filteredOptions.find(opt => opt.value === currentValue)) {
-                if (filteredOptions.length > 0) {
-                    docTypeSelect.value = filteredOptions[0].value;
-                }
-            } else {
-                // 保持当前选择
-                docTypeSelect.value = currentValue;
-            }
-
-            // 更新预览
-            updateTemplatePreview();
-        }
-
-        // 更新模板预览
-        function updateTemplatePreview() {
-            const studentId = parseInt(document.getElementById('template-student-select').value);
-            const docType = document.getElementById('template-doc-type-select').value;
-            const type = document.getElementById('template-type-select').value;
-            const factor = parseFloat(document.getElementById('template-factor-input').value);
-            const commentSource = document.getElementById('template-comment-source').value;
-            const showSignatures = document.getElementById('template-show-signatures').checked;
-
-            const student = templateMockData.students[studentId];
-            const scores = templateMockData.scores[studentId];
-
-            // 根据模板类型显示/隐藏相关控件
-            const factorDiv = document.getElementById('template-factor-input').parentElement;
-            const commentDiv = document.getElementById('template-comment-source').parentElement;
-            const customCommentDiv = document.getElementById('template-custom-comment-div');
-            const signaturesDiv = document.getElementById('template-show-signatures').parentElement;
-
-            // 更新类型徽章和控件显示
-            const badge = document.getElementById('template-doc-type-badge');
-            let badgeText = '';
-            let showFactor = false;
-            let showComment = false;
-            let showSignaturesControl = false;
-
-            switch (docType) {
-                case 'score-paper':
-                    badgeText = '本科毕业论文答辩成绩表';
-                    showFactor = true;
-                    showComment = true;
-                    showSignaturesControl = true;
-                    break;
-                case 'score-design':
-                    badgeText = '本科毕业设计答辩成绩表';
-                    showFactor = true;
-                    showComment = true;
-                    showSignaturesControl = true;
-                    break;
-                case 'grade-paper':
-                    badgeText = '本科毕业论文成绩评定表';
-                    showFactor = false;
-                    showComment = false;
-                    showSignaturesControl = true;
-                    break;
-                case 'grade-design':
-                    badgeText = '本科毕业设计成绩评定表';
-                    showFactor = false;
-                    showComment = false;
-                    showSignaturesControl = true;
-                    break;
-                case 'group-summary':
-                    badgeText = '毕业论文(设计)答辩小组统分表';
-                    showFactor = true;
-                    showComment = false;
-                    showSignaturesControl = false;
-                    break;
-                case 'process-paper':
-                    badgeText = '毕业论文答辩成绩无评语过程表';
-                    showFactor = false;
-                    showComment = false;
-                    showSignaturesControl = true;
-                    break;
-                case 'process-design':
-                    badgeText = '毕业设计答辩成绩无评语过程表';
-                    showFactor = false;
-                    showComment = false;
-                    showSignaturesControl = true;
-                    break;
-            }
-
-            badge.textContent = badgeText;
-            factorDiv.style.display = showFactor ? 'block' : 'none';
-            commentDiv.style.display = showComment ? 'block' : 'none';
-            customCommentDiv.style.display = (commentSource === 'custom' && showComment) ? 'block' : 'none';
-            signaturesDiv.style.display = showSignaturesControl ? 'block' : 'none';
-
-            // 生成文档内容
-            const preview = document.getElementById('template-doc-preview');
-            let html = '';
-
-            switch (docType) {
-                case 'score-paper':
-                    html = generateTemplatePaperScoreDoc(student, scores, factor, commentSource, showSignatures);
-                    break;
-                case 'score-design':
-                    html = generateTemplateDesignScoreDoc(student, scores, factor, commentSource, showSignatures);
-                    break;
-                case 'grade-paper':
-                    html = generateTemplatePaperGradeDoc(student, scores, showSignatures);
-                    break;
-                case 'grade-design':
-                    html = generateTemplateDesignGradeDoc(student, scores, showSignatures);
-                    break;
-                case 'group-summary':
-                    html = generateTemplateGroupSummaryDoc(factor);
-                    break;
-                case 'process-paper':
-                    html = generateTemplatePaperProcessDoc(student, scores, showSignatures);
-                    break;
-                case 'process-design':
-                    html = generateTemplateDesignProcessDoc(student, scores, showSignatures);
-                    break;
-            }
-
-            preview.innerHTML = html;
-        }
-
-        // 生成论文答辩成绩表
-        function generateTemplatePaperScoreDoc(student, scores, factor, commentSource, showSignatures) {
-            const adjustedScores = {
-                item1: Math.round(scores.item1 * factor),
-                item2: Math.round(scores.item2 * factor),
-                item3: Math.round(scores.item3 * factor),
-                total: (scores.total * factor).toFixed(1)
-            };
-
-            const comment = getTemplateComment(student.id, commentSource);
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = today.getMonth() + 1;
-            const day = today.getDate();
-
-            return `
-                <div style="text-align: center; font-size: 1.5rem; font-weight: bold; margin-bottom: 2rem; color: var(--heading-color);">
-                    本科毕业论文答辩成绩表
-                </div>
-                
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 1.5rem;">
-                    <tr>
-                        <td style="border: 1px solid #333; padding: 0.75rem; background-color: #f0f0f0; font-weight: 600; width: 15%;">姓名</td>
-                        <td style="border: 1px solid #333; padding: 0.75rem; width: 35%;">${student.name}</td>
-                        <td style="border: 1px solid #333; padding: 0.75rem; background-color: #f0f0f0; font-weight: 600; width: 15%;">学号</td>
-                        <td style="border: 1px solid #333; padding: 0.75rem; width: 35%;">${student.studentNo}</td>
-                    </tr>
-                    <tr>
-                        <td style="border: 1px solid #333; padding: 0.75rem; background-color: #f0f0f0; font-weight: 600;">论文题目</td>
-                        <td style="border: 1px solid #333; padding: 0.75rem;" colspan="3">${student.title}</td>
-                    </tr>
-                </table>
-
-                <table style="width: 100%; border-collapse: collapse; margin: 1.5rem 0;">
-                    <thead>
-                        <tr>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">评价指标</th>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">满分</th>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">得分</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">论文质量</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">50</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${adjustedScores.item1}</span></td>
-                        </tr>
-                        <tr>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">答辩的自述报告</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">25</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${adjustedScores.item2}</span></td>
-                        </tr>
-                        <tr>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">回答问题的情况</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">25</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${adjustedScores.item3}</span></td>
-                        </tr>
-                        <tr style="font-weight: bold; background-color: #f8f9fa;">
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">总分</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">100</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-size: 1.2em;">${adjustedScores.total}</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <div style="margin-top: 1.5rem;">
-                    <strong>答辩小组评语：</strong>
-                    <div style="border: 1px solid #333; padding: 1rem; min-height: 100px; margin: 1rem 0; line-height: 1.8;">${comment}</div>
-                </div>
-
-                ${showSignatures ? generateTemplateSignatures(student) : ''}
-
-                <div style="text-align: right; margin-top: 1rem; font-size: 0.95rem;">
-                    ${year} 年 ${month} 月 ${day} 日
-                </div>
-
-                ${factor !== 1.0 ? `
-                <div class="alert alert-warning mt-3">
-                    <i class="bi bi-info-circle"></i> 
-                    已应用调节系数: <strong>${factor}</strong>
-                </div>
-                ` : ''}
-            `;
-        }
-
-        // 生成设计答辩成绩表
-        function generateTemplateDesignScoreDoc(student, scores, factor, commentSource, showSignatures) {
-            const adjustedScores = {
-                item1: Math.round(scores.item1 * factor),
-                item2: Math.round(scores.item2 * factor),
-                item3: Math.round(scores.item3 * factor),
-                item4: Math.round(scores.item4 * factor),
-                item5: Math.round(scores.item5 * factor),
-                item6: Math.round(scores.item6 * factor),
-                total: (scores.total * factor).toFixed(1)
-            };
-
-            const comment = getTemplateComment(student.id, commentSource);
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = today.getMonth() + 1;
-            const day = today.getDate();
-
-            return `
-                <div style="text-align: center; font-size: 1.5rem; font-weight: bold; margin-bottom: 2rem; color: var(--heading-color);">
-                    本科毕业设计答辩成绩表
-                </div>
-                
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 1.5rem;">
-                    <tr>
-                        <td style="border: 1px solid #333; padding: 0.75rem; background-color: #f0f0f0; font-weight: 600; width: 15%;">姓名</td>
-                        <td style="border: 1px solid #333; padding: 0.75rem; width: 35%;">${student.name}</td>
-                        <td style="border: 1px solid #333; padding: 0.75rem; background-color: #f0f0f0; font-weight: 600; width: 15%;">学号</td>
-                        <td style="border: 1px solid #333; padding: 0.75rem; width: 35%;">${student.studentNo}</td>
-                    </tr>
-                    <tr>
-                        <td style="border: 1px solid #333; padding: 0.75rem; background-color: #f0f0f0; font-weight: 600;">设计题目</td>
-                        <td style="border: 1px solid #333; padding: 0.75rem;" colspan="3">${student.title}</td>
-                    </tr>
-                    <tr>
-                        <td style="border: 1px solid #333; padding: 0.75rem; background-color: #f0f0f0; font-weight: 600;">设计摘要</td>
-                        <td style="border: 1px solid #333; padding: 0.75rem;" colspan="3">${student.summary}</td>
-                    </tr>
-                </table>
-
-                <table style="width: 100%; border-collapse: collapse; margin: 1.5rem 0;">
-                    <thead>
-                        <tr>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">评价指标</th>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">满分</th>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">得分</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">设计质量 (1)</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">17</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${adjustedScores.item1}</span></td>
-                        </tr>
-                        <tr>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">设计质量 (2)</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">17</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${adjustedScores.item2}</span></td>
-                        </tr>
-                        <tr>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">设计质量 (3)</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">16</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${adjustedScores.item3}</span></td>
-                        </tr>
-                        <tr>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">答辩的自述报告成绩</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">25</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${adjustedScores.item4}</span></td>
-                        </tr>
-                        <tr>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">回答问题的情况 (1)</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">13</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${adjustedScores.item5}</span></td>
-                        </tr>
-                        <tr>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">回答问题的情况 (2)</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">12</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${adjustedScores.item6}</span></td>
-                        </tr>
-                        <tr style="font-weight: bold; background-color: #f8f9fa;">
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">总分</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">100</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-size: 1.2em;">${adjustedScores.total}</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <div style="margin-top: 1.5rem;">
-                    <strong>答辩小组评语：</strong>
-                    <div style="border: 1px solid #333; padding: 1rem; min-height: 100px; margin: 1rem 0; line-height: 1.8;">${comment}</div>
-                </div>
-
-                ${showSignatures ? generateTemplateSignatures(student) : ''}
-
-                <div style="text-align: right; margin-top: 1rem; font-size: 0.95rem;">
-                    ${year} 年 ${month} 月 ${day} 日
-                </div>
-
-                ${factor !== 1.0 ? `
-                <div class="alert alert-warning mt-3">
-                    <i class="bi bi-info-circle"></i> 
-                    已应用调节系数: <strong>${factor}</strong>
-                </div>
-                ` : ''}
-            `;
-        }
-
-        // 生成签名区域
-        function generateTemplateSignatures(student) {
-            return `
-                <div style="margin-top: 2rem; display: flex; justify-content: space-between;">
-                    <div style="text-align: center; flex: 1;">
-                        <div>指导教师签名：</div>
-                        <div style="width: 120px; height: 50px; border: 1px dashed #999; margin: 0.5rem auto; display: flex; align-items: center; justify-content: center; background-color: #fafafa;">
-                            <span style="font-style: italic; color: #999;">${student.advisorName}</span>
-                        </div>
-                    </div>
-                    <div style="text-align: center; flex: 1;">
-                        <div>评阅教师签名：</div>
-                        <div style="width: 120px; height: 50px; border: 1px dashed #999; margin: 0.5rem auto; display: flex; align-items: center; justify-content: center; background-color: #fafafa;">
-                            <span style="font-style: italic; color: #999;">${student.reviewerName}</span>
-                        </div>
-                    </div>
-                    <div style="text-align: center; flex: 1;">
-                        <div>答辩组长签名：</div>
-                        <div style="width: 120px; height: 50px; border: 1px dashed #999; margin: 0.5rem auto; display: flex; align-items: center; justify-content: center; background-color: #fafafa;">
-                            <span style="font-style: italic; color: #999;">${student.leaderName}</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        // 获取评语
-        function getTemplateComment(studentId, source) {
-            if (source === 'custom') {
-                return document.getElementById('template-custom-comment').value;
-            } else if (source === 'ai') {
-                return templateMockData.comments.ai[studentId];
-            } else {
-                return templateMockData.comments.saved[studentId];
-            }
-        }
-
-        // 生成论文成绩评定表
-        function generateTemplatePaperGradeDoc(student, scores, showSignatures) {
-            const advisorScore = 90;
-            const reviewerScore = 92;
-            const defenseScore = parseFloat((scores.total * 1.05).toFixed(1)); // 应用调节系数后的答辩成绩
-            const advisorWeighted = (advisorScore * 0.3).toFixed(1);
-            const reviewerWeighted = (reviewerScore * 0.3).toFixed(1);
-            const defenseWeighted = (defenseScore * 0.4).toFixed(1);
-            const totalGrade = (parseFloat(advisorWeighted) + parseFloat(reviewerWeighted) + parseFloat(defenseWeighted)).toFixed(1);
-
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = today.getMonth() + 1;
-            const day = today.getDate();
-
-            return `
-                <div style="text-align: center; font-size: 1.5rem; font-weight: bold; margin-bottom: 2rem; color: var(--heading-color);">
-                    本科毕业论文成绩评定表
-                </div>
-                
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 1.5rem;">
-                    <tr>
-                        <td style="border: 1px solid #333; padding: 0.75rem; background-color: #f0f0f0; font-weight: 600; width: 15%;">姓名</td>
-                        <td style="border: 1px solid #333; padding: 0.75rem; width: 35%;">${student.name}</td>
-                        <td style="border: 1px solid #333; padding: 0.75rem; background-color: #f0f0f0; font-weight: 600; width: 15%;">学号</td>
-                        <td style="border: 1px solid #333; padding: 0.75rem; width: 35%;">${student.studentNo}</td>
-                    </tr>
-                    <tr>
-                        <td style="border: 1px solid #333; padding: 0.75rem; background-color: #f0f0f0; font-weight: 600;">论文题目</td>
-                        <td style="border: 1px solid #333; padding: 0.75rem;" colspan="3">${student.title}</td>
-                    </tr>
-                </table>
-
-                <table style="width: 100%; border-collapse: collapse; margin: 1.5rem 0;">
-                    <thead>
-                        <tr>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">评价项目</th>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">满分</th>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">得分</th>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">权重</th>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">加权得分</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">指导教师评定成绩</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">100</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${advisorScore}</span></td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">30%</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #d1ecf1; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${advisorWeighted}</span></td>
-                        </tr>
-                        <tr>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">评阅人评定成绩</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">100</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${reviewerScore}</span></td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">30%</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #d1ecf1; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${reviewerWeighted}</span></td>
-                        </tr>
-                        <tr>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">答辩成绩</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">100</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${defenseScore}</span></td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">40%</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #d1ecf1; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${defenseWeighted}</span></td>
-                        </tr>
-                        <tr style="font-weight: bold; background-color: #f8f9fa;">
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;" colspan="4">总评成绩</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #d4edda; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-size: 1.2em;">${totalGrade}</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                ${showSignatures ? generateTemplateDeptHeadSignature() : ''}
-
-                <div style="text-align: right; margin-top: 1rem; font-size: 0.95rem;">
-                    ${year} 年 ${month} 月 ${day} 日
-                </div>
-            `;
-        }
-
-        // 生成设计成绩评定表
-        function generateTemplateDesignGradeDoc(student, scores, showSignatures) {
-            const advisorScore = 88;
-            const reviewerScore = 86;
-            const defenseScore = parseFloat((scores.total * 1.02).toFixed(1)); // 应用调节系数后的答辩成绩
-            const advisorWeighted = (advisorScore * 0.3).toFixed(1);
-            const reviewerWeighted = (reviewerScore * 0.3).toFixed(1);
-            const defenseWeighted = (defenseScore * 0.4).toFixed(1);
-            const totalGrade = (parseFloat(advisorWeighted) + parseFloat(reviewerWeighted) + parseFloat(defenseWeighted)).toFixed(1);
-
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = today.getMonth() + 1;
-            const day = today.getDate();
-
-            return `
-                <div style="text-align: center; font-size: 1.5rem; font-weight: bold; margin-bottom: 2rem; color: var(--heading-color);">
-                    本科毕业设计成绩评定表
-                </div>
-                
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 1.5rem;">
-                    <tr>
-                        <td style="border: 1px solid #333; padding: 0.75rem; background-color: #f0f0f0; font-weight: 600; width: 15%;">姓名</td>
-                        <td style="border: 1px solid #333; padding: 0.75rem; width: 35%;">${student.name}</td>
-                        <td style="border: 1px solid #333; padding: 0.75rem; background-color: #f0f0f0; font-weight: 600; width: 15%;">学号</td>
-                        <td style="border: 1px solid #333; padding: 0.75rem; width: 35%;">${student.studentNo}</td>
-                    </tr>
-                    <tr>
-                        <td style="border: 1px solid #333; padding: 0.75rem; background-color: #f0f0f0; font-weight: 600;">设计题目</td>
-                        <td style="border: 1px solid #333; padding: 0.75rem;" colspan="3">${student.title}</td>
-                    </tr>
-                </table>
-
-                <table style="width: 100%; border-collapse: collapse; margin: 1.5rem 0;">
-                    <thead>
-                        <tr>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">评价项目</th>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">满分</th>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">得分</th>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">权重</th>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">加权得分</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">指导教师评定成绩</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">100</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${advisorScore}</span></td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">30%</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #d1ecf1; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${advisorWeighted}</span></td>
-                        </tr>
-                        <tr>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">评阅人评定成绩</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">100</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${reviewerScore}</span></td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">30%</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #d1ecf1; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${reviewerWeighted}</span></td>
-                        </tr>
-                        <tr>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">答辩成绩</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">100</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${defenseScore}</span></td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">40%</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #d1ecf1; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${defenseWeighted}</span></td>
-                        </tr>
-                        <tr style="font-weight: bold; background-color: #f8f9fa;">
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;" colspan="4">总评成绩</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #d4edda; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-size: 1.2em;">${totalGrade}</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                ${showSignatures ? generateTemplateDeptHeadSignature() : ''}
-
-                <div style="text-align: right; margin-top: 1rem; font-size: 0.95rem;">
-                    ${year} 年 ${month} 月 ${day} 日
-                </div>
-            `;
-        }
-
-        // 生成答辩小组统分表
-        function generateTemplateGroupSummaryDoc(factor) {
-            const mockStudents = [
-                { name: '张三', judge1: 88, judge2: 90, judge3: 87, defenseScore: 88.3, finalScore: (88.3 * factor).toFixed(1) },
-                { name: '李四', judge1: 92, judge2: 91, judge3: 93, defenseScore: 92.0, finalScore: (92.0 * factor).toFixed(1) },
-                { name: '王五', judge1: 85, judge2: 86, judge3: 84, defenseScore: 85.0, finalScore: (85.0 * factor).toFixed(1) },
-                { name: '赵六', judge1: 90, judge2: 89, judge3: 91, defenseScore: 90.0, finalScore: (90.0 * factor).toFixed(1) }
-            ];
-
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = today.getMonth() + 1;
-            const day = today.getDate();
-
-            return `
-                <div style="text-align: center; font-size: 1.5rem; font-weight: bold; margin-bottom: 2rem; color: var(--heading-color);">
-                    毕业论文(设计)答辩小组统分表
-                </div>
-                
-                <table style="width: 100%; border-collapse: collapse; margin: 1.5rem 0;">
-                    <thead>
-                        <tr>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">答辩人姓名</th>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">评委1成绩</th>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">评委2成绩</th>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">评委3成绩</th>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">答辩得分</th>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">调节系数</th>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">最后得分</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${mockStudents.map(s => `
-                            <tr>
-                                <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">${s.name}</td>
-                                <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">${s.judge1}</td>
-                                <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">${s.judge2}</td>
-                                <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">${s.judge3}</td>
-                                <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${s.defenseScore}</span></td>
-                                <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #d1ecf1; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${factor.toFixed(3)}</span></td>
-                                <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #d4edda; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-weight: bold;">${s.finalScore}</span></td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-
-                <div style="text-align: right; margin-top: 1rem; font-size: 0.95rem;">
-                    ${year} 年 ${month} 月 ${day} 日
-                </div>
-
-                ${factor !== 1.0 ? `
-                <div class="alert alert-info mt-3">
-                    <i class="bi bi-info-circle"></i> 
-                    调节系数: <strong>${factor.toFixed(3)}</strong> (大组答辩成绩 / 小组答辩平均成绩)
-                </div>
-                ` : ''}
-            `;
-        }
-
-        // 生成论文过程表（无评语）
-        function generateTemplatePaperProcessDoc(student, scores, showSignatures) {
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = today.getMonth() + 1;
-            const day = today.getDate();
-
-            return `
-                <div style="text-align: center; font-size: 1.5rem; font-weight: bold; margin-bottom: 2rem; color: var(--heading-color);">
-                    毕业论文答辩成绩无评语过程表
-                </div>
-                
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 1.5rem;">
-                    <tr>
-                        <td style="border: 1px solid #333; padding: 0.75rem; background-color: #f0f0f0; font-weight: 600; width: 15%;">姓名</td>
-                        <td style="border: 1px solid #333; padding: 0.75rem; width: 35%;">${student.name}</td>
-                        <td style="border: 1px solid #333; padding: 0.75rem; background-color: #f0f0f0; font-weight: 600; width: 15%;">学号</td>
-                        <td style="border: 1px solid #333; padding: 0.75rem; width: 35%;">${student.studentNo}</td>
-                    </tr>
-                    <tr>
-                        <td style="border: 1px solid #333; padding: 0.75rem; background-color: #f0f0f0; font-weight: 600;">论文题目</td>
-                        <td style="border: 1px solid #333; padding: 0.75rem;" colspan="3">${student.title}</td>
-                    </tr>
-                </table>
-
-                <table style="width: 100%; border-collapse: collapse; margin: 1.5rem 0;">
-                    <thead>
-                        <tr>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">评价指标</th>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">满分</th>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">得分</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">论文质量</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">50</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${scores.item1}</span></td>
-                        </tr>
-                        <tr>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">答辩的自述报告</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">25</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${scores.item2}</span></td>
-                        </tr>
-                        <tr>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">回答问题的情况</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">25</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${scores.item3}</span></td>
-                        </tr>
-                        <tr style="font-weight: bold; background-color: #f8f9fa;">
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">总分</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">100</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-size: 1.2em;">${scores.total}</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                ${showSignatures ? generateTemplateJudgeSignatures() : ''}
-
-                <div style="text-align: right; margin-top: 1rem; font-size: 0.95rem;">
-                    ${year} 年 ${month} 月 ${day} 日
-                </div>
-            `;
-        }
-
-        // 生成设计过程表（无评语）
-        function generateTemplateDesignProcessDoc(student, scores, showSignatures) {
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = today.getMonth() + 1;
-            const day = today.getDate();
-
-            return `
-                <div style="text-align: center; font-size: 1.5rem; font-weight: bold; margin-bottom: 2rem; color: var(--heading-color);">
-                    毕业设计答辩成绩无评语过程表
-                </div>
-                
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 1.5rem;">
-                    <tr>
-                        <td style="border: 1px solid #333; padding: 0.75rem; background-color: #f0f0f0; font-weight: 600; width: 15%;">姓名</td>
-                        <td style="border: 1px solid #333; padding: 0.75rem; width: 35%;">${student.name}</td>
-                        <td style="border: 1px solid #333; padding: 0.75rem; background-color: #f0f0f0; font-weight: 600; width: 15%;">学号</td>
-                        <td style="border: 1px solid #333; padding: 0.75rem; width: 35%;">${student.studentNo}</td>
-                    </tr>
-                    <tr>
-                        <td style="border: 1px solid #333; padding: 0.75rem; background-color: #f0f0f0; font-weight: 600;">设计题目</td>
-                        <td style="border: 1px solid #333; padding: 0.75rem;" colspan="3">${student.title}</td>
-                    </tr>
-                </table>
-
-                <table style="width: 100%; border-collapse: collapse; margin: 1.5rem 0;">
-                    <thead>
-                        <tr>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">评价指标</th>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">满分</th>
-                            <th style="border: 1px solid #333; padding: 0.75rem; text-align: center; background-color: #f0f0f0; font-weight: 600;">得分</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">设计质量 (1)</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">15</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${scores.item1}</span></td>
-                        </tr>
-                        <tr>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">设计质量 (2)</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">15</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${scores.item2}</span></td>
-                        </tr>
-                        <tr>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">设计质量 (3)</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">15</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${scores.item3}</span></td>
-                        </tr>
-                        <tr>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">答辩的自述报告</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">25</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${scores.item4}</span></td>
-                        </tr>
-                        <tr>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">回答问题的情况 (1)</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">15</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${scores.item5}</span></td>
-                        </tr>
-                        <tr>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">回答问题的情况 (2)</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">15</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${scores.item6}</span></td>
-                        </tr>
-                        <tr style="font-weight: bold; background-color: #f8f9fa;">
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">总分</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;">100</td>
-                            <td style="border: 1px solid #333; padding: 0.75rem; text-align: center;"><span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-size: 1.2em;">${scores.total}</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                ${showSignatures ? generateTemplateJudgeSignatures() : ''}
-
-                <div style="text-align: right; margin-top: 1rem; font-size: 0.95rem;">
-                    ${year} 年 ${month} 月 ${day} 日
-                </div>
-            `;
-        }
-
-        // 生成系主任签名
-        function generateTemplateDeptHeadSignature() {
-            return `
-                <div style="margin-top: 2rem; text-align: right;">
-                    <div style="text-align: center; display: inline-block; margin-left: 2rem;">
-                        <div>系主任签名：</div>
-                        <div style="width: 120px; height: 50px; border: 1px dashed #999; margin: 0.5rem auto; display: flex; align-items: center; justify-content: center; background-color: #fafafa;">
-                            <span style="font-style: italic; color: #999;">系主任</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        // 生成评委签名（多个）
-        function generateTemplateJudgeSignatures() {
-            return `
-                <div style="margin-top: 2rem; display: flex; justify-content: space-around;">
-                    <div style="text-align: center; flex: 1;">
-                        <div>评委签名：</div>
-                        <div style="width: 100px; height: 50px; border: 1px dashed #999; margin: 0.5rem auto; display: flex; align-items: center; justify-content: center; background-color: #fafafa;">
-                            <span style="font-style: italic; color: #999; font-size: 0.9rem;">评委1</span>
-                        </div>
-                    </div>
-                    <div style="text-align: center; flex: 1;">
-                        <div>评委签名：</div>
-                        <div style="width: 100px; height: 50px; border: 1px dashed #999; margin: 0.5rem auto; display: flex; align-items: center; justify-content: center; background-color: #fafafa;">
-                            <span style="font-style: italic; color: #999; font-size: 0.9rem;">评委2</span>
-                        </div>
-                    </div>
-                    <div style="text-align: center; flex: 1;">
-                        <div>评委签名：</div>
-                        <div style="width: 100px; height: 50px; border: 1px dashed #999; margin: 0.5rem auto; display: flex; align-items: center; justify-content: center; background-color: #fafafa;">
-                            <span style="font-style: italic; color: #999; font-size: 0.9rem;">评委3</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
         // ==================== 教师小组打分功能 ====================
 
         // 加载教师所在小组的学生列表
@@ -5540,7 +5048,7 @@
                 if (isSuperAdmin) {
                     // 超级管理员：显示所有小组的所有学生
                     document.getElementById('ts-group-info').textContent = '所有小组';
-                    // 更新表头，添加"小组"列，但不显示"班级"列
+                    // 更新表头，添加"小组"列，但不显示"班级"、"我的打分"和"操作"列
                     const tableHead = document.querySelector('#teacher-scoring-view table thead tr');
                     if (tableHead && !tableHead.querySelector('th:first-child').textContent.includes('小组')) {
                         tableHead.innerHTML = `
@@ -5553,8 +5061,6 @@
                             <th>平均分</th>
                             <th>调节系数</th>
                             <th>最终答辩成绩</th>
-                            <th>我的打分</th>
-                            <th>操作</th>
                         `;
                     }
                     data.groups.forEach(group => {
@@ -5589,7 +5095,7 @@
                 }
 
                 if (students.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="${isSuperAdmin ? '11' : '11'}" class="text-center text-muted">暂无学生数据</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="${isSuperAdmin ? '9' : '11'}" class="text-center text-muted">暂无学生数据</td></tr>`;
                     return;
                 }
 
@@ -5619,9 +5125,17 @@
                     }
 
                     const row = document.createElement('tr');
-                    // 超级管理员显示小组名称，但不显示"班级"列
+                    // 超级管理员显示小组名称，但不显示"班级"、"我的打分"和"操作"列
                     const groupNameCell = isSuperAdmin && s.groupName ? `<td><span class="badge bg-info">${s.groupName}</span></td>` : '';
                     const classCell = isSuperAdmin ? '' : `<td>${s.classInfo || ''}</td>`;
+                    const myScoreCell = isSuperAdmin ? '' : `<td>${hasScored ? `<span class="badge bg-success">${myScore}</span>` : '<span class="badge bg-secondary">未打分</span>'}</td>`;
+                    const actionCell = isSuperAdmin ? '' : `<td>
+                            <button class="btn btn-sm ${hasScored ? 'btn-outline-warning' : 'btn-outline-primary'}" 
+                                onclick='openTeacherScoringModal(${s.id}, "${s.studentNo}", "${s.name}", "${s.defenseType}", "${(s.title || '').replace(/"/g, '&quot;')}", ${JSON.stringify(myScoreItems)})'
+                            >
+                                <i class="bi ${hasScored ? 'bi-pencil' : 'bi-plus-circle'}"></i> ${hasScored ? '修改' : '打分'}
+                            </button>
+                        </td>`;
                     row.innerHTML = `
                         ${groupNameCell}
                         <td>${s.studentNo || ''}</td>
@@ -5633,14 +5147,8 @@
                         <td>${avgScore}</td>
                         <td><strong class="text-primary">${adjustmentFactor}</strong></td>
                         <td><strong class="text-success">${finalDefenseScore}</strong></td>
-                        <td>${hasScored ? `<span class="badge bg-success">${myScore}</span>` : '<span class="badge bg-secondary">未打分</span>'}</td>
-                        <td>
-                            <button class="btn btn-sm ${hasScored ? 'btn-outline-warning' : 'btn-outline-primary'}" 
-                                onclick='openTeacherScoringModal(${s.id}, "${s.studentNo}", "${s.name}", "${s.defenseType}", "${(s.title || '').replace(/"/g, '&quot;')}", ${JSON.stringify(myScoreItems)})'
-                            >
-                                <i class="bi ${hasScored ? 'bi-pencil' : 'bi-plus-circle'}"></i> ${hasScored ? '修改' : '打分'}
-                            </button>
-                        </td>
+                        ${myScoreCell}
+                        ${actionCell}
                     `;
                     tbody.appendChild(row);
                 });
@@ -5795,9 +5303,31 @@
                 document.getElementById('lg-teacher-info').textContent = data.teacherName ? `教师：${data.teacherName}` : '';
                 document.getElementById('lg-year-info').textContent = data.year ? `${data.year}年` : '';
 
+                // 检查是否是超级管理员
+                const userInfoDiv = document.querySelector('.user-info');
+                const isSuperAdmin = userInfoDiv && userInfoDiv.dataset.userRole === 'SUPER_ADMIN';
+
+                // 如果是超级管理员，更新表头删除"操作"列
+                if (isSuperAdmin) {
+                    const tableHead = document.querySelector('#large-group-defense-view table thead tr');
+                    if (tableHead) {
+                        tableHead.innerHTML = `
+                            <th>所属小组</th>
+                            <th>学号</th>
+                            <th>姓名</th>
+                            <th>类型</th>
+                            <th>题目</th>
+                            <th>小组平均分</th>
+                            <th>大组打分进度</th>
+                            <th>大组平均分</th>
+                            <th>调节系数</th>
+                        `;
+                    }
+                }
+
                 const candidates = data.candidates || [];
                 if (candidates.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">暂无大组答辩候选人（需要先完成小组打分）</td></tr>';
+                    tbody.innerHTML = `<tr><td colspan="${isSuperAdmin ? '9' : '10'}" class="text-center text-muted">暂无大组答辩候选人（需要先完成小组打分）</td></tr>`;
                     return;
                 }
 
@@ -5813,6 +5343,13 @@
                     const hasScored = c.myLargeGroupScore != null;
 
                     const row = document.createElement('tr');
+                    const actionCell = isSuperAdmin ? '' : `<td>
+                            <button class="btn btn-sm ${hasScored ? 'btn-outline-warning' : 'btn-outline-primary'}" 
+                                onclick="openLargeGroupScoringModal(${c.studentId}, '${c.studentNo}', '${c.studentName}', '${c.groupName || ''}', ${c.groupAvgScore || 'null'}, ${c.myLargeGroupScore || 'null'})"
+                            >
+                                <i class="bi ${hasScored ? 'bi-pencil' : 'bi-plus-circle'}"></i> ${hasScored ? '修改' : '打分'}
+                            </button>
+                        </td>`;
                     row.innerHTML = `
                         <td>${c.groupName || ''}</td>
                         <td>${c.studentNo || ''}</td>
@@ -5823,13 +5360,7 @@
                         <td><span class="badge ${lgProgressBadge}">${lgProgress}</span></td>
                         <td>${lgAvgScore}</td>
                         <td><strong class="text-primary">${adjustmentFactor}</strong></td>
-                        <td>
-                            <button class="btn btn-sm ${hasScored ? 'btn-outline-warning' : 'btn-outline-primary'}" 
-                                onclick="openLargeGroupScoringModal(${c.studentId}, '${c.studentNo}', '${c.studentName}', '${c.groupName || ''}', ${c.groupAvgScore || 'null'}, ${c.myLargeGroupScore || 'null'})"
-                            >
-                                <i class="bi ${hasScored ? 'bi-pencil' : 'bi-plus-circle'}"></i> ${hasScored ? '修改' : '打分'}
-                            </button>
-                        </td>
+                        ${actionCell}
                     `;
                     tbody.appendChild(row);
                 });
