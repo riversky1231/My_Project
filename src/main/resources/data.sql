@@ -510,7 +510,7 @@ CREATE TABLE `user`  (
 -- ----------------------------
 -- Records of user
 -- ----------------------------
-INSERT INTO `user` VALUES (1, 'admin', '$2a$10$OJU0o3Fw0h03uOyubGypyeX2OlxAb9Zlxfm5CKGRl1ybvrcxnvGky', '超级管理员', '', NULL, 1, 1, 1, '2025-12-18 12:38:58', '2025-12-23 16:17:31');
+INSERT INTO `user` VALUES (1, 'admin', '$2a$10$OJU0o3Fw0h03uOyubGypyeX2OlxAb9Zlxfm5CKGRl1ybvrcxnvGky', '超级管理员', '', NULL, 1, 1, NULL, '2025-12-18 12:38:58', '2025-12-23 16:17:31');
 INSERT INTO `user` VALUES (2, 'cs_admin', '$2a$10$tVBf3h/9H.XjXnUNDQ85wukXmhJflZrjw7yJo9jP0f9hQt5o1TrbO', '计院管理员', 'cs_admin@example.com', '13800000001', 1, 2, 1, '2025-12-18 12:38:58', '2025-12-23 15:11:53');
 INSERT INTO `user` VALUES (3, 'se_admin', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '软院管理员', 'se_admin@example.com', '13800000002', 1, 2, 2, '2025-12-18 12:38:58', '2025-12-18 12:40:03');
 INSERT INTO `user` VALUES (4, 'ice_admin', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '信通管理员', 'ice_admin@example.com', '13800000003', 1, 2, 3, '2025-12-18 12:38:58', '2025-12-18 12:40:06');

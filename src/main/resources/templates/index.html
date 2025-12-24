@@ -556,7 +556,6 @@
                                 <th>角色</th>
                                 <th>院系</th>
                                 <th>状态</th>
-                                <th>创建时间</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
@@ -569,7 +568,6 @@
                                 <td><span class="badge bg-primary">院系管理员</span></td>
                                 <td>计算机科学与技术学院</td>
                                 <td><span class="badge bg-success">启用</span></td>
-                                <td>2024-01-15</td>
                                 <td>
                                     <button class="btn btn-sm btn-outline-primary"><i
                                             class="bi bi-pencil-square"></i></button>
@@ -586,7 +584,6 @@
                                 <td><span class="badge bg-primary">院系管理员</span></td>
                                 <td>软件学院</td>
                                 <td><span class="badge bg-secondary">禁用</span></td>
-                                <td>2024-02-20</td>
                                 <td>
                                     <button class="btn btn-sm btn-outline-primary"><i
                                             class="bi bi-pencil-square"></i></button>
@@ -603,7 +600,6 @@
                                 <td><span class="badge bg-info">教师</span></td>
                                 <td>计算机科学与技术学院</td>
                                 <td><span class="badge bg-success">启用</span></td>
-                                <td>2024-03-10</td>
                                 <td>
                                     <button class="btn btn-sm btn-outline-primary"><i
                                             class="bi bi-pencil-square"></i></button>
@@ -1979,7 +1975,7 @@
             userListBody.innerHTML = '';
 
             if (users.length === 0) {
-                userListBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">暂无数据</td></tr>';
+                userListBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">暂无数据</td></tr>';
                 return;
             }
 
@@ -2020,13 +2016,12 @@
                         <td><strong>${user.username}</strong></td>
                         <td>${user.realName}</td>
                         <td><span class="badge bg-primary role-badge">${roleDisplay}</span></td>
-                        <td>${user.department ? user.department.name : 'N/A'}</td>
+                        <td>${user.department ? user.department.name : '-'}</td>
                         <td>
                             <span class="badge ${user.status === 1 ? 'bg-success' : 'bg-secondary'}">
                                 ${user.status === 1 ? '启用' : '禁用'}
                             </span>
                         </td>
-                        <td>${new Date(user.createdTime).toLocaleDateString()}</td>
                         <td>${actionButtons}</td>
                     </tr>
                 `;
