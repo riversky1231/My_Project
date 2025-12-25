@@ -6,6 +6,9 @@ import com.example.defensemanagement.entity.ArchiveDetail;
 import com.example.defensemanagement.entity.DefenseGroup;
 import com.example.defensemanagement.entity.User;
 import com.example.defensemanagement.entity.Teacher;
+import com.example.defensemanagement.entity.DefenseGroupTeacher;
+import com.example.defensemanagement.mapper.DefenseGroupTeacherMapper;
+import com.example.defensemanagement.mapper.TeacherMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -19,6 +22,12 @@ public class DefenseController {
 
     @Autowired
     private DefenseService defenseService;
+    
+    @Autowired
+    private DefenseGroupTeacherMapper defenseGroupTeacherMapper;
+    
+    @Autowired
+    private TeacherMapper teacherMapper;
 
     @GetMapping("/")
     public String index(Model model, HttpSession session) {
@@ -30,9 +39,43 @@ public class DefenseController {
             return "redirect:/login";
         }
 
+        // 检查教师是否为答辩组长
+        boolean isDefenseLeader = false;
+        Long teacherId = null;
+        
+        // 如果 currentTeacher 不为空，直接使用
+        if (currentTeacher != null) {
+            teacherId = currentTeacher.getId();
+        } 
+        // 如果 currentUser 不为空且是教师角色，查找对应的 Teacher
+        else if (currentUser != null && currentUser.getRole() != null && 
+                 ("TEACHER".equals(currentUser.getRole().getName()) || 
+                  "DEFENSE_LEADER".equals(currentUser.getRole().getName()))) {
+            Teacher teacher = teacherMapper.findByUserId(currentUser.getId());
+            if (teacher != null) {
+                teacherId = teacher.getId();
+                // 同时设置 currentTeacher 到 session，方便后续使用
+                session.setAttribute("currentTeacher", teacher);
+                currentTeacher = teacher;
+            }
+        }
+        
+        // 如果找到了 teacherId，检查是否为答辩组长
+        if (teacherId != null) {
+            List<DefenseGroupTeacher> allGroups = defenseGroupTeacherMapper.findAll();
+            for (DefenseGroupTeacher gt : allGroups) {
+                if (gt.getTeacherId() != null && gt.getTeacherId().equals(teacherId) && 
+                    gt.getIsLeader() != null && gt.getIsLeader() == 1) {
+                    isDefenseLeader = true;
+                    break;
+                }
+            }
+        }
+        
         model.addAttribute("groups", defenseService.getAllGroups());
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("currentTeacher", currentTeacher);
+        model.addAttribute("isDefenseLeader", isDefenseLeader);
 
         return "index";
     }
@@ -104,7 +147,13 @@ public class DefenseController {
 
     @PostMapping("/group/add")
     @ResponseBody
-    public void addGroup(@RequestBody AddGroupRequest request) {
+    public void addGroup(@RequestBody AddGroupRequest request, HttpSession session) {
+        // 检查权限：只有超级管理员可以添加小组
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser == null || !"SUPER_ADMIN".equals(currentUser.getRole().getName())) {
+            throw new RuntimeException("权限不足：只有超级管理员可以添加小组");
+        }
+        
         DefenseGroup g = new DefenseGroup();
         g.setName(request.getName());
         g.setScore(request.getScore());
@@ -112,6 +161,29 @@ public class DefenseController {
         int order = defenseService.getAllGroups() != null ? defenseService.getAllGroups().size() : 0;
         g.setDisplayOrder(order);
         defenseService.addGroup(g);
+    }
+
+    @DeleteMapping("/group/{id}")
+    @ResponseBody
+    public String deleteGroup(@PathVariable Long id, HttpSession session) {
+        // 检查权限：只有超级管理员可以删除小组
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser == null || !"SUPER_ADMIN".equals(currentUser.getRole().getName())) {
+            return "error:权限不足：只有超级管理员可以删除小组";
+        }
+        
+        // 检查组内是否有成员
+        DefenseGroup group = defenseService.getGroupById(id);
+        if (group == null) {
+            return "error:小组不存在";
+        }
+        
+        if (group.getMembers() != null && !group.getMembers().isEmpty()) {
+            return "error:组内有成员，无法删除小组。请先移除所有成员后再删除。";
+        }
+        
+        defenseService.deleteGroup(id);
+        return "success";
     }
 
     // 内部类用于接收请求参数

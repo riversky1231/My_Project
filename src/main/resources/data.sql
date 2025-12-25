@@ -4,26 +4,6 @@ SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ----------------------------
--- Table structure for archive_session
--- ----------------------------
-DROP TABLE IF EXISTS `archive_session`;
-CREATE TABLE `archive_session`  (
-                                    `id` bigint NOT NULL AUTO_INCREMENT,
-                                    `session_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '答辩会议名称',
-                                    `archive_time` timestamp NOT NULL COMMENT '归档时间',
-                                    `group_count` int NOT NULL COMMENT '小组数量',
-                                    `avg_score` decimal(5, 2) NOT NULL COMMENT '平均分',
-                                    `max_score` int NOT NULL COMMENT '最高分',
-                                    `archive_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '归档数据(JSON格式)',
-                                    `created_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-                                    PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '归档会话表' ROW_FORMAT = DYNAMIC;
-
--- ----------------------------
--- Records of archive_session
--- ----------------------------
-
--- ----------------------------
 -- Table structure for comment
 -- ----------------------------
 DROP TABLE IF EXISTS `comment`;
@@ -153,25 +133,6 @@ INSERT INTO `department` VALUES (2, '软件学院', 'SE', '软件学院', '2025-
 INSERT INTO `department` VALUES (3, '信息与通信工程学院', 'ICE', '信息与通信工程', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 INSERT INTO `department` VALUES (4, '人工智能学院', 'AI', '人工智能学院', '2025-12-18 12:38:58', '2025-12-18 19:49:01');
 INSERT INTO `department` VALUES (5, '网络空间安全学院', 'NSC', '网络空间安全学院', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-
--- ----------------------------
--- Table structure for department_head_signature
--- ----------------------------
-DROP TABLE IF EXISTS `department_head_signature`;
-CREATE TABLE `department_head_signature`  (
-                                              `id` bigint NOT NULL AUTO_INCREMENT,
-                                              `department_id` bigint NOT NULL COMMENT '院系ID',
-                                              `signature_path` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '系主任签名图片路径',
-                                              `created_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-                                              `updated_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-                                              PRIMARY KEY (`id`) USING BTREE,
-                                              UNIQUE INDEX `uk_department`(`department_id` ASC) USING BTREE,
-                                              CONSTRAINT `department_head_signature_ibfk_1` FOREIGN KEY (`department_id`) REFERENCES `department` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '系主任签名表' ROW_FORMAT = DYNAMIC;
-
--- ----------------------------
--- Records of department_head_signature
--- ----------------------------
 
 -- ----------------------------
 -- Table structure for evaluation_item

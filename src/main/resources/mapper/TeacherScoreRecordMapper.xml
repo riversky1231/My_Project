@@ -53,9 +53,14 @@
     </select>
 
     <select id="findByGroupIdAndYear" resultMap="TeacherScoreRecordMap">
-        SELECT * FROM teacher_score_record
-        WHERE defense_group_id = #{defenseGroupId} AND year = #{year}
-        ORDER BY submit_time DESC
+        SELECT tsr.*,
+               s.name as student_name, s.student_no, s.defense_type,
+               t.name as teacher_name, t.teacher_no
+        FROM teacher_score_record tsr
+        LEFT JOIN t_student s ON tsr.student_id = s.id
+        LEFT JOIN teacher t ON tsr.teacher_id = t.id
+        WHERE tsr.defense_group_id = #{defenseGroupId} AND tsr.year = #{year}
+        ORDER BY tsr.submit_time DESC
     </select>
 
     <insert id="insert" parameterType="com.example.defensemanagement.entity.TeacherScoreRecord" useGeneratedKeys="true" keyProperty="id">

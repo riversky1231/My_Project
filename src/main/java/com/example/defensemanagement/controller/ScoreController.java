@@ -373,6 +373,62 @@ public class ScoreController {
         return scoreService.getLargeGroupStudentScores(studentId, year);
     }
 
+    /**
+     * 获取大组答辩学生的所有打分详情（超级管理员使用）
+     * GET /defense/score/largegroup/student/{studentId}/scores/admin
+     */
+    @GetMapping("/largegroup/student/{studentId}/scores/admin")
+    @ResponseBody
+    public Map<String, Object> getLargeGroupStudentScoresForAdmin(@PathVariable Long studentId, HttpSession session) {
+        // 检查是否是超级管理员
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser == null || currentUser.getRole() == null || 
+            !"SUPER_ADMIN".equals(currentUser.getRole().getName())) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "权限不足：只有超级管理员可以查看");
+            return error;
+        }
+        
+        Integer year = getCurrentDefenseYear();
+        return scoreService.getLargeGroupStudentScoresForAdmin(studentId, year);
+    }
+
+    /**
+     * 更新大组答辩打分（超级管理员使用）
+     * POST /defense/score/largegroup/update
+     */
+    @PostMapping("/largegroup/update")
+    @ResponseBody
+    public String updateLargeGroupScore(@RequestBody Map<String, Object> request, HttpSession session) {
+        // 检查是否是超级管理员
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser == null || currentUser.getRole() == null || 
+            !"SUPER_ADMIN".equals(currentUser.getRole().getName())) {
+            return "error:权限不足：只有超级管理员可以修改";
+        }
+        
+        try {
+            Long scoreId = request.get("scoreId") != null ? Long.valueOf(request.get("scoreId").toString()) : null;
+            Long studentId = request.get("studentId") != null ? Long.valueOf(request.get("studentId").toString()) : null;
+            Long teacherId = request.get("teacherId") != null ? Long.valueOf(request.get("teacherId").toString()) : null;
+            Integer score = request.get("score") != null ? Integer.valueOf(request.get("score").toString()) : null;
+            
+            if (studentId == null || teacherId == null || score == null) {
+                return "error:参数不完整";
+            }
+            
+            if (score < 0 || score > 100) {
+                return "error:分数必须在0-100之间";
+            }
+            
+            Integer year = getCurrentDefenseYear();
+            scoreService.updateLargeGroupScore(scoreId, studentId, teacherId, year, score);
+            return "success";
+        } catch (Exception e) {
+            return "error:" + e.getMessage();
+        }
+    }
+
     // ======================= 辅助方法 =======================
 
     /**

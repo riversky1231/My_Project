@@ -7,6 +7,7 @@
         <id property="id" column="id"/>
         <result property="defenseType" column="defense_type"/>
         <result property="itemName" column="item_name"/>
+        <result property="description" column="description"/>
         <result property="weight" column="weight"/>
         <result property="maxScore" column="max_score"/>
         <result property="displayOrder" column="display_order"/>
@@ -19,8 +20,8 @@
     </select>
 
     <insert id="insert" parameterType="com.example.defensemanagement.entity.EvaluationItem" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO evaluation_item (defense_type, item_name, weight, max_score, display_order)
-        VALUES (#{defenseType}, #{itemName}, #{weight}, #{maxScore}, #{displayOrder})
+        INSERT INTO evaluation_item (defense_type, item_name, description, weight, max_score, display_order)
+        VALUES (#{defenseType}, #{itemName}, #{description}, #{weight}, #{maxScore}, #{displayOrder})
     </insert>
 
     <update id="update" parameterType="com.example.defensemanagement.entity.EvaluationItem">
@@ -28,6 +29,7 @@
         <set>
             <if test="defenseType != null">defense_type = #{defenseType},</if>
             <if test="itemName != null">item_name = #{itemName},</if>
+            <if test="description != null">description = #{description},</if>
             <if test="weight != null">weight = #{weight},</if>
             <if test="maxScore != null">max_score = #{maxScore},</if>
             <if test="displayOrder != null">display_order = #{displayOrder},</if>

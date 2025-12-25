@@ -13,6 +13,8 @@ import com.example.defensemanagement.mapper.DefenseGroupMapper;
 import com.example.defensemanagement.mapper.TeacherMapper;
 import com.example.defensemanagement.mapper.StudentFinalScoreMapper;
 import com.example.defensemanagement.mapper.TeacherScoreRecordMapper;
+import com.example.defensemanagement.mapper.DefenseGroupTeacherMapper;
+import com.example.defensemanagement.mapper.StudentMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -50,6 +52,12 @@ public class StudentController {
     
     @Autowired
     private TeacherScoreRecordMapper teacherScoreRecordMapper;
+    
+    @Autowired
+    private DefenseGroupTeacherMapper defenseGroupTeacherMapper;
+    
+    @Autowired
+    private StudentMapper studentMapper;
 
     // 检查院系管理员或超级管理员权限的辅助方法
     private String checkDeptAdmin(HttpSession session) {
@@ -877,5 +885,99 @@ public class StudentController {
         }
         
         return candidates;
+    }
+    
+    /**
+     * 答辩组长：获取本组内所有教师给所有学生的打分情况
+     * GET /department/student/leader/group/scores
+     */
+    @GetMapping("/leader/group/scores")
+    @ResponseBody
+    public Map<String, Object> getLeaderGroupScores(HttpSession session) {
+        Map<String, Object> result = new HashMap<>();
+        
+        // 获取当前登录的教师
+        Teacher currentTeacher = (Teacher) session.getAttribute("currentTeacher");
+        if (currentTeacher == null) {
+            // 尝试从User获取Teacher
+            User currentUser = (User) session.getAttribute("currentUser");
+            if (currentUser != null && currentUser.getRole() != null && 
+                ("TEACHER".equals(currentUser.getRole().getName()) || 
+                 "DEFENSE_LEADER".equals(currentUser.getRole().getName()))) {
+                currentTeacher = teacherMapper.findByUserId(currentUser.getId());
+            }
+        }
+        
+        if (currentTeacher == null) {
+            result.put("error", "未登录或不是教师");
+            return result;
+        }
+        
+        // 查找该教师作为组长的小组
+        com.example.defensemanagement.entity.DefenseGroupTeacher groupTeacher = defenseGroupTeacherMapper.findByTeacherId(currentTeacher.getId());
+        if (groupTeacher == null || groupTeacher.getIsLeader() == null || groupTeacher.getIsLeader() != 1) {
+            result.put("error", "您不是任何小组的组长");
+            return result;
+        }
+        
+        Long groupId = groupTeacher.getGroupId();
+        Integer currentYear = configService.getCurrentDefenseYear();
+        if (currentYear == null) {
+            result.put("error", "请先设置当前答辩年份");
+            return result;
+        }
+        
+        // 获取该小组的所有学生
+        List<Student> students = studentMapper.findByDefenseGroupId(groupId);
+        students = students.stream()
+            .filter(s -> currentYear.equals(s.getDefenseYear()))
+            .collect(Collectors.toList());
+        
+        // 获取该小组的所有教师打分记录
+        List<TeacherScoreRecord> allScores = teacherScoreRecordMapper.findByGroupIdAndYear(groupId, currentYear);
+        
+        // 构建返回数据：按学生分组，每个学生包含所有教师的打分
+        List<Map<String, Object>> studentScoreList = new ArrayList<>();
+        for (Student student : students) {
+            Map<String, Object> studentInfo = new HashMap<>();
+            studentInfo.put("studentId", student.getId());
+            studentInfo.put("studentNo", student.getStudentNo());
+            studentInfo.put("studentName", student.getName());
+            studentInfo.put("classInfo", student.getClassInfo());
+            studentInfo.put("defenseType", student.getDefenseType());
+            studentInfo.put("title", student.getTitle());
+            
+            // 获取该学生的所有教师打分记录
+            List<Map<String, Object>> teacherScores = new ArrayList<>();
+            for (TeacherScoreRecord record : allScores) {
+                if (record.getStudentId() != null && record.getStudentId().equals(student.getId())) {
+                    Map<String, Object> scoreInfo = new HashMap<>();
+                    scoreInfo.put("teacherId", record.getTeacherId());
+                    if (record.getTeacher() != null) {
+                        scoreInfo.put("teacherName", record.getTeacher().getName());
+                        scoreInfo.put("teacherNo", record.getTeacher().getTeacherNo());
+                    }
+                    scoreInfo.put("item1Score", record.getItem1Score());
+                    scoreInfo.put("item2Score", record.getItem2Score());
+                    scoreInfo.put("item3Score", record.getItem3Score());
+                    scoreInfo.put("item4Score", record.getItem4Score());
+                    scoreInfo.put("item5Score", record.getItem5Score());
+                    scoreInfo.put("item6Score", record.getItem6Score());
+                    scoreInfo.put("totalScore", record.getTotalScore());
+                    scoreInfo.put("submitTime", record.getSubmitTime());
+                    teacherScores.add(scoreInfo);
+                }
+            }
+            studentInfo.put("teacherScores", teacherScores);
+            studentScoreList.add(studentInfo);
+        }
+        
+        result.put("groupId", groupId);
+        result.put("groupName", defenseGroupMapper.findById(groupId) != null ? 
+                   defenseGroupMapper.findById(groupId).getName() : "");
+        result.put("students", studentScoreList);
+        result.put("year", currentYear);
+        
+        return result;
     }
 }

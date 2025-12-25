@@ -13,6 +13,8 @@ import com.example.defensemanagement.mapper.TeacherScoreRecordMapper;
 import com.example.defensemanagement.mapper.LargeGroupScoreMapper;
 import com.example.defensemanagement.mapper.DefenseGroupMapper;
 import com.example.defensemanagement.mapper.DefenseGroupTeacherMapper;
+import com.example.defensemanagement.mapper.TeacherMapper;
+import com.example.defensemanagement.entity.Teacher;
 import com.example.defensemanagement.service.ConfigService;
 import com.example.defensemanagement.service.ScoreService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +53,9 @@ public class ScoreServiceImpl implements ScoreService {
 
     @Autowired
     private DefenseGroupTeacherMapper defenseGroupTeacherMapper;
+    
+    @Autowired
+    private TeacherMapper teacherMapper;
 
     @Override
     @Transactional
@@ -757,6 +762,100 @@ public class ScoreServiceImpl implements ScoreService {
         }
         
         return result;
+    }
+
+    @Override
+    public Map<String, Object> getLargeGroupStudentScoresForAdmin(Long studentId, Integer year) {
+        Map<String, Object> result = new HashMap<>();
+        
+        List<LargeGroupScore> scores = largeGroupScoreMapper.findByStudentIdAndYear(studentId, year);
+        
+        // 获取所有教师的打分记录，包含教师信息
+        List<Map<String, Object>> scoreList = new java.util.ArrayList<>();
+        if (scores != null) {
+            for (LargeGroupScore score : scores) {
+                Map<String, Object> scoreInfo = new HashMap<>();
+                scoreInfo.put("id", score.getId());
+                scoreInfo.put("studentId", score.getStudentId());
+                scoreInfo.put("teacherId", score.getTeacherId());
+                scoreInfo.put("score", score.getScore());
+                scoreInfo.put("year", score.getYear());
+                
+                // 获取教师信息
+                if (score.getTeacherId() != null) {
+                    Teacher teacher = teacherMapper.findById(score.getTeacherId());
+                    if (teacher != null) {
+                        scoreInfo.put("teacherName", teacher.getName());
+                        scoreInfo.put("teacherNo", teacher.getTeacherNo());
+                    } else {
+                        scoreInfo.put("teacherName", "未知");
+                        scoreInfo.put("teacherNo", "");
+                    }
+                } else {
+                    scoreInfo.put("teacherName", "未知");
+                    scoreInfo.put("teacherNo", "");
+                }
+                
+                scoreList.add(scoreInfo);
+            }
+        }
+        
+        result.put("scores", scoreList);
+        
+        // 计算平均分
+        if (scores != null && !scores.isEmpty()) {
+            double avgScore = scores.stream()
+                    .filter(s -> s.getScore() != null)
+                    .mapToInt(LargeGroupScore::getScore)
+                    .average()
+                    .orElse(0.0);
+            result.put("avgScore", round(avgScore, 1));
+        } else {
+            result.put("avgScore", null);
+        }
+        
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public void updateLargeGroupScore(Long scoreId, Long studentId, Long teacherId, Integer year, Integer score) {
+        if (studentId == null || teacherId == null || year == null || score == null) {
+            throw new IllegalArgumentException("学生ID/教师ID/年份/分数不能为空");
+        }
+        
+        if (score < 0 || score > 100) {
+            throw new IllegalArgumentException("分数必须在0-100之间");
+        }
+        
+        LargeGroupScore largeGroupScore;
+        if (scoreId != null) {
+            // 如果提供了scoreId，尝试查找现有记录
+            largeGroupScore = largeGroupScoreMapper.findByStudentIdAndTeacherIdAndYear(studentId, teacherId, year);
+            if (largeGroupScore == null || !largeGroupScore.getId().equals(scoreId)) {
+                throw new IllegalArgumentException("打分记录不存在或不匹配");
+            }
+        } else {
+            // 如果没有提供scoreId，查找现有记录
+            largeGroupScore = largeGroupScoreMapper.findByStudentIdAndTeacherIdAndYear(studentId, teacherId, year);
+        }
+        
+        if (largeGroupScore == null) {
+            // 创建新记录
+            largeGroupScore = new LargeGroupScore();
+            largeGroupScore.setStudentId(studentId);
+            largeGroupScore.setTeacherId(teacherId);
+            largeGroupScore.setYear(year);
+            largeGroupScore.setScore(score);
+            largeGroupScoreMapper.insert(largeGroupScore);
+        } else {
+            // 更新现有记录
+            largeGroupScore.setScore(score);
+            largeGroupScoreMapper.update(largeGroupScore);
+        }
+        
+        // 自动更新该小组的调节系数和所有学生的最终答辩成绩
+        updateGroupAdjustmentFactor(studentId, year);
     }
 
     @Override

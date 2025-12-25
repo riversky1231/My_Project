@@ -65,6 +65,16 @@ public interface ScoreService {
     Map<String, Object> getLargeGroupStudentScores(Long studentId, Integer year);
 
     /**
+     * 获取大组答辩学生的所有打分详情（超级管理员使用，包含教师信息）
+     */
+    Map<String, Object> getLargeGroupStudentScoresForAdmin(Long studentId, Integer year);
+
+    /**
+     * 更新大组答辩打分（超级管理员使用）
+     */
+    void updateLargeGroupScore(Long scoreId, Long studentId, Long teacherId, Integer year, Integer score);
+
+    /**
      * 计算某学生小组内的答辩平均分
      */
     Double calculateGroupAvgScore(Long studentId, Integer year);

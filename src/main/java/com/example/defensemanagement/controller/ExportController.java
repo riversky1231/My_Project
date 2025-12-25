@@ -501,6 +501,104 @@ public class ExportController {
     }
 
     /**
+     * 答辩组长：一键打包本组所有学生的答辩成绩表
+     * GET /export/leader/group/score/zip
+     */
+    @GetMapping("/leader/group/score/zip")
+    public ResponseEntity<?> exportLeaderGroupScoreZip(HttpSession session) {
+        try {
+            // 获取当前登录的教师
+            Teacher currentTeacher = (Teacher) session.getAttribute("currentTeacher");
+            if (currentTeacher == null) {
+                // 尝试从User获取Teacher
+                User currentUser = (User) session.getAttribute("currentUser");
+                if (currentUser != null && currentUser.getRole() != null && 
+                    ("TEACHER".equals(currentUser.getRole().getName()) || 
+                     "DEFENSE_LEADER".equals(currentUser.getRole().getName()))) {
+                    currentTeacher = teacherMapper.findByUserId(currentUser.getId());
+                }
+            }
+            
+            if (currentTeacher == null) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "未登录或不是教师");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+            }
+            
+            // 查找该教师作为组长的小组
+            List<DefenseGroupTeacher> allGroups = defenseGroupTeacherMapper.findAll();
+            Long groupId = null;
+            for (DefenseGroupTeacher gt : allGroups) {
+                if (gt.getTeacherId() != null && gt.getTeacherId().equals(currentTeacher.getId()) && 
+                    gt.getIsLeader() != null && gt.getIsLeader() == 1) {
+                    groupId = gt.getGroupId();
+                    break;
+                }
+            }
+            
+            if (groupId == null) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "您不是任何小组的组长");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+            }
+            
+            // 获取该小组的所有学生
+            List<Student> students = studentMapper.findByDefenseGroupId(groupId);
+            Integer currentYear = configService.getCurrentDefenseYear();
+            if (currentYear != null) {
+                final Integer year = currentYear;
+                students = students.stream()
+                    .filter(s -> year.equals(s.getDefenseYear()))
+                    .collect(java.util.stream.Collectors.toList());
+            }
+            
+            if (students == null || students.isEmpty()) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "小组无学生");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+            }
+            
+            // 打包所有学生的答辩成绩表
+            try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                 ZipOutputStream zos = new ZipOutputStream(baos)) {
+                for (Student stu : students) {
+                    boolean isPaper = "PAPER".equalsIgnoreCase(stu.getDefenseType());
+                    ResponseEntity<byte[]> resp = buildScoreDoc(stu.getId(), isPaper);
+                    String filename = resp.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION);
+                    String cleanName = (isPaper ? "本科毕业论文答辩成绩表-" : "本科毕业设计答辩成绩表-") + stu.getName() + ".docx";
+                    if (filename != null && filename.contains("filename=\"")) {
+                        int idx = filename.indexOf("filename=\"") + 10;
+                        int end = filename.indexOf("\"", idx);
+                        if (end > idx) {
+                            cleanName = filename.substring(idx, end);
+                        }
+                    }
+                    zos.putNextEntry(new ZipEntry(cleanName));
+                    zos.write(resp.getBody());
+                    zos.closeEntry();
+                }
+                zos.finish();
+                byte[] zipBytes = baos.toByteArray();
+                
+                // 获取小组名称
+                com.example.defensemanagement.entity.DefenseGroup group = defenseGroupMapper.findById(groupId);
+                String groupName = group != null ? group.getName() : "小组" + groupId;
+                String zipName = encode("答辩组长-" + currentTeacher.getName() + "-" + groupName + "-答辩成绩表.zip");
+                
+                MediaType octet = MediaType.parseMediaType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + zipName + "\"")
+                        .contentType(octet)
+                        .body(zipBytes);
+            }
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "打包导出失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    /**
      * 教师：获取自己所带学生的列表（用于查看成绩评定表）
      * GET /export/teacher/students
      */
@@ -612,6 +710,114 @@ public class ExportController {
                 zos.finish();
                 byte[] zipBytes = baos.toByteArray();
                 String zipName = encode("教师-" + currentTeacher.getName() + "-成绩评定表.zip");
+                MediaType octet = MediaType.parseMediaType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + zipName + "\"")
+                        .contentType(octet)
+                        .body(zipBytes);
+            }
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "打包导出失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    /**
+     * 教师（不包括答辩组长）：一键打包下载评分过的所有本组学生的无评语过程表
+     * GET /export/teacher/group/process/zip
+     */
+    @GetMapping("/teacher/group/process/zip")
+    public ResponseEntity<?> exportTeacherGroupProcessZip(HttpSession session) {
+        try {
+            // 获取当前登录的教师
+            Teacher currentTeacher = (Teacher) session.getAttribute("currentTeacher");
+            if (currentTeacher == null) {
+                User currentUser = (User) session.getAttribute("currentUser");
+                if (currentUser != null && currentUser.getRole() != null && 
+                    "TEACHER".equals(currentUser.getRole().getName())) {
+                    currentTeacher = teacherMapper.findByUserId(currentUser.getId());
+                }
+            }
+            
+            if (currentTeacher == null) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "未登录或不是教师");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+            }
+            
+            // 检查是否为答辩组长，如果是则拒绝
+            DefenseGroupTeacher groupTeacher = defenseGroupTeacherMapper.findByTeacherId(currentTeacher.getId());
+            if (groupTeacher != null && groupTeacher.getIsLeader() != null && groupTeacher.getIsLeader() == 1) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "答辩组长不能使用此功能");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+            }
+            
+            // 提取teacherId为final变量，供lambda表达式使用
+            final Long teacherId = currentTeacher.getId();
+            
+            // 查找该教师所在的小组
+            if (groupTeacher == null || groupTeacher.getGroupId() == null) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "您不在任何答辩小组中");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+            }
+            
+            Long groupId = groupTeacher.getGroupId();
+            Integer currentYear = configService.getCurrentDefenseYear();
+            if (currentYear == null) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "请先设置当前答辩年份");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+            }
+            
+            // 获取该小组的所有学生
+            List<Student> groupStudents = studentMapper.findByDefenseGroupId(groupId);
+            final Integer year = currentYear;
+            groupStudents = groupStudents.stream()
+                .filter(s -> year.equals(s.getDefenseYear()))
+                .collect(java.util.stream.Collectors.toList());
+            
+            // 过滤出该教师已经评分过的学生（有TeacherScoreRecord记录）
+            List<Student> gradedStudents = groupStudents.stream().filter(s -> {
+                List<TeacherScoreRecord> records = teacherScoreRecordMapper.findByStudentIdAndYear(s.getId(), s.getDefenseYear());
+                if (records == null || records.isEmpty()) {
+                    return false;
+                }
+                // 检查是否有该教师的评分记录
+                return records.stream().anyMatch(r -> 
+                    r.getTeacherId() != null && r.getTeacherId().equals(teacherId));
+            }).collect(java.util.stream.Collectors.toList());
+            
+            if (gradedStudents.isEmpty()) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "没有可导出的已评分学生无评语过程表");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+            }
+            
+            // 打包所有已评分学生的无评语过程表
+            try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                 ZipOutputStream zos = new ZipOutputStream(baos)) {
+                for (Student stu : gradedStudents) {
+                    boolean isPaper = "PAPER".equalsIgnoreCase(stu.getDefenseType());
+                    ResponseEntity<byte[]> resp = buildProcessDoc(stu.getId(), isPaper);
+                    String filename = resp.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION);
+                    String cleanName = (isPaper ? "毕业论文答辩成绩无评语过程表-" : "毕业设计答辩成绩无评语过程表-") + stu.getName() + ".docx";
+                    if (filename != null && filename.contains("filename=\"")) {
+                        int idx = filename.indexOf("filename=\"") + 10;
+                        int end = filename.indexOf("\"", idx);
+                        if (end > idx) {
+                            cleanName = filename.substring(idx, end);
+                        }
+                    }
+                    zos.putNextEntry(new ZipEntry(cleanName));
+                    zos.write(resp.getBody());
+                    zos.closeEntry();
+                }
+                zos.finish();
+                byte[] zipBytes = baos.toByteArray();
+                String zipName = encode("教师-" + currentTeacher.getName() + "-本组已评分学生无评语过程表.zip");
                 MediaType octet = MediaType.parseMediaType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
                 return ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + zipName + "\"")
@@ -778,9 +984,40 @@ public class ExportController {
         // 总分应该等于各个分项的和（确保一致性）
         double totalFromItems = item1Scaled + item2Scaled + item3Scaled;
         
+        // 获取评价指标配置
+        List<com.example.defensemanagement.entity.EvaluationItem> items = configService.getEvaluationItems("PAPER");
+        
+        // 填充分数占位符
         ph.put("{{ITEM1}}", formatInt(item1Scaled));
         ph.put("{{ITEM2}}", formatInt(item2Scaled));
         ph.put("{{ITEM3}}", formatInt(item3Scaled));
+        
+        // 填充评价指标名称和描述占位符
+        if (items != null && items.size() >= 3) {
+            ph.put("{{ITEM1_NAME}}", items.get(0).getItemName() != null ? items.get(0).getItemName() : "论文质量");
+            ph.put("{{ITEM1_DESC}}", items.get(0).getDescription() != null ? items.get(0).getDescription() : "");
+            ph.put("{{ITEM1_MAX}}", items.get(0).getMaxScore() != null ? String.valueOf(items.get(0).getMaxScore()) : "50");
+            
+            ph.put("{{ITEM2_NAME}}", items.get(1).getItemName() != null ? items.get(1).getItemName() : "答辩的自述报告");
+            ph.put("{{ITEM2_DESC}}", items.get(1).getDescription() != null ? items.get(1).getDescription() : "");
+            ph.put("{{ITEM2_MAX}}", items.get(1).getMaxScore() != null ? String.valueOf(items.get(1).getMaxScore()) : "25");
+            
+            ph.put("{{ITEM3_NAME}}", items.get(2).getItemName() != null ? items.get(2).getItemName() : "回答问题的情况");
+            ph.put("{{ITEM3_DESC}}", items.get(2).getDescription() != null ? items.get(2).getDescription() : "");
+            ph.put("{{ITEM3_MAX}}", items.get(2).getMaxScore() != null ? String.valueOf(items.get(2).getMaxScore()) : "25");
+        } else {
+            // 默认值
+            ph.put("{{ITEM1_NAME}}", "论文质量");
+            ph.put("{{ITEM1_DESC}}", "");
+            ph.put("{{ITEM1_MAX}}", "50");
+            ph.put("{{ITEM2_NAME}}", "答辩的自述报告");
+            ph.put("{{ITEM2_DESC}}", "");
+            ph.put("{{ITEM2_MAX}}", "25");
+            ph.put("{{ITEM3_NAME}}", "回答问题的情况");
+            ph.put("{{ITEM3_DESC}}", "");
+            ph.put("{{ITEM3_MAX}}", "25");
+        }
+        
         // 总分使用各个分项的和，确保一致性
         ph.put("{{TOTAL}}", format1(totalFromItems));
         ph.put("{{COMMENT}}", generateComment("PAPER_PROMPT", stu, totalFromItems, factor));
@@ -799,12 +1036,38 @@ public class ExportController {
         // 总分应该等于各个分项的和（确保一致性）
         double totalFromItems = item1Scaled + item2Scaled + item3Scaled + item4Scaled + item5Scaled + item6Scaled;
         
+        // 获取评价指标配置
+        List<com.example.defensemanagement.entity.EvaluationItem> items = configService.getEvaluationItems("DESIGN");
+        
+        // 填充分数占位符
         ph.put("{{ITEM1}}", formatInt(item1Scaled));
         ph.put("{{ITEM2}}", formatInt(item2Scaled));
         ph.put("{{ITEM3}}", formatInt(item3Scaled));
         ph.put("{{ITEM4}}", formatInt(item4Scaled));
         ph.put("{{ITEM5}}", formatInt(item5Scaled));
         ph.put("{{ITEM6}}", formatInt(item6Scaled));
+        
+        // 填充评价指标名称和描述占位符
+        if (items != null && items.size() >= 6) {
+            for (int i = 0; i < 6; i++) {
+                com.example.defensemanagement.entity.EvaluationItem item = items.get(i);
+                int itemNum = i + 1;
+                ph.put("{{ITEM" + itemNum + "_NAME}}", item.getItemName() != null ? item.getItemName() : "指标" + itemNum);
+                ph.put("{{ITEM" + itemNum + "_DESC}}", item.getDescription() != null ? item.getDescription() : "");
+                ph.put("{{ITEM" + itemNum + "_MAX}}", item.getMaxScore() != null ? String.valueOf(item.getMaxScore()) : "15");
+            }
+        } else {
+            // 默认值
+            String[] defaultNames = {"设计质量1", "设计质量2", "设计质量3", "答辩的自述报告成绩", "回答问题的情况1", "回答问题的情况2"};
+            int[] defaultMaxScores = {15, 15, 15, 25, 15, 15};
+            for (int i = 0; i < 6; i++) {
+                int itemNum = i + 1;
+                ph.put("{{ITEM" + itemNum + "_NAME}}", defaultNames[i]);
+                ph.put("{{ITEM" + itemNum + "_DESC}}", "");
+                ph.put("{{ITEM" + itemNum + "_MAX}}", String.valueOf(defaultMaxScores[i]));
+            }
+        }
+        
         // 总分使用各个分项的和，确保一致性
         ph.put("{{TOTAL}}", format1(totalFromItems));
         ph.put("{{COMMENT}}", generateComment("DESIGN_PROMPT", stu, totalFromItems, factor));
