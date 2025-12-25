@@ -461,6 +461,10 @@
                     <button class="btn btn-primary" onclick="openStudentModal()">
                         <i class="bi bi-plus-circle"></i> 添加新学生
                     </button>
+                    <button class="btn btn-success ms-2" onclick="document.getElementById('excel-import-input').click()">
+                        <i class="bi bi-file-earmark-excel"></i> Excel导入
+                    </button>
+                    <input type="file" id="excel-import-input" accept=".xlsx,.xls" style="display: none;" onchange="handleExcelImport(event)">
                 </div>
             </header>
             <!-- 教师签名上传提示（仅教师可见） -->
@@ -2642,12 +2646,16 @@
         function hideAdminStudentButtons() {
             const addButton = document.querySelector('#student-management-view header .btn-primary');
             if (addButton) addButton.style.display = 'none';
+            const excelButton = document.querySelector('#student-management-view header .btn-success');
+            if (excelButton) excelButton.style.display = 'none';
         }
 
         // 显示管理员专用按钮
         function showAdminStudentButtons() {
             const addButton = document.querySelector('#student-management-view header .btn-primary');
             if (addButton) addButton.style.display = '';
+            const excelButton = document.querySelector('#student-management-view header .btn-success');
+            if (excelButton) excelButton.style.display = '';
         }
 
         // 管理员加载学生列表
@@ -2989,6 +2997,58 @@
             } catch (error) {
                 console.error('Save student error:', error);
                 showAlert('error', '保存失败，请检查网络连接');
+            }
+        }
+
+        // Excel导入处理函数
+        async function handleExcelImport(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                return;
+            }
+
+            // 验证文件类型
+            const fileName = file.name.toLowerCase();
+            if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+                showAlert('error', '请选择Excel文件（.xlsx或.xls格式）');
+                event.target.value = '';
+                return;
+            }
+
+            // 确认导入
+            if (!confirm('确定要导入Excel文件吗？导入后将创建新学生记录（学号、姓名），其他字段为空。')) {
+                event.target.value = '';
+                return;
+            }
+
+            toggleLoading(true);
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/department/student/import/excel', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.text();
+                
+                if (result.startsWith('success')) {
+                    // 解析成功信息（格式：success:成功导入X条，失败Y条）
+                    const message = result.substring(7); // 去掉 "success:" 前缀
+                    showAlert('success', 'Excel导入完成！' + message);
+                    // 刷新学生列表
+                    loadStudents();
+                } else {
+                    showAlert('error', '导入失败: ' + result);
+                }
+            } catch (error) {
+                console.error('Excel import error:', error);
+                showAlert('error', '导入失败: ' + error.message);
+            } finally {
+                toggleLoading(false);
+                // 清空文件选择，以便下次可以选择同一文件
+                event.target.value = '';
             }
         }
 
@@ -5190,67 +5250,6 @@
                 return;
             }
 
-            // 优先从输入框获取年份，如果没有则从系统配置获取
-            let year = document.getElementById('score-year')?.value || document.getElementById('finalize-year')?.value;
-            if (!year) {
-                // 尝试从全局变量获取
-                year = window.currentCommentYear;
-            }
-            if (!year) {
-                try {
-                    const yearResp = await fetch('/admin/config/year/current');
-                    if (yearResp.ok) {
-                        year = await yearResp.json();
-                        window.currentCommentYear = year;
-                    }
-                } catch (e) {
-                    console.error('Failed to get current year:', e);
-                }
-            }
-
-            if (!year) {
-                showAlert('warning', '请先设置当前答辩年份（在系统设置中设置）');
-                currentCommentStudentId = null;
-                currentCommentYear = null;
-                return;
-            }
-
-            // 确保year是数字类型
-            year = parseInt(year);
-            if (isNaN(year)) {
-                showAlert('error', '年份格式无效');
-                currentCommentStudentId = null;
-                currentCommentYear = null;
-                return;
-            }
-
-            currentCommentStudentId = parseInt(studentId);
-            currentCommentYear = parseInt(year);
-
-            console.log('Loading student for comment:', {
-                studentId: currentCommentStudentId,
-                year: currentCommentYear,
-                studentIdStr: studentId,
-                yearStr: year
-            });
-
-            // 验证变量是否正确设置
-            if (!currentCommentStudentId || isNaN(currentCommentStudentId)) {
-                console.error('Invalid studentId:', studentId);
-                showAlert('error', '学生ID无效');
-                currentCommentStudentId = null;
-                currentCommentYear = null;
-                return;
-            }
-
-            if (!currentCommentYear || isNaN(currentCommentYear)) {
-                console.error('Invalid year:', year);
-                showAlert('error', '年份无效');
-                currentCommentStudentId = null;
-                currentCommentYear = null;
-                return;
-            }
-
             try {
                 const response = await fetch(`/department/student/list`);
                 if (!response.ok) {
@@ -5280,10 +5279,69 @@
                     return;
                 }
 
-                const student = students.find(s => s.id == studentId || s.id == currentCommentStudentId);
+                const student = students.find(s => s.id == studentId || s.id == parseInt(studentId));
 
                 if (!student) {
                     showAlert('error', '未找到该学生信息');
+                    currentCommentStudentId = null;
+                    currentCommentYear = null;
+                    return;
+                }
+
+                // 从学生数据中获取年份
+                let year = student.defenseYear;
+                
+                // 如果学生数据中没有年份，尝试从系统配置获取
+                if (!year) {
+                    try {
+                        const yearResp = await fetch('/admin/config/year/current');
+                        if (yearResp.ok) {
+                            year = await yearResp.json();
+                        }
+                    } catch (e) {
+                        console.error('Failed to get current year:', e);
+                    }
+                }
+
+                if (!year) {
+                    showAlert('warning', '请先设置当前答辩年份（在系统设置中设置）');
+                    currentCommentStudentId = null;
+                    currentCommentYear = null;
+                    return;
+                }
+
+                // 确保year是数字类型
+                year = parseInt(year);
+                if (isNaN(year)) {
+                    showAlert('error', '年份格式无效');
+                    currentCommentStudentId = null;
+                    currentCommentYear = null;
+                    return;
+                }
+
+                currentCommentStudentId = parseInt(studentId);
+                currentCommentYear = parseInt(year);
+
+                console.log('Loading student for comment:', {
+                    studentId: currentCommentStudentId,
+                    year: currentCommentYear,
+                    studentIdStr: studentId,
+                    yearStr: year,
+                    studentDefenseYear: student.defenseYear
+                });
+
+                // 验证变量是否正确设置
+                if (!currentCommentStudentId || isNaN(currentCommentStudentId)) {
+                    console.error('Invalid studentId:', studentId);
+                    showAlert('error', '学生ID无效');
+                    currentCommentStudentId = null;
+                    currentCommentYear = null;
+                    return;
+                }
+
+                if (!currentCommentYear || isNaN(currentCommentYear)) {
+                    console.error('Invalid year:', year);
+                    showAlert('error', '年份无效');
                     currentCommentStudentId = null;
                     currentCommentYear = null;
                     return;

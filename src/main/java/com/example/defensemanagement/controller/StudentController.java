@@ -22,6 +22,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpSession;
+import org.springframework.web.multipart.MultipartFile;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -208,6 +213,253 @@ public class StudentController {
             return "success";
         } catch (Exception e) {
             return "error:保存学生信息失败, " + e.getMessage();
+        }
+    }
+
+    /**
+     * Excel导入学生信息
+     * POST /department/student/import/excel
+     * Excel格式：第一行为表头（必须包含：学号、姓名），从第二行开始为数据
+     * 类型和题目为可选列，如果存在则读取，不存在则为空
+     */
+    @PostMapping("/import/excel")
+    @ResponseBody
+    public String importStudentsFromExcel(@RequestParam("file") MultipartFile file, HttpSession session) {
+        String permissionError = checkDeptAdmin(session);
+        if (permissionError != null) {
+            return permissionError;
+        }
+
+        if (file == null || file.isEmpty()) {
+            return "error:请选择Excel文件";
+        }
+
+        String fileName = file.getOriginalFilename();
+        if (fileName == null || (!fileName.endsWith(".xlsx") && !fileName.endsWith(".xls"))) {
+            return "error:文件格式不正确，请上传.xlsx或.xls格式的Excel文件";
+        }
+
+        int successCount = 0;
+        int failCount = 0;
+        StringBuilder errorMessages = new StringBuilder();
+
+        try {
+            InputStream inputStream = file.getInputStream();
+            Workbook workbook;
+            
+            // 根据文件扩展名创建不同的Workbook
+            if (fileName.endsWith(".xlsx")) {
+                workbook = new XSSFWorkbook(inputStream);
+            } else {
+                workbook = new HSSFWorkbook(inputStream);
+            }
+
+            Sheet sheet = workbook.getSheetAt(0);
+            if (sheet == null || sheet.getPhysicalNumberOfRows() < 2) {
+                workbook.close();
+                return "error:Excel文件至少需要包含表头和数据行（至少2行）";
+            }
+
+            // 获取当前用户信息
+            User currentUser = (User) session.getAttribute("currentUser");
+            Long departmentId = null;
+            if (currentUser != null && currentUser.getDepartmentId() != null) {
+                departmentId = currentUser.getDepartmentId();
+            }
+
+            // 获取当前答辩年份
+            Integer currentYear = configService.getCurrentDefenseYear();
+            if (currentYear == null) {
+                currentYear = java.time.Year.now().getValue(); // 默认使用当前年份
+            }
+
+            // 读取第一行，尝试识别表头或数据
+            Row firstRow = sheet.getRow(0);
+            if (firstRow == null) {
+                workbook.close();
+                return "error:Excel文件第一行不能为空";
+            }
+
+            int studentNoCol = -1;
+            int nameCol = -1;
+            int typeCol = -1;
+            int titleCol = -1;
+            int startRowIndex = 0; // 数据开始的行索引
+
+            // 首先尝试识别表头
+            boolean hasHeader = false;
+            for (int i = 0; i < firstRow.getPhysicalNumberOfCells(); i++) {
+                Cell cell = firstRow.getCell(i);
+                if (cell != null) {
+                    String cellValue = getCellValueAsString(cell).trim();
+                    if (cellValue.contains("学号") || cellValue.equalsIgnoreCase("studentNo") || cellValue.equalsIgnoreCase("student_no") || cellValue.equalsIgnoreCase("学号")) {
+                        studentNoCol = i;
+                        hasHeader = true;
+                    } else if (cellValue.contains("姓名") || cellValue.equalsIgnoreCase("name") || cellValue.equalsIgnoreCase("姓名")) {
+                        nameCol = i;
+                        hasHeader = true;
+                    } else if (cellValue.contains("类型") || cellValue.equalsIgnoreCase("type") || cellValue.equalsIgnoreCase("defenseType")) {
+                        typeCol = i;
+                        hasHeader = true;
+                    } else if (cellValue.contains("题目") || cellValue.equalsIgnoreCase("title")) {
+                        titleCol = i;
+                        hasHeader = true;
+                    }
+                }
+            }
+
+            // 如果找到了表头，数据从第二行开始
+            if (hasHeader && (studentNoCol != -1 || nameCol != -1)) {
+                startRowIndex = 1;
+            } else {
+                // 如果没有找到表头，假设第一列是学号，第二列是姓名
+                studentNoCol = 0;
+                nameCol = 1;
+                startRowIndex = 0; // 从第一行开始读取数据
+            }
+
+            // 验证必需的列是否存在（只需要学号和姓名）
+            if (studentNoCol == -1 || nameCol == -1) {
+                workbook.close();
+                return "error:Excel文件必须包含学号和姓名列（第一列学号，第二列姓名，或使用表头标识）";
+            }
+
+            // 从指定行开始读取数据
+            for (int rowIndex = startRowIndex; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
+                Row row = sheet.getRow(rowIndex);
+                if (row == null) {
+                    continue;
+                }
+
+                try {
+                    // 读取各列数据（只读取学号和姓名，类型和题目为可选）
+                    String studentNo = getCellValueAsString(row.getCell(studentNoCol)).trim();
+                    String name = getCellValueAsString(row.getCell(nameCol)).trim();
+                    String defenseType = null;
+                    String title = null;
+                    
+                    // 如果存在类型列，读取类型
+                    if (typeCol != -1) {
+                        defenseType = getCellValueAsString(row.getCell(typeCol)).trim();
+                        if (defenseType != null && !defenseType.isEmpty()) {
+                            // 验证类型值（PAPER或DESIGN）
+                            if ("论文".equals(defenseType)) {
+                                defenseType = "PAPER";
+                            } else if ("设计".equals(defenseType)) {
+                                defenseType = "DESIGN";
+                            } else {
+                                defenseType = defenseType.toUpperCase();
+                            }
+                            // 验证类型值是否有效
+                            if (!"PAPER".equals(defenseType) && !"DESIGN".equals(defenseType)) {
+                                defenseType = null; // 无效类型，置为空
+                            }
+                        } else {
+                            defenseType = null;
+                        }
+                    }
+                    
+                    // 如果存在题目列，读取题目
+                    if (titleCol != -1) {
+                        title = getCellValueAsString(row.getCell(titleCol)).trim();
+                        if (title != null && title.isEmpty()) {
+                            title = null;
+                        }
+                    }
+
+                    // 验证必填字段（只需要学号和姓名）
+                    if (studentNo == null || studentNo.isEmpty()) {
+                        failCount++;
+                        errorMessages.append("第").append(rowIndex + 1).append("行：学号不能为空；");
+                        continue;
+                    }
+                    if (name == null || name.isEmpty()) {
+                        failCount++;
+                        errorMessages.append("第").append(rowIndex + 1).append("行：姓名不能为空；");
+                        continue;
+                    }
+
+                    // 检查学号是否已存在（同一年份）
+                    Student existingStudent = studentMapper.findByStudentNoAndYear(studentNo, currentYear);
+                    if (existingStudent != null) {
+                        failCount++;
+                        errorMessages.append("第").append(rowIndex + 1).append("行：学号").append(studentNo).append("在").append(currentYear).append("年已存在；");
+                        continue;
+                    }
+
+                    // 创建学生对象
+                    Student student = new Student();
+                    student.setStudentNo(studentNo);
+                    student.setName(name);
+                    student.setDefenseType(defenseType); // 可能为null
+                    student.setTitle(title); // 可能为null
+                    student.setDefenseYear(currentYear);
+                    student.setDepartmentId(departmentId);
+                    // 其他字段保持为null
+
+                    // 保存学生
+                    studentService.saveStudent(student);
+                    successCount++;
+
+                } catch (Exception e) {
+                    failCount++;
+                    errorMessages.append("第").append(rowIndex + 1).append("行：").append(e.getMessage()).append("；");
+                }
+            }
+
+            workbook.close();
+            inputStream.close();
+
+            // 构建返回消息
+            StringBuilder result = new StringBuilder("success:成功导入").append(successCount).append("条");
+            if (failCount > 0) {
+                result.append("，失败").append(failCount).append("条");
+                if (errorMessages.length() > 0) {
+                    String errorMsg = errorMessages.toString();
+                    // 限制错误消息长度
+                    if (errorMsg.length() > 500) {
+                        errorMsg = errorMsg.substring(0, 500) + "...";
+                    }
+                    result.append("。错误详情：").append(errorMsg);
+                }
+            }
+
+            return result.toString();
+
+        } catch (Exception e) {
+            return "error:导入失败：" + e.getMessage();
+        }
+    }
+
+    /**
+     * 辅助方法：获取单元格的字符串值
+     */
+    private String getCellValueAsString(Cell cell) {
+        if (cell == null) {
+            return "";
+        }
+
+        switch (cell.getCellType()) {
+            case STRING:
+                return cell.getStringCellValue();
+            case NUMERIC:
+                if (DateUtil.isCellDateFormatted(cell)) {
+                    return cell.getDateCellValue().toString();
+                } else {
+                    // 处理数字，避免科学计数法
+                    double numericValue = cell.getNumericCellValue();
+                    if (numericValue == (long) numericValue) {
+                        return String.valueOf((long) numericValue);
+                    } else {
+                        return String.valueOf(numericValue);
+                    }
+                }
+            case BOOLEAN:
+                return String.valueOf(cell.getBooleanCellValue());
+            case FORMULA:
+                return cell.getCellFormula();
+            default:
+                return "";
         }
     }
 
