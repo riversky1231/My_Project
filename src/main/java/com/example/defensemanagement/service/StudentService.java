@@ -66,4 +66,14 @@ public interface StudentService {
      * 根据评阅人ID和年份获取学生列表
      */
     List<Student> getStudentsByReviewer(Long teacherId, Integer year);
+    
+    /**
+     * 搜索学生（支持分页）
+     */
+    List<Student> searchStudents(String keyword, Long departmentId, Integer year, int page, int pageSize);
+    
+    /**
+     * 统计学生数量（用于分页）
+     */
+    int countStudents(String keyword, Long departmentId, Integer year);
 }

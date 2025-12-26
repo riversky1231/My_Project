@@ -15,6 +15,8 @@ import com.example.defensemanagement.mapper.StudentFinalScoreMapper;
 import com.example.defensemanagement.mapper.TeacherScoreRecordMapper;
 import com.example.defensemanagement.mapper.DefenseGroupTeacherMapper;
 import com.example.defensemanagement.mapper.StudentMapper;
+import com.example.defensemanagement.mapper.DepartmentMapper;
+import com.example.defensemanagement.entity.Department;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -42,27 +44,30 @@ public class StudentController {
 
     @Autowired
     private ConfigService configService;
-    
+
     @Autowired
     private DefenseGroupMapper defenseGroupMapper;
-    
+
     @Autowired
     private TeacherMapper teacherMapper;
-    
+
     @Autowired
     private StudentFinalScoreMapper studentFinalScoreMapper;
-    
+
     @Autowired
     private ScoreService scoreService;
-    
+
     @Autowired
     private TeacherScoreRecordMapper teacherScoreRecordMapper;
-    
+
     @Autowired
     private DefenseGroupTeacherMapper defenseGroupTeacherMapper;
-    
+
     @Autowired
     private StudentMapper studentMapper;
+
+    @Autowired
+    private DepartmentMapper departmentMapper;
 
     // 检查院系管理员或超级管理员权限的辅助方法
     private String checkDeptAdmin(HttpSession session) {
@@ -77,7 +82,7 @@ public class StudentController {
         }
         return "error:权限不足";
     }
-    
+
     /**
      * 通过 user_id 查找对应的 teacher_id
      */
@@ -98,7 +103,7 @@ public class StudentController {
     public List<Student> getStudentsByDept(HttpSession session) {
         User currentUser = (User) session.getAttribute("currentUser");
         Teacher currentTeacher = (Teacher) session.getAttribute("currentTeacher");
-        
+
         // 如果是教师（包括答辩组长），返回其指导的学生
         if (currentTeacher != null) {
             Integer currentYear = configService.getCurrentDefenseYear();
@@ -108,11 +113,11 @@ public class StudentController {
             // 教师只能查看自己指导的学生
             return studentService.getStudentsByAdvisor(currentTeacher.getId(), currentYear);
         }
-        
+
         // 如果是用户登录
         if (currentUser != null) {
             String roleName = currentUser.getRole() != null ? currentUser.getRole().getName() : null;
-            
+
             // 超级管理员：查看所有学生
             if ("SUPER_ADMIN".equals(roleName)) {
                 Integer currentYear = configService.getCurrentDefenseYear();
@@ -123,24 +128,24 @@ public class StudentController {
                 // 返回当前年份的所有学生
                 return studentService.findByYear(currentYear);
             }
-            
+
             // 院系管理员：查看本院系的学生
             if ("DEPT_ADMIN".equals(roleName)) {
                 Long departmentId = currentUser.getDepartmentId();
                 Integer currentYear = configService.getCurrentDefenseYear();
-                
+
                 if (departmentId == null) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "院系信息未配置，请联系管理员");
                 }
                 if (currentYear == null) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "请先设置当前答辩年份");
                 }
-                
+
                 // 院系管理员管理自己系的学生
                 List<Student> students = studentService.findByDepartmentAndYear(departmentId, currentYear);
                 return students != null ? students : new java.util.ArrayList<>();
             }
-            
+
             // 教师角色：查看自己指导的学生
             if ("TEACHER".equals(roleName)) {
                 Integer currentYear = configService.getCurrentDefenseYear();
@@ -155,8 +160,51 @@ public class StudentController {
                 return studentService.getStudentsByAdvisor(teacherId, currentYear);
             }
         }
-        
+
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "权限不足或未登录");
+    }
+
+    /**
+     * 搜索学生（支持分页）
+     * GET /department/student/search?keyword=xxx&page=1&pageSize=10
+     */
+    @GetMapping("/search")
+    @ResponseBody
+    public Map<String, Object> searchStudents(
+            @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize,
+            HttpSession session) {
+
+        User currentUser = (User) session.getAttribute("currentUser");
+        Long departmentId = null;
+        Integer year = configService.getCurrentDefenseYear();
+
+        // 根据用户角色确定departmentId和year
+        if (currentUser != null) {
+            String roleName = currentUser.getRole() != null ? currentUser.getRole().getName() : null;
+
+            // 超级管理员：可以查看所有学生
+            if (!"SUPER_ADMIN".equals(roleName)) {
+                // 院系管理员：只能查看本院系的学生
+                if ("DEPT_ADMIN".equals(roleName)) {
+                    departmentId = currentUser.getDepartmentId();
+                }
+            }
+        }
+
+        List<Student> students = studentService.searchStudents(keyword, departmentId, year, page, pageSize);
+        int total = studentService.countStudents(keyword, departmentId, year);
+        int totalPages = (int) Math.ceil((double) total / pageSize);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("students", students);
+        result.put("total", total);
+        result.put("currentPage", page);
+        result.put("pageSize", pageSize);
+        result.put("totalPages", totalPages);
+
+        return result;
     }
 
     /**
@@ -168,7 +216,7 @@ public class StudentController {
     public Integer getCurrentYear() {
         return configService.getCurrentDefenseYear();
     }
-    
+
     /**
      * 获取答辩小组列表（用于前端下拉选择）
      * GET /department/student/groups
@@ -178,7 +226,7 @@ public class StudentController {
     public List<DefenseGroup> getDefenseGroups(HttpSession session) {
         User currentUser = (User) session.getAttribute("currentUser");
         Teacher currentTeacher = (Teacher) session.getAttribute("currentTeacher");
-        
+
         // 允许超级管理员、院系管理员和教师访问
         if (currentUser != null) {
             String roleName = currentUser.getRole() != null ? currentUser.getRole().getName() : null;
@@ -187,12 +235,12 @@ public class StudentController {
                 return defenseGroupMapper.findAllByOrderByDisplayOrderAsc();
             }
         }
-        
+
         // 教师也可以访问（用于查看自己指导的学生所在的小组）
         if (currentTeacher != null) {
             return defenseGroupMapper.findAllByOrderByDisplayOrderAsc();
         }
-        
+
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "权限不足");
     }
 
@@ -219,8 +267,10 @@ public class StudentController {
     /**
      * Excel导入学生信息
      * POST /department/student/import/excel
-     * Excel格式：第一行为表头（必须包含：学号、姓名），从第二行开始为数据
-     * 类型和题目为可选列，如果存在则读取，不存在则为空
+     * Excel格式：第一行为表头（可选），从第二行开始为数据（如果无表头则从第一行开始）
+     * 支持的列：学号、姓名、类型、题目、所属院系
+     * 要求：每行至少有一个字段有数据即可插入
+     * 无表头时默认：第1列学号，第2列姓名，第3列类型，第4列题目，第5列所属院系
      */
     @PostMapping("/import/excel")
     @ResponseBody
@@ -246,7 +296,7 @@ public class StudentController {
         try {
             InputStream inputStream = file.getInputStream();
             Workbook workbook;
-            
+
             // 根据文件扩展名创建不同的Workbook
             if (fileName.endsWith(".xlsx")) {
                 workbook = new XSSFWorkbook(inputStream);
@@ -255,9 +305,9 @@ public class StudentController {
             }
 
             Sheet sheet = workbook.getSheetAt(0);
-            if (sheet == null || sheet.getPhysicalNumberOfRows() < 2) {
+            if (sheet == null || sheet.getPhysicalNumberOfRows() < 1) {
                 workbook.close();
-                return "error:Excel文件至少需要包含表头和数据行（至少2行）";
+                return "error:Excel文件不能为空";
             }
 
             // 获取当前用户信息
@@ -284,6 +334,7 @@ public class StudentController {
             int nameCol = -1;
             int typeCol = -1;
             int titleCol = -1;
+            int departmentCol = -1;
             int startRowIndex = 0; // 数据开始的行索引
 
             // 首先尝试识别表头
@@ -292,37 +343,51 @@ public class StudentController {
                 Cell cell = firstRow.getCell(i);
                 if (cell != null) {
                     String cellValue = getCellValueAsString(cell).trim();
-                    if (cellValue.contains("学号") || cellValue.equalsIgnoreCase("studentNo") || cellValue.equalsIgnoreCase("student_no") || cellValue.equalsIgnoreCase("学号")) {
+                    if (cellValue.contains("学号") || cellValue.equalsIgnoreCase("studentNo")
+                            || cellValue.equalsIgnoreCase("student_no") || cellValue.equalsIgnoreCase("学号")) {
                         studentNoCol = i;
                         hasHeader = true;
-                    } else if (cellValue.contains("姓名") || cellValue.equalsIgnoreCase("name") || cellValue.equalsIgnoreCase("姓名")) {
+                    } else if (cellValue.contains("姓名") || cellValue.equalsIgnoreCase("name")
+                            || cellValue.equalsIgnoreCase("姓名")) {
                         nameCol = i;
                         hasHeader = true;
-                    } else if (cellValue.contains("类型") || cellValue.equalsIgnoreCase("type") || cellValue.equalsIgnoreCase("defenseType")) {
+                    } else if (cellValue.contains("类型") || cellValue.equalsIgnoreCase("type")
+                            || cellValue.equalsIgnoreCase("defenseType")) {
                         typeCol = i;
                         hasHeader = true;
                     } else if (cellValue.contains("题目") || cellValue.equalsIgnoreCase("title")) {
                         titleCol = i;
+                        hasHeader = true;
+                    } else if (cellValue.contains("所属院系") || cellValue.contains("院系")
+                            || cellValue.equalsIgnoreCase("department") || cellValue.equalsIgnoreCase("dept")) {
+                        departmentCol = i;
                         hasHeader = true;
                     }
                 }
             }
 
             // 如果找到了表头，数据从第二行开始
-            if (hasHeader && (studentNoCol != -1 || nameCol != -1)) {
+            if (hasHeader && (studentNoCol != -1 || nameCol != -1 || typeCol != -1 || titleCol != -1
+                    || departmentCol != -1)) {
                 startRowIndex = 1;
             } else {
-                // 如果没有找到表头，假设第一列是学号，第二列是姓名
+                // 如果没有找到表头，假设第一列是学号，第二列是姓名，第三列是类型，第四列是题目，第五列是所属院系
                 studentNoCol = 0;
                 nameCol = 1;
+                typeCol = 2;
+                titleCol = 3;
+                departmentCol = 4;
                 startRowIndex = 0; // 从第一行开始读取数据
             }
 
-            // 验证必需的列是否存在（只需要学号和姓名）
-            if (studentNoCol == -1 || nameCol == -1) {
+            // 验证至少有一列存在（学号、姓名、类型、题目、所属院系至少有一个）
+            if (studentNoCol == -1 && nameCol == -1 && typeCol == -1 && titleCol == -1 && departmentCol == -1) {
                 workbook.close();
-                return "error:Excel文件必须包含学号和姓名列（第一列学号，第二列姓名，或使用表头标识）";
+                return "error:Excel文件必须包含以下列之一：学号、姓名、类型、题目、所属院系（或使用表头标识，或按顺序：第1列学号，第2列姓名，第3列类型，第4列题目，第5列所属院系）";
             }
+
+            // 获取所有院系列表（用于匹配院系名称或代码）
+            List<Department> allDepartments = departmentMapper.findAll();
 
             // 从指定行开始读取数据
             for (int rowIndex = startRowIndex; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
@@ -332,69 +397,153 @@ public class StudentController {
                 }
 
                 try {
-                    // 读取各列数据（只读取学号和姓名，类型和题目为可选）
-                    String studentNo = getCellValueAsString(row.getCell(studentNoCol)).trim();
-                    String name = getCellValueAsString(row.getCell(nameCol)).trim();
+                    // 读取各列数据（学号、姓名、类型、题目、所属院系都是可选的）
+                    String studentNo = null;
+                    String name = null;
                     String defenseType = null;
                     String title = null;
-                    
-                    // 如果存在类型列，读取类型
+                    String departmentStr = null;
+
+                    // 读取学号
+                    if (studentNoCol != -1) {
+                        Cell cell = row.getCell(studentNoCol);
+                        if (cell != null) {
+                            studentNo = getCellValueAsString(cell).trim();
+                            if (studentNo != null && studentNo.isEmpty()) {
+                                studentNo = null;
+                            }
+                        }
+                    }
+
+                    // 读取姓名
+                    if (nameCol != -1) {
+                        Cell cell = row.getCell(nameCol);
+                        if (cell != null) {
+                            name = getCellValueAsString(cell).trim();
+                            if (name != null && name.isEmpty()) {
+                                name = null;
+                            }
+                        }
+                    }
+
+                    // 读取类型
                     if (typeCol != -1) {
-                        defenseType = getCellValueAsString(row.getCell(typeCol)).trim();
-                        if (defenseType != null && !defenseType.isEmpty()) {
-                            // 验证类型值（PAPER或DESIGN）
-                            if ("论文".equals(defenseType)) {
-                                defenseType = "PAPER";
-                            } else if ("设计".equals(defenseType)) {
-                                defenseType = "DESIGN";
+                        Cell cell = row.getCell(typeCol);
+                        if (cell != null) {
+                            defenseType = getCellValueAsString(cell).trim();
+                            if (defenseType != null && !defenseType.isEmpty()) {
+                                // 验证类型值（PAPER或DESIGN）
+                                if ("论文".equals(defenseType)) {
+                                    defenseType = "PAPER";
+                                } else if ("设计".equals(defenseType)) {
+                                    defenseType = "DESIGN";
+                                } else {
+                                    defenseType = defenseType.toUpperCase();
+                                }
+                                // 验证类型值是否有效
+                                if (!"PAPER".equals(defenseType) && !"DESIGN".equals(defenseType)) {
+                                    defenseType = null; // 无效类型，置为空
+                                }
                             } else {
-                                defenseType = defenseType.toUpperCase();
+                                defenseType = null;
                             }
-                            // 验证类型值是否有效
-                            if (!"PAPER".equals(defenseType) && !"DESIGN".equals(defenseType)) {
-                                defenseType = null; // 无效类型，置为空
-                            }
-                        } else {
-                            defenseType = null;
                         }
                     }
-                    
-                    // 如果存在题目列，读取题目
+
+                    // 读取题目
                     if (titleCol != -1) {
-                        title = getCellValueAsString(row.getCell(titleCol)).trim();
-                        if (title != null && title.isEmpty()) {
-                            title = null;
+                        Cell cell = row.getCell(titleCol);
+                        if (cell != null) {
+                            title = getCellValueAsString(cell).trim();
+                            if (title != null && title.isEmpty()) {
+                                title = null;
+                            }
                         }
                     }
 
-                    // 验证必填字段（只需要学号和姓名）
-                    if (studentNo == null || studentNo.isEmpty()) {
-                        failCount++;
-                        errorMessages.append("第").append(rowIndex + 1).append("行：学号不能为空；");
-                        continue;
+                    // 读取所属院系
+                    if (departmentCol != -1) {
+                        Cell cell = row.getCell(departmentCol);
+                        if (cell != null) {
+                            departmentStr = getCellValueAsString(cell).trim();
+                            if (departmentStr != null && departmentStr.isEmpty()) {
+                                departmentStr = null;
+                            }
+                        }
                     }
-                    if (name == null || name.isEmpty()) {
+
+                    // 验证：至少有一个字段有数据
+                    if ((studentNo == null || studentNo.isEmpty())
+                            && (name == null || name.isEmpty())
+                            && (defenseType == null || defenseType.isEmpty())
+                            && (title == null || title.isEmpty())
+                            && (departmentStr == null || departmentStr.isEmpty())) {
                         failCount++;
-                        errorMessages.append("第").append(rowIndex + 1).append("行：姓名不能为空；");
+                        errorMessages.append("第").append(rowIndex + 1).append("行：学号、姓名、类型、题目、所属院系至少需要填写一个；");
                         continue;
                     }
 
-                    // 检查学号是否已存在（同一年份）
-                    Student existingStudent = studentMapper.findByStudentNoAndYear(studentNo, currentYear);
-                    if (existingStudent != null) {
+                    // 确保学号和姓名至少有一个有值（数据库要求NOT NULL）
+                    if ((studentNo == null || studentNo.isEmpty()) && (name == null || name.isEmpty())) {
                         failCount++;
-                        errorMessages.append("第").append(rowIndex + 1).append("行：学号").append(studentNo).append("在").append(currentYear).append("年已存在；");
+                        errorMessages.append("第").append(rowIndex + 1).append("行：学号和姓名不能同时为空；");
                         continue;
+                    }
+
+                    // 如果学号为空，生成一个默认学号（基于姓名和时间戳）
+                    if (studentNo == null || studentNo.isEmpty()) {
+                        String baseName = (name != null && !name.isEmpty()) ? name : "STU";
+                        studentNo = baseName + "_" + System.currentTimeMillis() + "_" + rowIndex;
+                    }
+
+                    // 如果姓名为空，生成一个默认姓名（基于学号）
+                    if (name == null || name.isEmpty()) {
+                        name = "学生_" + studentNo;
+                    }
+
+                    // 解析所属院系
+                    Long finalDepartmentId = departmentId; // 默认使用当前用户的院系
+                    if (departmentStr != null && !departmentStr.isEmpty()) {
+                        // 尝试通过院系代码查找
+                        Department dept = departmentMapper.findByCode(departmentStr);
+                        if (dept == null) {
+                            // 如果代码找不到，尝试通过名称查找
+                            for (Department d : allDepartments) {
+                                if (d.getName() != null && d.getName().equals(departmentStr)) {
+                                    dept = d;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (dept == null) {
+                            failCount++;
+                            errorMessages.append("第").append(rowIndex + 1).append("行：院系 ").append(departmentStr)
+                                    .append("不存在；");
+                            continue;
+                        }
+                        finalDepartmentId = dept.getId();
+                    }
+
+                    // 如果学号不为空，检查学号是否已存在（同一年份）
+                    if (studentNo != null && !studentNo.isEmpty()) {
+                        Student existingStudent = studentMapper.findByStudentNoAndYear(studentNo, currentYear);
+                        if (existingStudent != null) {
+                            failCount++;
+                            errorMessages.append("第").append(rowIndex + 1).append("行：学号").append(studentNo).append("在")
+                                    .append(currentYear).append("年已存在；");
+                            continue;
+                        }
                     }
 
                     // 创建学生对象
                     Student student = new Student();
-                    student.setStudentNo(studentNo);
-                    student.setName(name);
+                    student.setStudentNo(studentNo); // 确保不为null
+                    student.setName(name); // 确保不为null
                     student.setDefenseType(defenseType); // 可能为null
                     student.setTitle(title); // 可能为null
                     student.setDefenseYear(currentYear);
-                    student.setDepartmentId(departmentId);
+                    student.setDepartmentId(finalDepartmentId);
                     // 其他字段保持为null
 
                     // 保存学生
@@ -560,9 +709,55 @@ public class StudentController {
             return "error:" + e.getMessage();
         }
     }
-    
+
+    /**
+     * 批量删除学生
+     * POST /department/student/batch-delete
+     */
+    @PostMapping("/batch-delete")
+    @ResponseBody
+    public String batchDeleteStudents(@RequestBody List<Long> ids, HttpSession session) {
+        String permissionError = checkDeptAdmin(session);
+        if (permissionError != null) {
+            return "error:权限不足";
+        }
+
+        if (ids == null || ids.isEmpty()) {
+            return "error:请选择要删除的学生";
+        }
+
+        int successCount = 0;
+        int failCount = 0;
+        StringBuilder errorMessages = new StringBuilder();
+
+        for (Long id : ids) {
+            try {
+                if (studentService.deleteStudent(id)) {
+                    successCount++;
+                } else {
+                    failCount++;
+                    errorMessages.append("学生[ID:").append(id).append("]删除失败；");
+                }
+            } catch (Exception e) {
+                failCount++;
+                errorMessages.append("学生[ID:").append(id).append("]删除失败：").append(e.getMessage()).append("；");
+            }
+        }
+
+        // 构建返回消息
+        if (failCount == 0) {
+            return "success";
+        } else {
+            String errorMsg = errorMessages.toString();
+            if (errorMsg.length() > 500) {
+                errorMsg = errorMsg.substring(0, 500) + "...";
+            }
+            return "error:成功删除" + successCount + "个，失败" + failCount + "个。" + errorMsg;
+        }
+    }
+
     // ======================= 教师专用接口 =======================
-    
+
     /**
      * 从 Session 中获取当前教师
      */
@@ -572,7 +767,7 @@ public class StudentController {
         if (teacher != null) {
             return teacher;
         }
-        
+
         // 如果是 User 登录，检查是否是教师角色
         User user = (User) session.getAttribute("currentUser");
         if (user != null && user.getRole() != null) {
@@ -590,7 +785,7 @@ public class StudentController {
         }
         return null;
     }
-    
+
     /**
      * 获取教师指导的学生列表（含成绩信息）
      * GET /department/student/teacher/advised
@@ -599,15 +794,15 @@ public class StudentController {
     @ResponseBody
     public Map<String, Object> getAdvisedStudentsWithScores(HttpSession session) {
         Map<String, Object> result = new HashMap<>();
-        
+
         // 检查是否是超级管理员
         User currentUser = (User) session.getAttribute("currentUser");
-        boolean isSuperAdmin = currentUser != null && currentUser.getRole() != null && 
-                               "SUPER_ADMIN".equals(currentUser.getRole().getName());
-        
+        boolean isSuperAdmin = currentUser != null && currentUser.getRole() != null &&
+                "SUPER_ADMIN".equals(currentUser.getRole().getName());
+
         Teacher teacher = getTeacherFromSession(session);
         Integer currentYear = configService.getCurrentDefenseYear();
-        
+
         List<Student> students;
         if (isSuperAdmin) {
             // 超级管理员：返回所有学生
@@ -632,16 +827,16 @@ public class StudentController {
             result.put("teacherId", teacher.getId());
             result.put("teacherName", teacher.getName());
         }
-        
+
         // 获取学生成绩信息
         List<Map<String, Object>> studentList = new ArrayList<>();
         if (students != null) {
             List<Long> studentIds = students.stream().map(Student::getId).collect(Collectors.toList());
-            List<StudentFinalScore> scores = studentIds.isEmpty() ? new ArrayList<>() : 
-                studentFinalScoreMapper.findByStudentIdsAndYear(studentIds, currentYear);
+            List<StudentFinalScore> scores = studentIds.isEmpty() ? new ArrayList<>()
+                    : studentFinalScoreMapper.findByStudentIdsAndYear(studentIds, currentYear);
             Map<Long, StudentFinalScore> scoreMap = scores.stream()
-                .collect(Collectors.toMap(StudentFinalScore::getStudentId, s -> s));
-            
+                    .collect(Collectors.toMap(StudentFinalScore::getStudentId, s -> s));
+
             for (Student s : students) {
                 Map<String, Object> info = new HashMap<>();
                 info.put("id", s.getId());
@@ -663,7 +858,7 @@ public class StudentController {
                 info.put("defenseYear", s.getDefenseYear());
                 info.put("advisorTeacherId", s.getAdvisorTeacherId());
                 info.put("reviewerTeacherId", s.getReviewerTeacherId());
-                
+
                 // 设置评阅教师信息
                 if (s.getReviewer() != null) {
                     info.put("reviewerName", s.getReviewer().getName());
@@ -672,7 +867,7 @@ public class StudentController {
                     info.put("reviewerName", null);
                     info.put("reviewerTeacherNo", null);
                 }
-                
+
                 // 设置答辩小组信息
                 info.put("defenseGroupId", s.getDefenseGroupId());
                 if (s.getDefenseGroup() != null) {
@@ -680,7 +875,7 @@ public class StudentController {
                 } else {
                     info.put("defenseGroupName", null);
                 }
-                
+
                 // 设置成绩信息
                 StudentFinalScore score = scoreMap.get(s.getId());
                 if (score != null) {
@@ -694,51 +889,52 @@ public class StudentController {
                     info.put("finalDefenseScore", null);
                     info.put("totalGrade", null);
                 }
-                
+
                 studentList.add(info);
             }
         }
-        
+
         result.put("students", studentList);
         result.put("year", currentYear);
         return result;
     }
-    
+
     /**
      * 教师设置指导教师评定成绩
      * POST /department/student/teacher/setAdvisorScore
      */
     @PostMapping("/teacher/setAdvisorScore")
     @ResponseBody
-    public String setAdvisorScoreByTeacher(@RequestParam Long studentId, @RequestParam Integer score, HttpSession session) {
+    public String setAdvisorScoreByTeacher(@RequestParam Long studentId, @RequestParam Integer score,
+            HttpSession session) {
         // 检查是否是超级管理员
         User currentUser = (User) session.getAttribute("currentUser");
-        boolean isSuperAdmin = currentUser != null && currentUser.getRole() != null && 
-                               "SUPER_ADMIN".equals(currentUser.getRole().getName());
-        
+        boolean isSuperAdmin = currentUser != null && currentUser.getRole() != null &&
+                "SUPER_ADMIN".equals(currentUser.getRole().getName());
+
         Teacher teacher = getTeacherFromSession(session);
         if (teacher == null && !isSuperAdmin) {
             return "error:请先登录教师账号";
         }
-        
+
         Integer currentYear = configService.getCurrentDefenseYear();
         if (currentYear == null) {
             return "error:请先设置当前答辩年份";
         }
-        
+
         // 验证该学生是否存在
         Student student = studentService.findById(studentId);
         if (student == null) {
             return "error:学生不存在";
         }
-        
+
         // 如果不是超级管理员，验证该学生是否是当前教师指导的
         if (!isSuperAdmin && teacher != null) {
             if (student.getAdvisorTeacherId() == null || !student.getAdvisorTeacherId().equals(teacher.getId())) {
                 return "error:您不是该学生的指导教师";
             }
         }
-        
+
         try {
             scoreService.setAdvisorScore(studentId, currentYear, score);
             return "success";
@@ -746,19 +942,20 @@ public class StudentController {
             return "error:" + e.getMessage();
         }
     }
-    
+
     /**
      * 教师为学生指定评阅人
      * POST /department/student/teacher/assignReviewer
      */
     @PostMapping("/teacher/assignReviewer")
     @ResponseBody
-    public String assignReviewerByTeacher(@RequestParam Long studentId, @RequestParam Long reviewerId, HttpSession session) {
+    public String assignReviewerByTeacher(@RequestParam Long studentId, @RequestParam Long reviewerId,
+            HttpSession session) {
         Teacher teacher = getTeacherFromSession(session);
         if (teacher == null) {
             return "error:请先登录教师账号";
         }
-        
+
         // 验证该学生是否是当前教师指导的
         Student student = studentService.findById(studentId);
         if (student == null) {
@@ -767,7 +964,7 @@ public class StudentController {
         if (student.getAdvisorTeacherId() == null || !student.getAdvisorTeacherId().equals(teacher.getId())) {
             return "error:您不是该学生的指导教师";
         }
-        
+
         try {
             studentService.assignReviewer(studentId, reviewerId);
             return "success";
@@ -775,7 +972,7 @@ public class StudentController {
             return "error:" + e.getMessage();
         }
     }
-    
+
     /**
      * 获取当前教师作为评阅人的学生列表（含成绩信息）
      * GET /department/student/teacher/reviewed
@@ -784,15 +981,15 @@ public class StudentController {
     @ResponseBody
     public Map<String, Object> getReviewedStudentsWithScores(HttpSession session) {
         Map<String, Object> result = new HashMap<>();
-        
+
         // 检查是否是超级管理员
         User currentUser = (User) session.getAttribute("currentUser");
-        boolean isSuperAdmin = currentUser != null && currentUser.getRole() != null && 
-                               "SUPER_ADMIN".equals(currentUser.getRole().getName());
-        
+        boolean isSuperAdmin = currentUser != null && currentUser.getRole() != null &&
+                "SUPER_ADMIN".equals(currentUser.getRole().getName());
+
         Teacher teacher = getTeacherFromSession(session);
         Integer currentYear = configService.getCurrentDefenseYear();
-        
+
         List<Student> students;
         if (isSuperAdmin) {
             // 超级管理员：返回所有学生
@@ -817,16 +1014,16 @@ public class StudentController {
             result.put("teacherId", teacher.getId());
             result.put("teacherName", teacher.getName());
         }
-        
+
         // 获取学生成绩信息
         List<Map<String, Object>> studentList = new ArrayList<>();
         if (students != null) {
             List<Long> studentIds = students.stream().map(Student::getId).collect(Collectors.toList());
-            List<StudentFinalScore> scores = studentIds.isEmpty() ? new ArrayList<>() : 
-                studentFinalScoreMapper.findByStudentIdsAndYear(studentIds, currentYear);
+            List<StudentFinalScore> scores = studentIds.isEmpty() ? new ArrayList<>()
+                    : studentFinalScoreMapper.findByStudentIdsAndYear(studentIds, currentYear);
             Map<Long, StudentFinalScore> scoreMap = scores.stream()
-                .collect(Collectors.toMap(StudentFinalScore::getStudentId, s -> s));
-            
+                    .collect(Collectors.toMap(StudentFinalScore::getStudentId, s -> s));
+
             for (Student s : students) {
                 Map<String, Object> info = new HashMap<>();
                 info.put("id", s.getId());
@@ -848,7 +1045,7 @@ public class StudentController {
                 info.put("defenseYear", s.getDefenseYear());
                 info.put("advisorTeacherId", s.getAdvisorTeacherId());
                 info.put("reviewerTeacherId", s.getReviewerTeacherId());
-                
+
                 // 设置指导教师信息
                 if (s.getAdvisor() != null) {
                     info.put("advisorName", s.getAdvisor().getName());
@@ -857,7 +1054,7 @@ public class StudentController {
                     info.put("advisorName", null);
                     info.put("advisorTeacherNo", null);
                 }
-                
+
                 // 设置评阅人信息
                 if (s.getReviewer() != null) {
                     info.put("reviewerName", s.getReviewer().getName());
@@ -866,7 +1063,7 @@ public class StudentController {
                     info.put("reviewerName", null);
                     info.put("reviewerTeacherNo", null);
                 }
-                
+
                 // 设置答辩小组信息
                 info.put("defenseGroupId", s.getDefenseGroupId());
                 if (s.getDefenseGroup() != null) {
@@ -874,7 +1071,7 @@ public class StudentController {
                 } else {
                     info.put("defenseGroupName", null);
                 }
-                
+
                 // 设置成绩信息
                 StudentFinalScore score = scoreMap.get(s.getId());
                 if (score != null) {
@@ -888,51 +1085,52 @@ public class StudentController {
                     info.put("finalDefenseScore", null);
                     info.put("totalGrade", null);
                 }
-                
+
                 studentList.add(info);
             }
         }
-        
+
         result.put("students", studentList);
         result.put("year", currentYear);
         return result;
     }
-    
+
     /**
      * 教师设置评阅人评定成绩
      * POST /department/student/teacher/setReviewerScore
      */
     @PostMapping("/teacher/setReviewerScore")
     @ResponseBody
-    public String setReviewerScoreByTeacher(@RequestParam Long studentId, @RequestParam Integer score, HttpSession session) {
+    public String setReviewerScoreByTeacher(@RequestParam Long studentId, @RequestParam Integer score,
+            HttpSession session) {
         // 检查是否是超级管理员
         User currentUser = (User) session.getAttribute("currentUser");
-        boolean isSuperAdmin = currentUser != null && currentUser.getRole() != null && 
-                               "SUPER_ADMIN".equals(currentUser.getRole().getName());
-        
+        boolean isSuperAdmin = currentUser != null && currentUser.getRole() != null &&
+                "SUPER_ADMIN".equals(currentUser.getRole().getName());
+
         Teacher teacher = getTeacherFromSession(session);
         if (teacher == null && !isSuperAdmin) {
             return "error:请先登录教师账号";
         }
-        
+
         Integer currentYear = configService.getCurrentDefenseYear();
         if (currentYear == null) {
             return "error:请先设置当前答辩年份";
         }
-        
+
         // 验证该学生是否存在
         Student student = studentService.findById(studentId);
         if (student == null) {
             return "error:学生不存在";
         }
-        
+
         // 如果不是超级管理员，验证该学生是否是当前教师评阅的
         if (!isSuperAdmin && teacher != null) {
             if (student.getReviewerTeacherId() == null || !student.getReviewerTeacherId().equals(teacher.getId())) {
                 return "error:您不是该学生的评阅人";
             }
         }
-        
+
         try {
             scoreService.setReviewerScore(studentId, currentYear, score);
             return "success";
@@ -940,38 +1138,39 @@ public class StudentController {
             return "error:" + e.getMessage();
         }
     }
-    
+
     /**
      * 获取学生的指导教师或评阅人的打分记录（用于超级管理员修改分项分数）
      * GET /department/student/teacher/scoreRecord?studentId=1&type=advisor/reviewer
      */
     @GetMapping("/teacher/scoreRecord")
     @ResponseBody
-    public Map<String, Object> getTeacherScoreRecord(@RequestParam Long studentId, @RequestParam String type, HttpSession session) {
+    public Map<String, Object> getTeacherScoreRecord(@RequestParam Long studentId, @RequestParam String type,
+            HttpSession session) {
         Map<String, Object> result = new HashMap<>();
-        
+
         // 检查是否是超级管理员
         User currentUser = (User) session.getAttribute("currentUser");
-        boolean isSuperAdmin = currentUser != null && currentUser.getRole() != null && 
-                               "SUPER_ADMIN".equals(currentUser.getRole().getName());
-        
+        boolean isSuperAdmin = currentUser != null && currentUser.getRole() != null &&
+                "SUPER_ADMIN".equals(currentUser.getRole().getName());
+
         if (!isSuperAdmin) {
             result.put("error", "权限不足");
             return result;
         }
-        
+
         Integer currentYear = configService.getCurrentDefenseYear();
         if (currentYear == null) {
             result.put("error", "请先设置当前答辩年份");
             return result;
         }
-        
+
         Student student = studentService.findById(studentId);
         if (student == null) {
             result.put("error", "学生不存在");
             return result;
         }
-        
+
         Long teacherId = null;
         if ("advisor".equals(type)) {
             teacherId = student.getAdvisorTeacherId();
@@ -981,19 +1180,20 @@ public class StudentController {
             result.put("error", "类型参数错误，应为advisor或reviewer");
             return result;
         }
-        
+
         if (teacherId == null) {
             result.put("error", "该学生未分配" + ("advisor".equals(type) ? "指导教师" : "评阅人"));
             return result;
         }
-        
+
         // 查找该教师的打分记录
-        TeacherScoreRecord record = teacherScoreRecordMapper.findByStudentIdAndTeacherIdAndYear(studentId, teacherId, currentYear);
+        TeacherScoreRecord record = teacherScoreRecordMapper.findByStudentIdAndTeacherIdAndYear(studentId, teacherId,
+                currentYear);
         if (record == null) {
             result.put("error", "未找到打分记录");
             return result;
         }
-        
+
         result.put("record", record);
         result.put("student", student);
         Teacher teacher = teacherMapper.findById(teacherId);
@@ -1002,7 +1202,7 @@ public class StudentController {
         }
         return result;
     }
-    
+
     /**
      * 更新教师的打分记录（用于超级管理员和院系管理员修改分项分数）
      * POST /department/student/teacher/updateScoreRecord
@@ -1019,23 +1219,23 @@ public class StudentController {
             @RequestParam(required = false) Integer item5,
             @RequestParam(required = false) Integer item6,
             HttpSession session) {
-        
+
         // 检查是否是超级管理员或院系管理员
         String permissionError = checkDeptAdmin(session);
         if (permissionError != null) {
             return permissionError;
         }
-        
+
         Integer currentYear = configService.getCurrentDefenseYear();
         if (currentYear == null) {
             return "error:请先设置当前答辩年份";
         }
-        
+
         Student student = studentService.findById(studentId);
         if (student == null) {
             return "error:学生不存在";
         }
-        
+
         Long teacherId = null;
         if ("advisor".equals(type)) {
             teacherId = student.getAdvisorTeacherId();
@@ -1044,13 +1244,14 @@ public class StudentController {
         } else {
             return "error:类型参数错误";
         }
-        
+
         if (teacherId == null) {
             return "error:该学生未分配" + ("advisor".equals(type) ? "指导教师" : "评阅人");
         }
-        
+
         // 查找该教师的打分记录（如果没有记录，创建新记录）
-        TeacherScoreRecord record = teacherScoreRecordMapper.findByStudentIdAndTeacherIdAndYear(studentId, teacherId, currentYear);
+        TeacherScoreRecord record = teacherScoreRecordMapper.findByStudentIdAndTeacherIdAndYear(studentId, teacherId,
+                currentYear);
         boolean isNewRecord = false;
         if (record == null) {
             // 创建新记录
@@ -1062,24 +1263,30 @@ public class StudentController {
             record.setSubmitTime(java.time.LocalDateTime.now());
             isNewRecord = true;
         }
-        
+
         // 更新分项分数
-        if (item1 != null) record.setItem1Score(item1);
-        if (item2 != null) record.setItem2Score(item2);
-        if (item3 != null) record.setItem3Score(item3);
-        if (item4 != null) record.setItem4Score(item4);
-        if (item5 != null) record.setItem5Score(item5);
-        if (item6 != null) record.setItem6Score(item6);
-        
+        if (item1 != null)
+            record.setItem1Score(item1);
+        if (item2 != null)
+            record.setItem2Score(item2);
+        if (item3 != null)
+            record.setItem3Score(item3);
+        if (item4 != null)
+            record.setItem4Score(item4);
+        if (item5 != null)
+            record.setItem5Score(item5);
+        if (item6 != null)
+            record.setItem6Score(item6);
+
         // 重新计算总分
         int total = (record.getItem1Score() != null ? record.getItem1Score() : 0) +
-                   (record.getItem2Score() != null ? record.getItem2Score() : 0) +
-                   (record.getItem3Score() != null ? record.getItem3Score() : 0) +
-                   (record.getItem4Score() != null ? record.getItem4Score() : 0) +
-                   (record.getItem5Score() != null ? record.getItem5Score() : 0) +
-                   (record.getItem6Score() != null ? record.getItem6Score() : 0);
+                (record.getItem2Score() != null ? record.getItem2Score() : 0) +
+                (record.getItem3Score() != null ? record.getItem3Score() : 0) +
+                (record.getItem4Score() != null ? record.getItem4Score() : 0) +
+                (record.getItem5Score() != null ? record.getItem5Score() : 0) +
+                (record.getItem6Score() != null ? record.getItem6Score() : 0);
         record.setTotalScore(total);
-        
+
         // 保存或更新记录
         try {
             if (isNewRecord) {
@@ -1087,20 +1294,20 @@ public class StudentController {
             } else {
                 teacherScoreRecordMapper.update(record);
             }
-            
+
             // 更新StudentFinalScore中的对应成绩
             if ("advisor".equals(type)) {
                 scoreService.setAdvisorScore(studentId, currentYear, total);
             } else {
                 scoreService.setReviewerScore(studentId, currentYear, total);
             }
-            
+
             return "success";
         } catch (Exception e) {
             return "error:" + e.getMessage();
         }
     }
-    
+
     /**
      * 获取可选的评阅教师列表（所有教师，排除自己）
      * GET /department/student/teacher/reviewerCandidates
@@ -1110,7 +1317,7 @@ public class StudentController {
     public List<Map<String, Object>> getReviewerCandidates(HttpSession session) {
         Teacher currentTeacher = getTeacherFromSession(session);
         List<Map<String, Object>> candidates = new ArrayList<>();
-        
+
         User currentUser = (User) session.getAttribute("currentUser");
         Long departmentId = null;
         if (currentTeacher != null) {
@@ -1118,7 +1325,7 @@ public class StudentController {
         } else if (currentUser != null) {
             departmentId = currentUser.getDepartmentId();
         }
-        
+
         // 获取同院系的教师列表
         List<Teacher> teachers = teacherMapper.findByDepartmentId(departmentId);
         if (teachers != null) {
@@ -1135,10 +1342,10 @@ public class StudentController {
                 candidates.add(info);
             }
         }
-        
+
         return candidates;
     }
-    
+
     /**
      * 答辩组长：获取本组内所有教师给所有学生的打分情况
      * GET /department/student/leader/group/scores
@@ -1147,47 +1354,48 @@ public class StudentController {
     @ResponseBody
     public Map<String, Object> getLeaderGroupScores(HttpSession session) {
         Map<String, Object> result = new HashMap<>();
-        
+
         // 获取当前登录的教师
         Teacher currentTeacher = (Teacher) session.getAttribute("currentTeacher");
         if (currentTeacher == null) {
             // 尝试从User获取Teacher
             User currentUser = (User) session.getAttribute("currentUser");
-            if (currentUser != null && currentUser.getRole() != null && 
-                ("TEACHER".equals(currentUser.getRole().getName()) || 
-                 "DEFENSE_LEADER".equals(currentUser.getRole().getName()))) {
+            if (currentUser != null && currentUser.getRole() != null &&
+                    ("TEACHER".equals(currentUser.getRole().getName()) ||
+                            "DEFENSE_LEADER".equals(currentUser.getRole().getName()))) {
                 currentTeacher = teacherMapper.findByUserId(currentUser.getId());
             }
         }
-        
+
         if (currentTeacher == null) {
             result.put("error", "未登录或不是教师");
             return result;
         }
-        
+
         // 查找该教师作为组长的小组
-        com.example.defensemanagement.entity.DefenseGroupTeacher groupTeacher = defenseGroupTeacherMapper.findByTeacherId(currentTeacher.getId());
+        com.example.defensemanagement.entity.DefenseGroupTeacher groupTeacher = defenseGroupTeacherMapper
+                .findByTeacherId(currentTeacher.getId());
         if (groupTeacher == null || groupTeacher.getIsLeader() == null || groupTeacher.getIsLeader() != 1) {
             result.put("error", "您不是任何小组的组长");
             return result;
         }
-        
+
         Long groupId = groupTeacher.getGroupId();
         Integer currentYear = configService.getCurrentDefenseYear();
         if (currentYear == null) {
             result.put("error", "请先设置当前答辩年份");
             return result;
         }
-        
+
         // 获取该小组的所有学生
         List<Student> students = studentMapper.findByDefenseGroupId(groupId);
         students = students.stream()
-            .filter(s -> currentYear.equals(s.getDefenseYear()))
-            .collect(Collectors.toList());
-        
+                .filter(s -> currentYear.equals(s.getDefenseYear()))
+                .collect(Collectors.toList());
+
         // 获取该小组的所有教师打分记录
         List<TeacherScoreRecord> allScores = teacherScoreRecordMapper.findByGroupIdAndYear(groupId, currentYear);
-        
+
         // 构建返回数据：按学生分组，每个学生包含所有教师的打分
         List<Map<String, Object>> studentScoreList = new ArrayList<>();
         for (Student student : students) {
@@ -1196,9 +1404,15 @@ public class StudentController {
             studentInfo.put("studentNo", student.getStudentNo());
             studentInfo.put("studentName", student.getName());
             studentInfo.put("classInfo", student.getClassInfo());
+            // 设置院系信息
+            if (student.getDepartment() != null) {
+                studentInfo.put("departmentName", student.getDepartment().getName());
+            } else {
+                studentInfo.put("departmentName", null);
+            }
             studentInfo.put("defenseType", student.getDefenseType());
             studentInfo.put("title", student.getTitle());
-            
+
             // 获取该学生的所有教师打分记录
             List<Map<String, Object>> teacherScores = new ArrayList<>();
             for (TeacherScoreRecord record : allScores) {
@@ -1223,13 +1437,176 @@ public class StudentController {
             studentInfo.put("teacherScores", teacherScores);
             studentScoreList.add(studentInfo);
         }
-        
+
         result.put("groupId", groupId);
-        result.put("groupName", defenseGroupMapper.findById(groupId) != null ? 
-                   defenseGroupMapper.findById(groupId).getName() : "");
+        result.put("groupName",
+                defenseGroupMapper.findById(groupId) != null ? defenseGroupMapper.findById(groupId).getName() : "");
         result.put("students", studentScoreList);
         result.put("year", currentYear);
-        
+
         return result;
+    }
+
+    /**
+     * 获取未分配到任何小组的学生列表（defense_group_id为NULL）
+     * GET /department/student/unassigned?groupId=xxx
+     * 注意：groupId参数保留用于权限检查，但实际查询的是所有未分配的学生
+     */
+    @GetMapping("/unassigned")
+    @ResponseBody
+    public List<Map<String, Object>> getUnassignedStudents(
+            @RequestParam Long groupId,
+            HttpSession session) {
+        String permissionError = checkDeptAdmin(session);
+        if (permissionError != null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, permissionError);
+        }
+
+        Integer currentYear = configService.getCurrentDefenseYear();
+        if (currentYear == null) {
+            currentYear = java.time.Year.now().getValue();
+        }
+
+        // 获取当前年份的所有学生
+        List<Student> allStudents = studentService.findByYear(currentYear);
+
+        // 过滤出未分配的学生（defense_group_id为NULL，即不属于任何小组）
+        List<Student> unassignedStudents = allStudents.stream()
+                .filter(s -> s.getDefenseGroupId() == null)
+                .collect(Collectors.toList());
+
+        // 转换为Map格式返回
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Student s : unassignedStudents) {
+            Map<String, Object> info = new HashMap<>();
+            info.put("id", s.getId());
+            info.put("studentNo", s.getStudentNo());
+            info.put("name", s.getName());
+            if (s.getDepartment() != null) {
+                info.put("departmentName", s.getDepartment().getName());
+            } else {
+                info.put("departmentName", null);
+            }
+            info.put("defenseType", s.getDefenseType());
+            info.put("title", s.getTitle());
+            result.add(info);
+        }
+
+        return result;
+    }
+
+    /**
+     * 批量分配学生到小组
+     * POST /department/student/assign-to-group
+     */
+    @PostMapping("/assign-to-group")
+    @ResponseBody
+    public String assignStudentsToGroup(@RequestBody Map<String, Object> request, HttpSession session) {
+        String permissionError = checkDeptAdmin(session);
+        if (permissionError != null) {
+            return permissionError;
+        }
+
+        try {
+            Long groupId = Long.valueOf(request.get("groupId").toString());
+            @SuppressWarnings("unchecked")
+            List<Integer> studentIds = (List<Integer>) request.get("studentIds");
+
+            if (groupId == null || studentIds == null || studentIds.isEmpty()) {
+                return "error:参数错误";
+            }
+
+            // 批量分配学生到小组
+            int successCount = 0;
+            for (Integer studentId : studentIds) {
+                if (studentService.assignDefenseGroup(studentId.longValue(), groupId)) {
+                    successCount++;
+                }
+            }
+
+            if (successCount == studentIds.size()) {
+                return "success";
+            } else {
+                return "error:部分学生分配失败，成功: " + successCount + "/" + studentIds.size();
+            }
+        } catch (Exception e) {
+            return "error:" + e.getMessage();
+        }
+    }
+
+    /**
+     * 获取指定小组的学生列表
+     * GET /department/student/group/{groupId}/students
+     */
+    @GetMapping("/group/{groupId}/students")
+    @ResponseBody
+    public List<Map<String, Object>> getGroupStudents(
+            @PathVariable Long groupId,
+            HttpSession session) {
+        String permissionError = checkDeptAdmin(session);
+        if (permissionError != null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, permissionError);
+        }
+
+        // 获取该小组的所有学生
+        List<Student> students = studentMapper.findByDefenseGroupId(groupId);
+
+        // 转换为Map格式返回
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Student s : students) {
+            Map<String, Object> info = new HashMap<>();
+            info.put("id", s.getId());
+            info.put("studentNo", s.getStudentNo());
+            info.put("name", s.getName());
+            if (s.getDepartment() != null) {
+                info.put("departmentName", s.getDepartment().getName());
+            } else {
+                info.put("departmentName", null);
+            }
+            info.put("defenseType", s.getDefenseType());
+            info.put("title", s.getTitle());
+            result.add(info);
+        }
+
+        return result;
+    }
+
+    /**
+     * 批量从小组移除学生（将 defense_group_id 设置为 NULL）
+     * POST /department/student/remove-from-group
+     */
+    @PostMapping("/remove-from-group")
+    @ResponseBody
+    public String removeStudentsFromGroup(@RequestBody Map<String, Object> request, HttpSession session) {
+        String permissionError = checkDeptAdmin(session);
+        if (permissionError != null) {
+            return permissionError;
+        }
+
+        try {
+            @SuppressWarnings("unchecked")
+            List<Integer> studentIds = (List<Integer>) request.get("studentIds");
+
+            if (studentIds == null || studentIds.isEmpty()) {
+                return "error:参数错误";
+            }
+
+            // 批量移除学生（将 defense_group_id 设置为 NULL）
+            int successCount = 0;
+            for (Integer studentId : studentIds) {
+                // 使用 updateDefenseGroupId 方法，传入 null 来清除小组分配
+                if (studentMapper.updateDefenseGroupId(studentId.longValue(), null) > 0) {
+                    successCount++;
+                }
+            }
+
+            if (successCount == studentIds.size()) {
+                return "success";
+            } else {
+                return "error:部分学生移除失败，成功: " + successCount + "/" + studentIds.size();
+            }
+        } catch (Exception e) {
+            return "error:" + e.getMessage();
+        }
     }
 }

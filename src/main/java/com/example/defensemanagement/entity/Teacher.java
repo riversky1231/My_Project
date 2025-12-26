@@ -17,4 +17,7 @@ public class Teacher {
     
     // 关联对象
     private Department department;
+    
+    // 临时属性：用于在小组中显示是否为组长（从 DefenseGroupTeacher 获取）
+    private Integer isLeader;
 }

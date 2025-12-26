@@ -45,4 +45,16 @@ public interface StudentMapper {
 
     // 获取所有年份列表（去重，用于年份管理）
     List<Integer> findAllYears();
+    
+    // 搜索学生（支持分页）
+    List<Student> searchStudents(@Param("keyword") String keyword,
+                                  @Param("departmentId") Long departmentId,
+                                  @Param("year") Integer year,
+                                  @Param("offset") int offset,
+                                  @Param("limit") int limit);
+    
+    // 统计学生数量（用于分页）
+    int countStudents(@Param("keyword") String keyword,
+                      @Param("departmentId") Long departmentId,
+                      @Param("year") Integer year);
 }

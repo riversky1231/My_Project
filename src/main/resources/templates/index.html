@@ -375,44 +375,6 @@
                 <h1>小组管理</h1>
             </header>
             <div class="module">
-                <div class="module-header">
-                    <h4><i class="bi bi-person-badge"></i> 小组教师与组长</h4>
-                </div>
-                <div class="row g-2 align-items-end">
-                    <div class="col-md-3">
-                        <label class="form-label">选择小组</label>
-                        <select class="form-select" id="gt-group-select">
-                            <option th:each="group : ${groups}" th:value="${group.id}" th:text="${group.name}"></option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">选择教师</label>
-                        <select class="form-select" id="gt-teacher-select"></select>
-                    </div>
-                    <div class="col-md-5 d-flex gap-2">
-                        <button class="btn btn-outline-primary" onclick="gtAssignTeacher()">分配到小组</button>
-                        <button class="btn btn-outline-success" onclick="gtSetLeader()">设为组长</button>
-                        <button class="btn btn-outline-secondary" onclick="gtRefresh()">刷新</button>
-                    </div>
-                </div>
-                <div class="mt-3">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>教师编号</th>
-                                    <th>姓名</th>
-                                    <th>职称</th>
-                                    <th>角色</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="gt-list"></tbody>
-                        </table>
-                    </div>
-                    <small class="text-muted">提示：导出时组长签名将使用该组“组长教师”的签名（上传签名会自动命名为 teacher_教师ID.*）。</small>
-                </div>
-
                 <div class="accordion" id="groupsAccordion">
                     <div th:each="group, iterStat : ${groups}" class="accordion-item">
                         <h2 class="accordion-header" th:id="'heading' + ${iterStat.index}">
@@ -424,22 +386,75 @@
                         </h2>
                         <div th:id="'collapse' + ${iterStat.index}" class="accordion-collapse collapse"
                             th:classappend="${iterStat.index == 0 ? 'show' : ''}"
-                            th:aria-labelledby="'heading' + ${iterStat.index}" data-bs-parent="#groupsAccordion">
+                            th:aria-labelledby="'heading' + ${iterStat.index}">
                             <div class="accordion-body">
-                                <ul class="list-group">
-                                    <li th:each="member : ${group.members}"
-                                        class="list-group-item d-flex justify-content-between align-items-start">
-                                        <div class="ms-2 me-auto">
-                                            <div class="fw-bold"
-                                                th:text="${member.name + ' (' + member.studentNo + ')'}">学生姓名(学号)</div>
-                                            <small class="text-muted">
-                                                <span th:text="'项目：' + ${member.title}">项目名称</span>
-                                                <span class="badge bg-info ms-2"
-                                                    th:text="${member.defenseType == 'PAPER' ? '论文' : '设计'}">类型</span>
-                                            </small>
-                                        </div>
-                                    </li>
-                                </ul>
+                                <div class="mb-3 d-flex gap-2 flex-wrap">
+                                    <button class="btn btn-primary btn-sm"
+                                        th:onclick="'addStudentToGroup(' + ${group.id} + ')'">
+                                        <i class="bi bi-person-plus"></i> 添加学生
+                                    </button>
+                                    <button class="btn btn-danger btn-sm"
+                                        th:onclick="'removeStudentFromGroup(' + ${group.id} + ')'">
+                                        <i class="bi bi-person-dash"></i> 移除学生
+                                    </button>
+                                    <button class="btn btn-success btn-sm"
+                                        th:onclick="'assignTeacherToGroup(' + ${group.id} + ')'">
+                                        <i class="bi bi-person-check"></i> 分配教师
+                                    </button>
+                                    <button class="btn btn-warning btn-sm"
+                                        th:onclick="'removeTeacherFromGroup(' + ${group.id} + ')'">
+                                        <i class="bi bi-person-x"></i> 移除教师
+                                    </button>
+                                    <button class="btn btn-info btn-sm"
+                                        th:onclick="'setGroupLeader(' + ${group.id} + ')'">
+                                        <i class="bi bi-star"></i> 设定组长
+                                    </button>
+                                </div>
+                                <!-- 学生列表 -->
+                                <div class="mb-3">
+                                    <h6 class="text-muted mb-2"><i class="bi bi-people"></i> 学生列表</h6>
+                                    <ul class="list-group">
+                                        <li th:each="member : ${group.members}"
+                                            class="list-group-item d-flex justify-content-between align-items-start">
+                                            <div class="ms-2 me-auto">
+                                                <div class="fw-bold"
+                                                    th:text="${member.name + ' (' + member.studentNo + ')'}">学生姓名(学号)
+                                                </div>
+                                                <small class="text-muted">
+                                                    <span th:text="'项目：' + ${member.title}">项目名称</span>
+                                                    <span class="badge bg-info ms-2"
+                                                        th:text="${member.defenseType == 'PAPER' ? '论文' : '设计'}">类型</span>
+                                                </small>
+                                            </div>
+                                        </li>
+                                        <li th:if="${group.members == null || group.members.isEmpty()}"
+                                            class="list-group-item text-muted text-center">暂无学生</li>
+                                    </ul>
+                                </div>
+
+                                <!-- 教师列表 -->
+                                <div>
+                                    <h6 class="text-muted mb-2"><i class="bi bi-person-badge"></i> 教师列表</h6>
+                                    <ul class="list-group">
+                                        <li th:each="teacher : ${group.teachers}"
+                                            class="list-group-item d-flex justify-content-between align-items-start">
+                                            <div class="ms-2 me-auto">
+                                                <div class="fw-bold">
+                                                    <span
+                                                        th:text="${teacher.name + ' (' + teacher.teacherNo + ')'}">教师姓名(编号)</span>
+                                                    <span th:if="${teacher.isLeader != null && teacher.isLeader == 1}"
+                                                        class="badge bg-success ms-2">组长</span>
+                                                </div>
+                                                <small class="text-muted"
+                                                    th:if="${teacher.title != null && !teacher.title.isEmpty()}">
+                                                    <span th:text="'职称：' + ${teacher.title}">职称</span>
+                                                </small>
+                                            </div>
+                                        </li>
+                                        <li th:if="${group.teachers == null || group.teachers.isEmpty()}"
+                                            class="list-group-item text-muted text-center">暂无教师</li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -454,17 +469,19 @@
                 <div class="d-flex align-items-center">
                     <div class="input-group me-3" style="width: 300px;">
                         <input type="text" id="student-search-input" class="form-control" placeholder="搜索学生..."
-                            onkeypress="if(event.key==='Enter') loadStudents()">
-                        <button class="btn btn-outline-secondary" type="button" onclick="loadStudents()"><i
-                                class="bi bi-search"></i></button>
+                            onkeypress="if(event.key==='Enter') searchStudentsWithPagination(1)">
+                        <button class="btn btn-outline-secondary" type="button"
+                            onclick="searchStudentsWithPagination(1)"><i class="bi bi-search"></i></button>
                     </div>
                     <button class="btn btn-primary" onclick="openStudentModal()">
                         <i class="bi bi-plus-circle"></i> 添加新学生
                     </button>
-                    <button class="btn btn-success ms-2" onclick="document.getElementById('excel-import-input').click()">
+                    <button class="btn btn-success ms-2"
+                        onclick="document.getElementById('excel-import-input').click()">
                         <i class="bi bi-file-earmark-excel"></i> Excel导入
                     </button>
-                    <input type="file" id="excel-import-input" accept=".xlsx,.xls" style="display: none;" onchange="handleExcelImport(event)">
+                    <input type="file" id="excel-import-input" accept=".xlsx,.xls" style="display: none;"
+                        onchange="handleExcelImport(event)">
                 </div>
             </header>
             <!-- 教师签名上传提示（仅教师可见） -->
@@ -478,9 +495,13 @@
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
                         <thead class="table-light">
-                            <tr>
+                            <tr id="student-table-header">
+                                <th style="width: 50px;">
+                                    <input type="checkbox" id="student-select-all" onchange="toggleSelectAllStudents()">
+                                </th>
                                 <th>学号</th>
                                 <th>姓名</th>
+                                <th id="student-class-header" style="display: none;">班级</th>
                                 <th>所属院系</th>
                                 <th>类型</th>
                                 <th>题目</th>
@@ -492,11 +513,24 @@
                         </thead>
                         <tbody id="student-list">
                             <tr>
-                                <td colspan="9" class="text-center text-muted">加载中...</td>
+                                <td colspan="10" class="text-center text-muted">加载中...</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
+                <!-- Pagination -->
+                <nav class="d-flex justify-content-between align-items-center mt-3">
+                    <div class="d-flex align-items-center">
+                        <small class="text-muted me-3" id="student-pagination-info">显示 0-0 条，共 0 条</small>
+                        <button class="btn btn-danger btn-sm" id="batch-delete-student-btn"
+                            onclick="batchDeleteStudents()" disabled>
+                            <i class="bi bi-trash"></i> 一键删除选中项
+                        </button>
+                    </div>
+                    <ul class="pagination pagination-sm mb-0" id="student-pagination">
+                        <!-- 分页按钮将由 JavaScript 生成 -->
+                    </ul>
+                </nav>
             </div>
         </div>
 
@@ -523,7 +557,7 @@
                             <tr>
                                 <th>学号</th>
                                 <th>姓名</th>
-                                <th>班级</th>
+                                <th>所属院系</th>
                                 <th>类型</th>
                                 <th>题目</th>
                                 <th>指导教师评定成绩</th>
@@ -552,7 +586,7 @@
                             <tr>
                                 <th>学号</th>
                                 <th>姓名</th>
-                                <th>班级</th>
+                                <th>所属院系</th>
                                 <th>类型</th>
                                 <th>题目</th>
                                 <th>指导教师</th>
@@ -586,6 +620,12 @@
                     <button class="btn btn-primary" onclick="openUserModal()">
                         <i class="bi bi-plus-circle"></i> 添加新用户
                     </button>
+                    <button class="btn btn-success ms-2"
+                        onclick="document.getElementById('user-excel-import-input').click()">
+                        <i class="bi bi-file-earmark-excel"></i> Excel导入
+                    </button>
+                    <input type="file" id="user-excel-import-input" accept=".xlsx,.xls" style="display: none;"
+                        onchange="handleUserExcelImport(event)">
                 </div>
             </header>
             <div class="module">
@@ -593,6 +633,9 @@
                     <table class="table table-hover align-middle">
                         <thead class="table-light">
                             <tr>
+                                <th style="width: 50px;">
+                                    <input type="checkbox" id="user-select-all" onchange="toggleSelectAllUsers()">
+                                </th>
                                 <th>用户名</th>
                                 <th>真实姓名</th>
                                 <th>角色</th>
@@ -602,62 +645,20 @@
                             </tr>
                         </thead>
                         <tbody id="user-list">
-                            <!-- Mock Data -->
                             <tr>
-                                <td><input class="form-check-input" type="checkbox"></td>
-                                <td><strong>dept_admin_cs</strong></td>
-                                <td>张三</td>
-                                <td><span class="badge bg-primary">院系管理员</span></td>
-                                <td>计算机科学与技术学院</td>
-                                <td><span class="badge bg-success">启用</span></td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-primary"><i
-                                            class="bi bi-pencil-square"></i></button>
-                                    <button class="btn btn-sm btn-outline-danger ms-1"><i
-                                            class="bi bi-trash"></i></button>
-                                    <button class="btn btn-sm btn-outline-warning ms-1"><i
-                                            class="bi bi-toggle-on"></i></button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><input class="form-check-input" type="checkbox"></td>
-                                <td><strong>dept_admin_se</strong></td>
-                                <td>李四</td>
-                                <td><span class="badge bg-primary">院系管理员</span></td>
-                                <td>软件学院</td>
-                                <td><span class="badge bg-secondary">禁用</span></td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-primary"><i
-                                            class="bi bi-pencil-square"></i></button>
-                                    <button class="btn btn-sm btn-outline-danger ms-1"><i
-                                            class="bi bi-trash"></i></button>
-                                    <button class="btn btn-sm btn-outline-success ms-1"><i
-                                            class="bi bi-toggle-off"></i></button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><input class="form-check-input" type="checkbox"></td>
-                                <td><strong>teacher_wang</strong></td>
-                                <td>王老师</td>
-                                <td><span class="badge bg-info">教师</span></td>
-                                <td>计算机科学与技术学院</td>
-                                <td><span class="badge bg-success">启用</span></td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-primary"><i
-                                            class="bi bi-pencil-square"></i></button>
-                                    <button class="btn btn-sm btn-outline-danger ms-1"><i
-                                            class="bi bi-trash"></i></button>
-                                    <button class="btn btn-sm btn-outline-warning ms-1"><i
-                                            class="bi bi-toggle-on"></i></button>
-                                </td>
+                                <td colspan="7" class="text-center text-muted">加载中...</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
                 <!-- Pagination -->
                 <nav class="d-flex justify-content-between align-items-center mt-3">
-                    <div>
-                        <small class="text-muted" id="user-pagination-info">显示 0-0 条，共 0 条</small>
+                    <div class="d-flex align-items-center">
+                        <small class="text-muted me-3" id="user-pagination-info">显示 0-0 条，共 0 条</small>
+                        <button class="btn btn-danger btn-sm" id="batch-delete-user-btn" onclick="batchDeleteUsers()"
+                            disabled>
+                            <i class="bi bi-trash"></i> 一键删除选中项
+                        </button>
                     </div>
                     <ul class="pagination pagination-sm mb-0" id="user-pagination">
                         <!-- 分页按钮将由 JavaScript 生成 -->
@@ -673,13 +674,19 @@
                 <div class="d-flex align-items-center">
                     <div class="input-group me-3" style="width: 300px;">
                         <input type="text" id="department-search-input" class="form-control" placeholder="搜索院系..."
-                            onkeypress="if(event.key==='Enter') loadDepartments()">
-                        <button class="btn btn-outline-secondary" type="button" onclick="loadDepartments()"><i
-                                class="bi bi-search"></i></button>
+                            onkeypress="if(event.key==='Enter') searchDepartmentsWithPagination(1)">
+                        <button class="btn btn-outline-secondary" type="button"
+                            onclick="searchDepartmentsWithPagination(1)"><i class="bi bi-search"></i></button>
                     </div>
                     <button class="btn btn-primary" onclick="openDepartmentModal()">
                         <i class="bi bi-plus-circle"></i> 添加新院系
                     </button>
+                    <button class="btn btn-success ms-2"
+                        onclick="document.getElementById('department-excel-import-input').click()">
+                        <i class="bi bi-file-earmark-excel"></i> Excel导入
+                    </button>
+                    <input type="file" id="department-excel-import-input" accept=".xlsx,.xls" style="display: none;"
+                        onchange="handleDepartmentExcelImport(event)">
                 </div>
             </header>
             <div class="module">
@@ -687,7 +694,11 @@
                     <table class="table table-hover align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th>ID</th>
+                                <th style="width: 50px;">
+                                    <input type="checkbox" id="department-select-all"
+                                        onchange="toggleSelectAllDepartments()">
+                                </th>
+                                <th style="display: none;">ID</th>
                                 <th>院系名称</th>
                                 <th>院系代码</th>
                                 <th>描述</th>
@@ -701,6 +712,19 @@
                         </tbody>
                     </table>
                 </div>
+                <!-- Pagination -->
+                <nav class="d-flex justify-content-between align-items-center mt-3">
+                    <div class="d-flex align-items-center">
+                        <small class="text-muted me-3" id="department-pagination-info">显示 0-0 条，共 0 条</small>
+                        <button class="btn btn-danger btn-sm" id="batch-delete-department-btn"
+                            onclick="batchDeleteDepartments()" disabled>
+                            <i class="bi bi-trash"></i> 一键删除选中项
+                        </button>
+                    </div>
+                    <ul class="pagination pagination-sm mb-0" id="department-pagination">
+                        <!-- 分页按钮将由 JavaScript 生成 -->
+                    </ul>
+                </nav>
             </div>
         </div>
 
@@ -1637,8 +1661,10 @@
                             <input type="text" class="form-control" id="studentName" required>
                         </div>
                         <div class="col-md-6">
-                            <label for="classInfo" class="form-label">班级</label>
-                            <input type="text" class="form-control" id="classInfo">
+                            <label for="studentDepartment" class="form-label">所属院系</label>
+                            <select class="form-select" id="studentDepartment">
+                                <option value="">请选择院系</option>
+                            </select>
                         </div>
                         <div class="col-md-6">
                             <label for="defenseType" class="form-label">答辩类型 <span class="text-danger">*</span></label>
@@ -1683,6 +1709,261 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                     <button type="button" class="btn btn-primary" onclick="saveStudent()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Students to Group Modal -->
+    <div class="modal fade" id="addStudentsToGroupModal" tabindex="-1" aria-labelledby="addStudentsToGroupModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addStudentsToGroupModalLabel">添加学生到小组</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">请选择要添加到小组的学生：</span>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                    onclick="toggleSelectAllUnassignedStudents()">
+                                    <i class="bi bi-check-square"></i> 全选
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th style="width: 50px;">
+                                        <input type="checkbox" id="unassigned-student-select-all"
+                                            onchange="toggleSelectAllUnassignedStudents()">
+                                    </th>
+                                    <th>学号</th>
+                                    <th>姓名</th>
+                                    <th>所属院系</th>
+                                    <th>类型</th>
+                                    <th>题目</th>
+                                </tr>
+                            </thead>
+                            <tbody id="unassigned-student-list">
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">加载中...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="submitAddStudentsToGroup()">
+                        <i class="bi bi-check-circle"></i> 提交
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remove Students from Group Modal -->
+    <div class="modal fade" id="removeStudentsFromGroupModal" tabindex="-1"
+        aria-labelledby="removeStudentsFromGroupModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="removeStudentsFromGroupModalLabel">从小组移除学生</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">请选择要从小组移除的学生：</span>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                    onclick="toggleSelectAllGroupStudents()">
+                                    <i class="bi bi-check-square"></i> 全选
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th style="width: 50px;">
+                                        <input type="checkbox" id="group-student-select-all"
+                                            onchange="toggleSelectAllGroupStudents()">
+                                    </th>
+                                    <th>学号</th>
+                                    <th>姓名</th>
+                                    <th>所属院系</th>
+                                    <th>类型</th>
+                                    <th>题目</th>
+                                </tr>
+                            </thead>
+                            <tbody id="group-student-list">
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">加载中...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger" onclick="submitRemoveStudentsFromGroup()">
+                        <i class="bi bi-trash"></i> 移除
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Teachers to Group Modal -->
+    <div class="modal fade" id="assignTeachersToGroupModal" tabindex="-1"
+        aria-labelledby="assignTeachersToGroupModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="assignTeachersToGroupModalLabel">分配教师到小组</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">请选择要分配到小组的教师：</span>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                    onclick="toggleSelectAllUnassignedTeachers()">
+                                    <i class="bi bi-check-square"></i> 全选
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th style="width: 50px;">
+                                        <input type="checkbox" id="unassigned-teacher-select-all"
+                                            onchange="toggleSelectAllUnassignedTeachers()">
+                                    </th>
+                                    <th>教师编号</th>
+                                    <th>姓名</th>
+                                    <th>所属院系</th>
+                                </tr>
+                            </thead>
+                            <tbody id="unassigned-teacher-list">
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">加载中...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="submitAssignTeachersToGroup()">
+                        <i class="bi bi-check-circle"></i> 提交
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remove Teachers from Group Modal -->
+    <div class="modal fade" id="removeTeachersFromGroupModal" tabindex="-1"
+        aria-labelledby="removeTeachersFromGroupModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="removeTeachersFromGroupModalLabel">从小组移除教师</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">请选择要从小组移除的教师：</span>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                    onclick="toggleSelectAllGroupTeachers()">
+                                    <i class="bi bi-check-square"></i> 全选
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th style="width: 50px;">
+                                        <input type="checkbox" id="group-teacher-select-all"
+                                            onchange="toggleSelectAllGroupTeachers()">
+                                    </th>
+                                    <th>教师编号</th>
+                                    <th>姓名</th>
+                                    <th>所属院系</th>
+                                    <th>角色</th>
+                                </tr>
+                            </thead>
+                            <tbody id="group-teacher-list">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">加载中...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger" onclick="submitRemoveTeachersFromGroup()">
+                        <i class="bi bi-trash"></i> 移除
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Set Group Leader Modal -->
+    <div class="modal fade" id="setGroupLeaderModal" tabindex="-1" aria-labelledby="setGroupLeaderModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="setGroupLeaderModalLabel">设定小组组长</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <span class="text-muted">请选择要设定为组长的教师（一个小组只能有一个组长）：</span>
+                    </div>
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th style="width: 50px;">选择</th>
+                                    <th>教师编号</th>
+                                    <th>姓名</th>
+                                    <th>所属院系</th>
+                                    <th>角色</th>
+                                </tr>
+                            </thead>
+                            <tbody id="group-leader-teacher-list">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">加载中...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="submitSetGroupLeader()">
+                        <i class="bi bi-check-circle"></i> 确定
+                    </button>
                 </div>
             </div>
         </div>
@@ -1742,6 +2023,20 @@
         document.addEventListener('DOMContentLoaded', function () {
             // 显示登录成功提示
             showLoginSuccessAlert();
+
+            // 恢复之前保存的视图
+            const savedView = sessionStorage.getItem('activeView');
+            if (savedView) {
+                sessionStorage.removeItem('activeView'); // 清除保存的视图
+                // 延迟执行，确保DOM完全加载
+                setTimeout(function () {
+                    const viewElement = document.getElementById(savedView);
+                    const navLink = document.querySelector(`a[onclick*="${savedView}"]`);
+                    if (viewElement && navLink) {
+                        showView(savedView, navLink);
+                    }
+                }, 100);
+            }
 
             // 根据用户角色控制菜单显示
             const userInfoDiv = document.querySelector('.user-info');
@@ -1970,9 +2265,10 @@
             clickedLink.classList.add('active');
 
             // Load specific view data
-            if (viewId === 'group-management-view') {
-                gtInit();
-            }
+            // 小组教师与组长模块已删除
+            // if (viewId === 'group-management-view') {
+            //     gtInit();
+            // }
             if (viewId === 'student-management-view') {
                 loadStudents();
             }
@@ -2128,9 +2424,552 @@
             await gtRefresh();
         }
 
+        // --- Group Management Functions ---
+        let currentGroupIdForAddStudent = null;
+
+        // 添加学生到小组
+        async function addStudentToGroup(groupId) {
+            currentGroupIdForAddStudent = groupId;
+            const modal = new bootstrap.Modal(document.getElementById('addStudentsToGroupModal'));
+            document.getElementById('addStudentsToGroupModalLabel').textContent = '添加学生到小组';
+
+            // 加载未分配的学生列表
+            await loadUnassignedStudents(groupId);
+            modal.show();
+        }
+
+        // 加载未分配的学生列表
+        async function loadUnassignedStudents(groupId) {
+            const tbody = document.getElementById('unassigned-student-list');
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">加载中...</td></tr>';
+
+            try {
+                const response = await fetch(`/department/student/unassigned?groupId=${groupId}`);
+                if (!response.ok) throw new Error('获取未分配学生列表失败');
+                const students = await response.json();
+
+                if (!students || students.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">暂无未分配的学生</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                students.forEach(student => {
+                    const defenseTypeText = student.defenseType === 'PAPER' ? '论文' : '设计';
+                    const defenseTypeBadge = student.defenseType === 'PAPER' ? 'bg-info' : 'bg-warning';
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>
+                            <input type="checkbox" class="unassigned-student-checkbox" value="${student.id}">
+                        </td>
+                        <td>${student.studentNo || ''}</td>
+                        <td><strong>${student.name || ''}</strong></td>
+                        <td>${student.departmentName || 'N/A'}</td>
+                        <td><span class="badge ${defenseTypeBadge}">${defenseTypeText}</span></td>
+                        <td>${student.title || ''}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error(error);
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
+            }
+        }
+
+        // 全选/取消全选未分配学生
+        function toggleSelectAllUnassignedStudents() {
+            const selectAllCheckbox = document.getElementById('unassigned-student-select-all');
+            if (!selectAllCheckbox) return;
+            const checkboxes = document.querySelectorAll('.unassigned-student-checkbox');
+            if (checkboxes.length === 0) return;
+            // 检查是否所有checkbox都已选中
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            // 切换状态：如果全部选中则取消，否则全选
+            const newState = !allChecked;
+            selectAllCheckbox.checked = newState;
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = newState;
+            });
+        }
+
+        // 提交添加学生到小组
+        async function submitAddStudentsToGroup() {
+            if (!currentGroupIdForAddStudent) {
+                showAlert('error', '未选择小组');
+                return;
+            }
+
+            const checkboxes = document.querySelectorAll('.unassigned-student-checkbox:checked');
+            if (checkboxes.length === 0) {
+                showAlert('warning', '请至少选择一个学生');
+                return;
+            }
+
+            const studentIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+            try {
+                const response = await fetch(`/department/student/assign-to-group`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        groupId: currentGroupIdForAddStudent,
+                        studentIds: studentIds
+                    })
+                });
+
+                const result = await response.text();
+                if (result === 'success') {
+                    showAlert('success', `成功添加 ${studentIds.length} 个学生到小组`);
+                    bootstrap.Modal.getInstance(document.getElementById('addStudentsToGroupModal')).hide();
+                    // 保存当前视图，然后刷新页面
+                    sessionStorage.setItem('activeView', 'group-management-view');
+                    location.reload();
+                } else {
+                    showAlert('error', result);
+                }
+            } catch (error) {
+                console.error(error);
+                showAlert('error', '添加学生失败: ' + error.message);
+            }
+        }
+
+        // 从小组移除学生
+        let currentGroupIdForRemoveStudent = null;
+
+        async function removeStudentFromGroup(groupId) {
+            currentGroupIdForRemoveStudent = groupId;
+            const modal = new bootstrap.Modal(document.getElementById('removeStudentsFromGroupModal'));
+            document.getElementById('removeStudentsFromGroupModalLabel').textContent = '从小组移除学生';
+
+            // 加载该小组的学生列表
+            await loadGroupStudents(groupId);
+            modal.show();
+        }
+
+        // 加载小组的学生列表
+        async function loadGroupStudents(groupId) {
+            const tbody = document.getElementById('group-student-list');
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">加载中...</td></tr>';
+
+            try {
+                const response = await fetch(`/department/student/group/${groupId}/students`);
+                if (!response.ok) throw new Error('获取小组学生列表失败');
+                const students = await response.json();
+
+                if (!students || students.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">该小组暂无学生</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                students.forEach(student => {
+                    const defenseTypeText = student.defenseType === 'PAPER' ? '论文' : '设计';
+                    const defenseTypeBadge = student.defenseType === 'PAPER' ? 'bg-info' : 'bg-warning';
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>
+                            <input type="checkbox" class="group-student-checkbox" value="${student.id}">
+                        </td>
+                        <td>${student.studentNo || ''}</td>
+                        <td><strong>${student.name || ''}</strong></td>
+                        <td>${student.departmentName || 'N/A'}</td>
+                        <td><span class="badge ${defenseTypeBadge}">${defenseTypeText}</span></td>
+                        <td>${student.title || ''}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error(error);
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
+            }
+        }
+
+        // 全选/取消全选小组学生
+        function toggleSelectAllGroupStudents() {
+            const selectAllCheckbox = document.getElementById('group-student-select-all');
+            if (!selectAllCheckbox) return;
+            const checkboxes = document.querySelectorAll('.group-student-checkbox');
+            if (checkboxes.length === 0) return;
+            // 检查是否所有checkbox都已选中
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            // 切换状态：如果全部选中则取消，否则全选
+            const newState = !allChecked;
+            selectAllCheckbox.checked = newState;
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = newState;
+            });
+        }
+
+        // 提交移除学生
+        async function submitRemoveStudentsFromGroup() {
+            if (!currentGroupIdForRemoveStudent) {
+                showAlert('error', '未选择小组');
+                return;
+            }
+
+            const checkboxes = document.querySelectorAll('.group-student-checkbox:checked');
+            if (checkboxes.length === 0) {
+                showAlert('warning', '请至少选择一个学生');
+                return;
+            }
+
+            const studentIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+            try {
+                const response = await fetch(`/department/student/remove-from-group`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        studentIds: studentIds
+                    })
+                });
+
+                const result = await response.text();
+                if (result === 'success') {
+                    showAlert('success', `成功移除 ${studentIds.length} 个学生`);
+                    bootstrap.Modal.getInstance(document.getElementById('removeStudentsFromGroupModal')).hide();
+                    // 保存当前视图，然后刷新页面
+                    sessionStorage.setItem('activeView', 'group-management-view');
+                    location.reload();
+                } else {
+                    showAlert('error', result);
+                }
+            } catch (error) {
+                console.error(error);
+                showAlert('error', '移除学生失败: ' + error.message);
+            }
+        }
+
+        // 分配教师到小组
+        let currentGroupIdForAssignTeacher = null;
+
+        async function assignTeacherToGroup(groupId) {
+            currentGroupIdForAssignTeacher = groupId;
+            const modal = new bootstrap.Modal(document.getElementById('assignTeachersToGroupModal'));
+            document.getElementById('assignTeachersToGroupModalLabel').textContent = '分配教师到小组';
+
+            // 加载未分配的教师列表
+            await loadUnassignedTeachers();
+            modal.show();
+        }
+
+        // 加载未分配的教师列表
+        async function loadUnassignedTeachers() {
+            const tbody = document.getElementById('unassigned-teacher-list');
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">加载中...</td></tr>';
+
+            try {
+                const response = await fetch(`/department/group/unassigned-teachers`);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error('获取未分配教师列表失败: ' + errorText);
+                }
+                const teachers = await response.json();
+
+                console.log('未分配教师列表:', teachers); // 调试日志
+
+                if (!teachers || teachers.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">暂无未分配的教师</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                teachers.forEach(teacher => {
+                    if (!teacher || !teacher.id) {
+                        console.warn('无效的教师数据:', teacher);
+                        return;
+                    }
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>
+                            <input type="checkbox" class="unassigned-teacher-checkbox" value="${teacher.id}">
+                        </td>
+                        <td>${teacher.teacherNo || ''}</td>
+                        <td><strong>${teacher.name || ''}</strong></td>
+                        <td>${teacher.departmentName || 'N/A'}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('加载未分配教师失败:', error);
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
+            }
+        }
+
+        // 全选/取消全选未分配教师
+        function toggleSelectAllUnassignedTeachers() {
+            const selectAllCheckbox = document.getElementById('unassigned-teacher-select-all');
+            if (!selectAllCheckbox) return;
+            const checkboxes = document.querySelectorAll('.unassigned-teacher-checkbox');
+            if (checkboxes.length === 0) return;
+            // 检查是否所有checkbox都已选中
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            // 切换状态：如果全部选中则取消，否则全选
+            const newState = !allChecked;
+            selectAllCheckbox.checked = newState;
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = newState;
+            });
+        }
+
+        // 提交分配教师到小组
+        async function submitAssignTeachersToGroup() {
+            if (!currentGroupIdForAssignTeacher) {
+                showAlert('error', '未选择小组');
+                return;
+            }
+
+            const checkboxes = document.querySelectorAll('.unassigned-teacher-checkbox:checked');
+            if (checkboxes.length === 0) {
+                showAlert('warning', '请至少选择一个教师');
+                return;
+            }
+
+            const teacherIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+            try {
+                const response = await fetch(`/department/group/assign-teachers`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        groupId: currentGroupIdForAssignTeacher,
+                        teacherIds: teacherIds
+                    })
+                });
+
+                const result = await response.text();
+                if (result === 'success') {
+                    showAlert('success', `成功分配 ${teacherIds.length} 个教师到小组`);
+                    bootstrap.Modal.getInstance(document.getElementById('assignTeachersToGroupModal')).hide();
+                    // 保存当前视图，然后刷新页面
+                    sessionStorage.setItem('activeView', 'group-management-view');
+                    location.reload();
+                } else {
+                    showAlert('error', result);
+                }
+            } catch (error) {
+                console.error(error);
+                showAlert('error', '分配教师失败: ' + error.message);
+            }
+        }
+
+        // 从小组移除教师
+        let currentGroupIdForRemoveTeacher = null;
+
+        async function removeTeacherFromGroup(groupId) {
+            currentGroupIdForRemoveTeacher = groupId;
+            const modal = new bootstrap.Modal(document.getElementById('removeTeachersFromGroupModal'));
+            document.getElementById('removeTeachersFromGroupModalLabel').textContent = '从小组移除教师';
+
+            // 加载该小组的教师列表
+            await loadGroupTeachers(groupId);
+            modal.show();
+        }
+
+        // 加载小组的教师列表
+        async function loadGroupTeachers(groupId) {
+            const tbody = document.getElementById('group-teacher-list');
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">加载中...</td></tr>';
+
+            try {
+                const response = await fetch(`/department/group/${groupId}/teachers`);
+                if (!response.ok) throw new Error('获取小组教师列表失败');
+                const groupTeachers = await response.json();
+
+                if (!groupTeachers || groupTeachers.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">该小组暂无教师</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                groupTeachers.forEach(gt => {
+                    const teacher = gt.teacher;
+                    if (!teacher) return;
+
+                    const isLeaderBadge = gt.isLeader === 1 ? '<span class="badge bg-warning">组长</span>' : '';
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>
+                            <input type="checkbox" class="group-teacher-checkbox" value="${teacher.id}">
+                        </td>
+                        <td>${teacher.teacherNo || ''}</td>
+                        <td><strong>${teacher.name || ''}</strong></td>
+                        <td>${teacher.department ? teacher.department.name : 'N/A'}</td>
+                        <td>${isLeaderBadge}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error(error);
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
+            }
+        }
+
+        // 全选/取消全选小组教师
+        function toggleSelectAllGroupTeachers() {
+            const selectAllCheckbox = document.getElementById('group-teacher-select-all');
+            if (!selectAllCheckbox) return;
+            const checkboxes = document.querySelectorAll('.group-teacher-checkbox');
+            if (checkboxes.length === 0) return;
+            // 检查是否所有checkbox都已选中
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            // 切换状态：如果全部选中则取消，否则全选
+            const newState = !allChecked;
+            selectAllCheckbox.checked = newState;
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = newState;
+            });
+        }
+
+        // 提交移除教师
+        async function submitRemoveTeachersFromGroup() {
+            if (!currentGroupIdForRemoveTeacher) {
+                showAlert('error', '未选择小组');
+                return;
+            }
+
+            const checkboxes = document.querySelectorAll('.group-teacher-checkbox:checked');
+            if (checkboxes.length === 0) {
+                showAlert('warning', '请至少选择一个教师');
+                return;
+            }
+
+            const teacherIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+            try {
+                const response = await fetch(`/department/group/remove-teachers`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        groupId: currentGroupIdForRemoveTeacher,
+                        teacherIds: teacherIds
+                    })
+                });
+
+                const result = await response.text();
+                if (result.startsWith('success')) {
+                    showAlert('success', `成功移除 ${teacherIds.length} 个教师`);
+                    bootstrap.Modal.getInstance(document.getElementById('removeTeachersFromGroupModal')).hide();
+                    // 保存当前视图，然后刷新页面
+                    sessionStorage.setItem('activeView', 'group-management-view');
+                    location.reload();
+                } else {
+                    showAlert('error', result);
+                }
+            } catch (error) {
+                console.error(error);
+                showAlert('error', '移除教师失败: ' + error.message);
+            }
+        }
+
+        // 设定小组组长
+        let currentGroupIdForSetLeader = null;
+
+        async function setGroupLeader(groupId) {
+            currentGroupIdForSetLeader = groupId;
+            const modal = new bootstrap.Modal(document.getElementById('setGroupLeaderModal'));
+            document.getElementById('setGroupLeaderModalLabel').textContent = '设定小组组长';
+
+            // 加载该小组的教师列表
+            await loadGroupTeachersForLeader(groupId);
+            modal.show();
+        }
+
+        // 加载小组的教师列表（用于设定组长）
+        async function loadGroupTeachersForLeader(groupId) {
+            const tbody = document.getElementById('group-leader-teacher-list');
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">加载中...</td></tr>';
+
+            try {
+                const response = await fetch(`/department/group/${groupId}/teachers`);
+                if (!response.ok) throw new Error('获取小组教师列表失败');
+                const groupTeachers = await response.json();
+
+                if (!groupTeachers || groupTeachers.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">该小组暂无教师</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                groupTeachers.forEach(gt => {
+                    const teacher = gt.teacher;
+                    if (!teacher) return;
+
+                    // 判断是否为当前组长
+                    const isCurrentLeader = gt.isLeader === 1;
+                    const leaderBadge = isCurrentLeader ? '<span class="badge bg-warning">当前组长</span>' : '';
+
+                    const row = document.createElement('tr');
+                    if (isCurrentLeader) {
+                        row.classList.add('table-warning'); // 高亮显示当前组长
+                    }
+                    row.innerHTML = `
+                        <td>
+                            <input type="radio" name="group-leader-teacher" class="group-leader-radio" value="${teacher.id}" ${isCurrentLeader ? 'checked' : ''}>
+                        </td>
+                        <td>${teacher.teacherNo || ''}</td>
+                        <td><strong>${teacher.name || ''}</strong></td>
+                        <td>${teacher.department ? teacher.department.name : 'N/A'}</td>
+                        <td>${leaderBadge}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error(error);
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
+            }
+        }
+
+        // 提交设定组长
+        async function submitSetGroupLeader() {
+            if (!currentGroupIdForSetLeader) {
+                showAlert('error', '未选择小组');
+                return;
+            }
+
+            const selectedRadio = document.querySelector('input[name="group-leader-teacher"]:checked');
+            if (!selectedRadio) {
+                showAlert('warning', '请选择一个教师作为组长');
+                return;
+            }
+
+            const teacherId = parseInt(selectedRadio.value);
+
+            try {
+                const response = await fetch(`/department/group/${currentGroupIdForSetLeader}/leader/set?teacherId=${teacherId}`, {
+                    method: 'POST'
+                });
+
+                const result = await response.text();
+                if (result === 'success') {
+                    showAlert('success', '成功设定组长');
+                    bootstrap.Modal.getInstance(document.getElementById('setGroupLeaderModal')).hide();
+                    // 保存当前视图，然后刷新页面
+                    sessionStorage.setItem('activeView', 'group-management-view');
+                    location.reload();
+                } else {
+                    showAlert('error', result);
+                }
+            } catch (error) {
+                console.error(error);
+                showAlert('error', '设定组长失败: ' + error.message);
+            }
+        }
+
         // --- User Management Functions ---
         let currentUserPage = 1;
-        const userPageSize = 8;
+        const userPageSize = 10;
 
         async function searchUsersWithPagination(page = 1) {
             currentUserPage = page;
@@ -2152,6 +2991,13 @@
         function renderUserTable(users) {
             const userListBody = document.getElementById('user-list');
             userListBody.innerHTML = '';
+
+            // 重置全选复选框
+            const selectAllCheckbox = document.getElementById('user-select-all');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = false;
+            }
+            updateBatchDeleteUserButton();
 
             if (users.length === 0) {
                 userListBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">暂无数据</td></tr>';
@@ -2191,6 +3037,9 @@
 
                 const row = `
                     <tr data-user-id="${user.id}">
+                        <td>
+                            <input type="checkbox" class="user-checkbox" value="${user.id}" onchange="updateBatchDeleteUserButton()">
+                        </td>
                         <td><strong>${user.username}</strong></td>
                         <td>${user.realName}</td>
                         <td><span class="badge bg-primary role-badge">${roleDisplay}</span></td>
@@ -2205,6 +3054,72 @@
                 `;
                 userListBody.innerHTML += row;
             });
+        }
+
+        // 全选/取消全选用户
+        function toggleSelectAllUsers() {
+            const selectAllCheckbox = document.getElementById('user-select-all');
+            const checkboxes = document.querySelectorAll('.user-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+            updateBatchDeleteUserButton();
+        }
+
+        // 更新批量删除用户按钮状态
+        function updateBatchDeleteUserButton() {
+            const checkboxes = document.querySelectorAll('.user-checkbox:checked');
+            const batchDeleteBtn = document.getElementById('batch-delete-user-btn');
+            if (batchDeleteBtn) {
+                batchDeleteBtn.disabled = checkboxes.length === 0;
+            }
+
+            // 更新全选复选框状态
+            const selectAllCheckbox = document.getElementById('user-select-all');
+            if (selectAllCheckbox) {
+                const allCheckboxes = document.querySelectorAll('.user-checkbox');
+                if (allCheckboxes.length === 0) {
+                    selectAllCheckbox.checked = false;
+                } else {
+                    selectAllCheckbox.checked = checkboxes.length === allCheckboxes.length;
+                }
+            }
+        }
+
+        // 批量删除用户
+        async function batchDeleteUsers() {
+            const checkboxes = document.querySelectorAll('.user-checkbox:checked');
+            if (checkboxes.length === 0) {
+                showAlert('warning', '请至少选择一个用户');
+                return;
+            }
+
+            const selectedIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+            if (!confirm(`确定要删除选中的 ${selectedIds.length} 个用户吗？此操作不可恢复。`)) {
+                return;
+            }
+
+            toggleLoading(true);
+            try {
+                const response = await fetch('/admin/users/batch-delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(selectedIds)
+                });
+                const result = await response.text();
+
+                if (result === 'success') {
+                    showAlert('success', `成功删除 ${selectedIds.length} 个用户`);
+                    searchUsersWithPagination(1);
+                } else {
+                    showAlert('error', result.startsWith('error:') ? result.substring(6) : '批量删除失败');
+                }
+            } catch (error) {
+                console.error(error);
+                showAlert('error', '批量删除失败，请检查网络连接');
+            } finally {
+                toggleLoading(false);
+            }
         }
 
         function renderUserPagination(currentPage, totalPages, total) {
@@ -2464,6 +3379,58 @@
             }
         }
 
+        // 用户Excel导入处理函数
+        async function handleUserExcelImport(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                return;
+            }
+
+            // 验证文件类型
+            const fileName = file.name.toLowerCase();
+            if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+                showAlert('error', '请选择Excel文件（.xlsx或.xls格式）');
+                event.target.value = '';
+                return;
+            }
+
+            // 确认导入
+            if (!confirm('确定要导入Excel文件吗？导入后将创建新用户记录（用户名、真实姓名、角色、院系、状态，每行至少填写一个字段），其他字段为空。')) {
+                event.target.value = '';
+                return;
+            }
+
+            toggleLoading(true);
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/admin/users/import/excel', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.text();
+
+                if (result.startsWith('success')) {
+                    // 解析成功信息
+                    const message = result.substring(7); // 去掉 "success:" 前缀
+                    showAlert('success', 'Excel导入完成！' + message);
+                    // 刷新用户列表
+                    searchUsersWithPagination(1);
+                } else {
+                    showAlert('error', '导入失败: ' + result);
+                }
+            } catch (error) {
+                console.error('Excel import error:', error);
+                showAlert('error', '导入失败: ' + error.message);
+            } finally {
+                toggleLoading(false);
+                // 清空文件选择
+                event.target.value = '';
+            }
+        }
+
         async function deleteUser(userId) {
             if (!confirm('确定要删除这个用户吗？')) return;
 
@@ -2540,6 +3507,9 @@
         }
 
         // --- Student Management Functions ---
+        const studentPageSize = 10;
+        let currentStudentPage = 1;
+
         async function loadStudents() {
             // 根据用户角色判断加载哪种学生列表
             const userInfoDiv = document.querySelector('.user-info');
@@ -2562,13 +3532,13 @@
                 // 一般教师：不显示学生管理（已删除）
                 const tbody = document.getElementById('student-list');
                 if (tbody) {
-                    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">一般教师无权限查看学生管理</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">一般教师无权限查看学生管理</td></tr>';
                 }
             } else {
-                // 管理员：显示所有学生（管理员版）
+                // 管理员：显示所有学生（管理员版，支持分页）
                 updateStudentTableHeaderForAdmin();
                 showAdminStudentButtons();
-                loadStudentsForAdmin();
+                searchStudentsWithPagination(1);
             }
         }
 
@@ -2607,38 +3577,12 @@
 
         // 更新学生管理表头为管理员版
         function updateStudentTableHeaderForAdmin() {
-            const tableHead = document.querySelector('#student-management-view table thead tr');
-            if (tableHead) {
-                // 检查是否是超级管理员
-                const userInfoDiv = document.querySelector('.user-info');
-                const isSuperAdmin = userInfoDiv && userInfoDiv.dataset.userRole === 'SUPER_ADMIN';
-
-                if (isSuperAdmin) {
-                    // 超级管理员：不显示"班级"列
-                    tableHead.innerHTML = `
-                        <th>学号</th>
-                        <th>姓名</th>
-                        <th>类型</th>
-                        <th>题目</th>
-                        <th>指导教师</th>
-                        <th>评阅教师</th>
-                        <th>答辩小组</th>
-                        <th>操作</th>
-                    `;
-                } else {
-                    // 普通管理员：显示"班级"列
-                    tableHead.innerHTML = `
-                        <th>学号</th>
-                        <th>姓名</th>
-                        <th>班级</th>
-                        <th>类型</th>
-                        <th>题目</th>
-                        <th>指导教师</th>
-                        <th>评阅教师</th>
-                        <th>答辩小组</th>
-                        <th>操作</th>
-                    `;
-                }
+            const classHeader = document.getElementById('student-class-header');
+            const userInfoDiv = document.querySelector('.user-info');
+            const isSuperAdmin = userInfoDiv && userInfoDiv.dataset.userRole === 'SUPER_ADMIN';
+            if (classHeader) {
+                // 超级管理员不显示"班级"列，院系管理员显示
+                classHeader.style.display = isSuperAdmin ? 'none' : '';
             }
         }
 
@@ -2658,30 +3602,78 @@
             if (excelButton) excelButton.style.display = '';
         }
 
-        // 管理员加载学生列表
-        async function loadStudentsForAdmin() {
+        // 管理员加载学生列表（支持分页）
+        async function searchStudentsWithPagination(page = 1) {
+            currentStudentPage = page;
             const keyword = document.getElementById('student-search-input')?.value.trim() || '';
+
             try {
-                const response = await fetch(`/department/student/list`);
+                const response = await fetch(`/department/student/search?keyword=${encodeURIComponent(keyword)}&page=${page}&pageSize=${studentPageSize}`);
                 if (!response.ok) {
-                    let errorText = '获取学生列表失败';
-                    try {
-                        const errorJson = await response.json();
-                        errorText = errorJson.message || errorJson.error || errorText;
-                    } catch (e) {
-                        errorText = await response.text() || errorText;
-                    }
-                    throw new Error(errorText);
+                    throw new Error('获取学生列表失败');
                 }
-                const students = await response.json();
-                console.log('Loaded students:', students);
-                renderStudentTable(students, keyword);
+                const data = await response.json();
+
+                renderStudentTable(data.students, keyword);
+                renderStudentPagination(data.currentPage, data.totalPages, data.total);
             } catch (error) {
                 console.error('Load students error:', error);
                 showAlert('error', error.message || '获取学生列表失败');
+                const userInfoDiv = document.querySelector('.user-info');
+                const isSuperAdmin = userInfoDiv && userInfoDiv.dataset.userRole === 'SUPER_ADMIN';
+                const colCount = isSuperAdmin ? 9 : 10;
                 document.getElementById('student-list').innerHTML =
-                    '<tr><td colspan="9" class="text-center text-danger">加载失败: ' + (error.message || '未知错误') + '</td></tr>';
+                    `<tr><td colspan="${colCount}" class="text-center text-danger">加载失败: ${error.message || '未知错误'}</td></tr>`;
             }
+        }
+
+        // 渲染学生分页
+        function renderStudentPagination(currentPage, totalPages, total) {
+            const paginationInfo = document.getElementById('student-pagination-info');
+            const pagination = document.getElementById('student-pagination');
+
+            if (!paginationInfo || !pagination) return;
+
+            // 更新信息
+            const start = (currentPage - 1) * studentPageSize + 1;
+            const end = Math.min(currentPage * studentPageSize, total);
+            paginationInfo.textContent = `显示 ${start}-${end} 条，共 ${total} 条`;
+
+            // 生成分页按钮
+            pagination.innerHTML = '';
+
+            // 上一页
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+            prevLi.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="searchStudentsWithPagination(${currentPage - 1})">上一页</a>`;
+            pagination.appendChild(prevLi);
+
+            // 页码按钮
+            const maxButtons = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+
+            if (endPage - startPage < maxButtons - 1) {
+                startPage = Math.max(1, endPage - maxButtons + 1);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                li.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="searchStudentsWithPagination(${i})">${i}</a>`;
+                pagination.appendChild(li);
+            }
+
+            // 下一页
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+            nextLi.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="searchStudentsWithPagination(${currentPage + 1})">下一页</a>`;
+            pagination.appendChild(nextLi);
+        }
+
+        // 管理员加载学生列表（保留兼容性，但实际调用分页版本）
+        async function loadStudentsForAdmin() {
+            searchStudentsWithPagination(1);
         }
 
         // 辅助函数：获取教师显示信息
@@ -2713,10 +3705,17 @@
             const tbody = document.getElementById('student-list');
             tbody.innerHTML = '';
 
+            // 重置全选复选框
+            const selectAllCheckbox = document.getElementById('student-select-all');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = false;
+            }
+            updateBatchDeleteStudentButton();
+
             // 检查是否是超级管理员
             const userInfoDiv = document.querySelector('.user-info');
             const isSuperAdmin = userInfoDiv && userInfoDiv.dataset.userRole === 'SUPER_ADMIN';
-            const colCount = isSuperAdmin ? 8 : 9; // 超级管理员少一列（班级）
+            const colCount = isSuperAdmin ? 10 : 11; // 超级管理员少一列（班级），加上勾选框列
 
             if (!students || students.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="${colCount}" class="text-center text-muted">暂无学生数据</td></tr>`;
@@ -2742,11 +3741,17 @@
             filtered.forEach(student => {
                 // 超级管理员不显示"班级"列
                 const classCell = isSuperAdmin ? '' : `<td>${student.classInfo || 'N/A'}</td>`;
+                // 获取院系名称
+                const departmentName = student.department ? student.department.name : (student.departmentId ? 'ID:' + student.departmentId : 'N/A');
                 const row = `
                     <tr>
+                        <td>
+                            <input type="checkbox" class="student-checkbox" value="${student.id}" onchange="updateBatchDeleteStudentButton()">
+                        </td>
                         <td>${student.studentNo || 'N/A'}</td>
                         <td><strong>${student.name || 'N/A'}</strong></td>
                         ${classCell}
+                        <td>${departmentName}</td>
                         <td><span class="badge ${student.defenseType === 'PAPER' ? 'bg-info' : 'bg-warning'}">
                             ${student.defenseType === 'PAPER' ? '论文' : (student.defenseType === 'DESIGN' ? '设计' : 'N/A')}
                         </span></td>
@@ -2766,6 +3771,72 @@
                 `;
                 tbody.innerHTML += row;
             });
+        }
+
+        // 全选/取消全选学生
+        function toggleSelectAllStudents() {
+            const selectAllCheckbox = document.getElementById('student-select-all');
+            const checkboxes = document.querySelectorAll('.student-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+            updateBatchDeleteStudentButton();
+        }
+
+        // 更新批量删除学生按钮状态
+        function updateBatchDeleteStudentButton() {
+            const checkboxes = document.querySelectorAll('.student-checkbox:checked');
+            const batchDeleteBtn = document.getElementById('batch-delete-student-btn');
+            if (batchDeleteBtn) {
+                batchDeleteBtn.disabled = checkboxes.length === 0;
+            }
+
+            // 更新全选复选框状态
+            const selectAllCheckbox = document.getElementById('student-select-all');
+            if (selectAllCheckbox) {
+                const allCheckboxes = document.querySelectorAll('.student-checkbox');
+                if (allCheckboxes.length === 0) {
+                    selectAllCheckbox.checked = false;
+                } else {
+                    selectAllCheckbox.checked = checkboxes.length === allCheckboxes.length;
+                }
+            }
+        }
+
+        // 批量删除学生
+        async function batchDeleteStudents() {
+            const checkboxes = document.querySelectorAll('.student-checkbox:checked');
+            if (checkboxes.length === 0) {
+                showAlert('warning', '请至少选择一个学生');
+                return;
+            }
+
+            const selectedIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+            if (!confirm(`确定要删除选中的 ${selectedIds.length} 个学生吗？此操作不可恢复。`)) {
+                return;
+            }
+
+            toggleLoading(true);
+            try {
+                const response = await fetch('/department/student/batch-delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(selectedIds)
+                });
+                const result = await response.text();
+
+                if (result === 'success') {
+                    showAlert('success', `成功删除 ${selectedIds.length} 个学生`);
+                    searchStudentsWithPagination(currentStudentPage);
+                } else {
+                    showAlert('error', result.startsWith('error:') ? result.substring(6) : '批量删除失败');
+                }
+            } catch (error) {
+                console.error(error);
+                showAlert('error', '批量删除失败，请检查网络连接');
+            } finally {
+                toggleLoading(false);
+            }
         }
 
         async function openStudentModal(student = null) {
@@ -2791,6 +3862,25 @@
             } catch (e) {
                 console.error('Failed to load current year:', e);
                 document.getElementById('defenseYear').value = new Date().getFullYear();
+            }
+
+            // 加载院系列表
+            try {
+                const deptResp = await fetch('/admin/departments/list');
+                if (deptResp.ok) {
+                    const departments = await deptResp.json();
+                    const deptSelect = document.getElementById('studentDepartment');
+                    deptSelect.innerHTML = '<option value="">请选择院系</option>';
+
+                    departments.forEach(dept => {
+                        const opt = document.createElement('option');
+                        opt.value = dept.id;
+                        opt.textContent = dept.name || `院系 ${dept.id}`;
+                        deptSelect.appendChild(opt);
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to load departments:', e);
             }
 
             // 加载答辩小组列表
@@ -2830,7 +3920,7 @@
                 document.getElementById('studentId').value = student.id || '';
                 document.getElementById('studentNo').value = student.studentNo || '';
                 document.getElementById('studentName').value = student.name || '';
-                document.getElementById('classInfo').value = student.classInfo || '';
+                document.getElementById('studentDepartment').value = student.departmentId || '';
                 document.getElementById('defenseType').value = student.defenseType || '';
                 document.getElementById('title').value = student.title || '';
                 document.getElementById('summary').value = student.summary || '';
@@ -2961,11 +4051,14 @@
             const userInfoDiv = document.querySelector('.user-info');
             const currentUserDept = userInfoDiv.dataset.userDept;
 
+            // 获取院系ID（优先使用下拉框选择的值，如果没有则使用当前用户的院系）
+            const selectedDeptId = document.getElementById('studentDepartment').value;
+            const departmentId = selectedDeptId ? parseInt(selectedDeptId) : (currentUserDept ? parseInt(currentUserDept) : null);
+
             const studentData = {
                 id: studentId || null,
                 studentNo: studentNo,
                 name: studentName,
-                classInfo: document.getElementById('classInfo').value || null,
                 defenseType: document.getElementById('defenseType').value || null,
                 title: document.getElementById('title').value || null,
                 summary: document.getElementById('summary').value || null,
@@ -2976,7 +4069,7 @@
                 defenseGroupId: document.getElementById('defenseGroup').value ?
                     parseInt(document.getElementById('defenseGroup').value) : null,
                 defenseYear: parseInt(defenseYear),
-                departmentId: currentUserDept ? parseInt(currentUserDept) : null
+                departmentId: departmentId
             };
 
             try {
@@ -2990,7 +4083,7 @@
                 if (result === 'success') {
                     showAlert('success', studentId ? '学生信息更新成功！' : '学生添加成功！');
                     bootstrap.Modal.getInstance(document.getElementById('addStudentModal')).hide();
-                    loadStudents();
+                    searchStudentsWithPagination(currentStudentPage);
                 } else {
                     showAlert('error', '保存失败: ' + result);
                 }
@@ -3016,7 +4109,7 @@
             }
 
             // 确认导入
-            if (!confirm('确定要导入Excel文件吗？导入后将创建新学生记录（学号、姓名），其他字段为空。')) {
+            if (!confirm('确定要导入Excel文件吗？导入后将创建新学生记录（学号、姓名、类型、题目，每行至少填写一个字段），其他字段为空。')) {
                 event.target.value = '';
                 return;
             }
@@ -3032,13 +4125,13 @@
                 });
 
                 const result = await response.text();
-                
+
                 if (result.startsWith('success')) {
                     // 解析成功信息（格式：success:成功导入X条，失败Y条）
                     const message = result.substring(7); // 去掉 "success:" 前缀
                     showAlert('success', 'Excel导入完成！' + message);
-                    // 刷新学生列表
-                    loadStudents();
+                    // 刷新学生列表（回到第一页）
+                    searchStudentsWithPagination(1);
                 } else {
                     showAlert('error', '导入失败: ' + result);
                 }
@@ -3061,7 +4154,7 @@
                 const result = await response.text();
                 if (result === 'success') {
                     showAlert('success', '学生删除成功！');
-                    loadStudents();
+                    searchStudentsWithPagination(currentStudentPage);
                 } else {
                     showAlert('error', '删除失败: ' + result);
                 }
@@ -3118,7 +4211,7 @@
                 row.innerHTML = `
                     <td>${s.studentNo || ''}</td>
                     <td><strong>${s.name || ''}</strong></td>
-                    <td>${s.classInfo || ''}</td>
+                    <td>${s.departmentName || 'N/A'}</td>
                     <td><span class="badge ${defenseTypeBadge}">${defenseTypeText}</span></td>
                     <td>${s.title || ''}</td>
                     <td>
@@ -3260,7 +4353,7 @@
                 row.innerHTML = `
                     <td>${student.studentNo || ''}</td>
                     <td><strong>${student.studentName || ''}</strong></td>
-                    <td>${student.classInfo || ''}</td>
+                    <td>${student.departmentName || 'N/A'}</td>
                     <td><span class="badge ${defenseTypeBadge}">${defenseTypeText}</span></td>
                     <td>${student.title || ''}</td>
                     <td>${scoresHtml}</td>
@@ -3314,7 +4407,7 @@
                 row.innerHTML = `
                     <td>${s.studentNo || ''}</td>
                     <td><strong>${s.name || ''}</strong></td>
-                    <td>${s.classInfo || ''}</td>
+                    <td>${s.departmentName || 'N/A'}</td>
                     <td><span class="badge ${defenseTypeBadge}">${defenseTypeText}</span></td>
                     <td>${s.title || ''}</td>
                     <td>
@@ -3403,7 +4496,7 @@
                     row.innerHTML = `
                         <td>${s.studentNo || ''}</td>
                         <td><strong>${s.name || ''}</strong></td>
-                        <td>${s.classInfo || ''}</td>
+                        <td>${s.departmentName || 'N/A'}</td>
                         <td><span class="badge ${defenseTypeBadge}">${defenseTypeText}</span></td>
                         <td>${s.title || ''}</td>
                         <td>${advisorInfo}</td>
@@ -4464,52 +5557,103 @@
         }
 
         // --- Department Management Functions ---
+        // --- Department Management Functions ---
+        const departmentPageSize = 10;
+        let currentDepartmentPage = 1;
+
         async function loadDepartments() {
+            searchDepartmentsWithPagination(1);
+        }
+
+        // 院系搜索（支持分页）
+        async function searchDepartmentsWithPagination(page = 1) {
+            currentDepartmentPage = page;
             const keyword = document.getElementById('department-search-input')?.value.trim() || '';
+
             try {
-                const response = await fetch('/admin/departments/list');
+                const response = await fetch(`/admin/departments/search?keyword=${encodeURIComponent(keyword)}&page=${page}&pageSize=${departmentPageSize}`);
                 if (!response.ok) {
                     throw new Error('获取院系列表失败');
                 }
-                const departments = await response.json();
-                renderDepartmentTable(departments, keyword);
+                const data = await response.json();
+
+                renderDepartmentTable(data.departments, keyword);
+                renderDepartmentPagination(data.currentPage, data.totalPages, data.total);
             } catch (error) {
                 console.error('Load departments error:', error);
                 showAlert('error', error.message || '获取院系列表失败');
                 document.getElementById('department-list').innerHTML =
-                    '<tr><td colspan="5" class="text-center text-danger">加载失败: ' + (error.message || '未知错误') + '</td></tr>';
+                    '<tr><td colspan="6" class="text-center text-danger">加载失败: ' + (error.message || '未知错误') + '</td></tr>';
             }
+        }
+
+        // 渲染院系分页
+        function renderDepartmentPagination(currentPage, totalPages, total) {
+            const paginationInfo = document.getElementById('department-pagination-info');
+            const pagination = document.getElementById('department-pagination');
+
+            if (!paginationInfo || !pagination) return;
+
+            // 更新信息
+            const start = (currentPage - 1) * departmentPageSize + 1;
+            const end = Math.min(currentPage * departmentPageSize, total);
+            paginationInfo.textContent = `显示 ${start}-${end} 条，共 ${total} 条`;
+
+            // 生成分页按钮
+            pagination.innerHTML = '';
+
+            // 上一页
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+            prevLi.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="searchDepartmentsWithPagination(${currentPage - 1})">上一页</a>`;
+            pagination.appendChild(prevLi);
+
+            // 页码按钮
+            const maxButtons = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+
+            if (endPage - startPage < maxButtons - 1) {
+                startPage = Math.max(1, endPage - maxButtons + 1);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                li.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="searchDepartmentsWithPagination(${i})">${i}</a>`;
+                pagination.appendChild(li);
+            }
+
+            // 下一页
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+            nextLi.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="searchDepartmentsWithPagination(${currentPage + 1})">下一页</a>`;
+            pagination.appendChild(nextLi);
         }
 
         function renderDepartmentTable(departments, keyword) {
             const tbody = document.getElementById('department-list');
             tbody.innerHTML = '';
 
+            // 重置全选复选框
+            const selectAllCheckbox = document.getElementById('department-select-all');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = false;
+            }
+            updateBatchDeleteDepartmentButton();
+
             if (!departments || departments.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">暂无院系数据</td></tr>';
                 return;
             }
 
-            // 搜索过滤
-            let filtered = departments;
-            if (keyword) {
-                const kw = keyword.toLowerCase();
-                filtered = departments.filter(dept =>
-                    (dept.name && dept.name.toLowerCase().includes(kw)) ||
-                    (dept.code && dept.code.toLowerCase().includes(kw)) ||
-                    (dept.description && dept.description.toLowerCase().includes(kw))
-                );
-            }
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">未找到匹配的院系</td></tr>';
-                return;
-            }
-
-            filtered.forEach(dept => {
+            departments.forEach(dept => {
                 const row = `
                     <tr>
-                        <td>${dept.id || 'N/A'}</td>
+                        <td>
+                            <input type="checkbox" class="department-checkbox" value="${dept.id}" onchange="updateBatchDeleteDepartmentButton()">
+                        </td>
+                        <td style="display: none;">${dept.id || 'N/A'}</td>
                         <td><strong>${dept.name || 'N/A'}</strong></td>
                         <td>${dept.code || 'N/A'}</td>
                         <td>${dept.description || '-'}</td>
@@ -4525,6 +5669,77 @@
                 `;
                 tbody.innerHTML += row;
             });
+        }
+
+        // 全选/取消全选
+        function toggleSelectAllDepartments() {
+            const selectAllCheckbox = document.getElementById('department-select-all');
+            const checkboxes = document.querySelectorAll('.department-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+            updateBatchDeleteDepartmentButton();
+        }
+
+        // 更新批量删除院系按钮状态
+        function updateBatchDeleteDepartmentButton() {
+            const checkboxes = document.querySelectorAll('.department-checkbox:checked');
+            const batchDeleteBtn = document.getElementById('batch-delete-department-btn');
+            if (batchDeleteBtn) {
+                batchDeleteBtn.disabled = checkboxes.length === 0;
+            }
+
+            // 更新全选复选框状态
+            const selectAllCheckbox = document.getElementById('department-select-all');
+            if (selectAllCheckbox) {
+                const allCheckboxes = document.querySelectorAll('.department-checkbox');
+                if (allCheckboxes.length === 0) {
+                    selectAllCheckbox.checked = false;
+                } else {
+                    selectAllCheckbox.checked = checkboxes.length === allCheckboxes.length;
+                }
+            }
+        }
+
+        // 兼容性：保留旧函数名
+        function updateBatchDeleteButton() {
+            updateBatchDeleteDepartmentButton();
+        }
+
+        // 批量删除院系
+        async function batchDeleteDepartments() {
+            const checkboxes = document.querySelectorAll('.department-checkbox:checked');
+            if (checkboxes.length === 0) {
+                showAlert('warning', '请至少选择一个院系');
+                return;
+            }
+
+            const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+            if (!confirm(`确定要删除选中的 ${selectedIds.length} 个院系吗？删除前请确保这些院系下没有用户或学生。`)) {
+                return;
+            }
+
+            toggleLoading(true);
+            try {
+                const response = await fetch('/admin/departments/batch-delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(selectedIds)
+                });
+                const result = await response.text();
+
+                if (result === 'success') {
+                    showAlert('success', `成功删除 ${selectedIds.length} 个院系`);
+                    searchDepartmentsWithPagination(currentDepartmentPage);
+                } else {
+                    showAlert('error', result.startsWith('error:') ? result.substring(6) : '批量删除失败');
+                }
+            } catch (error) {
+                console.error(error);
+                showAlert('error', '批量删除失败，请检查网络连接');
+            } finally {
+                toggleLoading(false);
+            }
         }
 
         function openDepartmentModal(department = null) {
@@ -4602,7 +5817,7 @@
                 if (result === 'success') {
                     showAlert('success', departmentId ? '院系更新成功' : '院系创建成功');
                     bootstrap.Modal.getInstance(document.getElementById('addDepartmentModal')).hide();
-                    loadDepartments();
+                    searchDepartmentsWithPagination(currentDepartmentPage);
                 } else {
                     showAlert('error', result.startsWith('error:') ? result.substring(6) : '操作失败');
                 }
@@ -4611,6 +5826,58 @@
                 showAlert('error', '操作失败，请检查网络连接');
             } finally {
                 toggleLoading(false);
+            }
+        }
+
+        // 院系Excel导入处理函数
+        async function handleDepartmentExcelImport(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                return;
+            }
+
+            // 验证文件类型
+            const fileName = file.name.toLowerCase();
+            if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+                showAlert('error', '请选择Excel文件（.xlsx或.xls格式）');
+                event.target.value = '';
+                return;
+            }
+
+            // 确认导入
+            if (!confirm('确定要导入Excel文件吗？导入后将创建新院系记录（ID、院系名称、院系代码、描述，每行至少填写一个字段），其他字段为空。')) {
+                event.target.value = '';
+                return;
+            }
+
+            toggleLoading(true);
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/admin/departments/import/excel', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.text();
+
+                if (result.startsWith('success')) {
+                    // 解析成功信息
+                    const message = result.substring(7); // 去掉 "success:" 前缀
+                    showAlert('success', 'Excel导入完成！' + message);
+                    // 刷新院系列表（回到第一页）
+                    searchDepartmentsWithPagination(1);
+                } else {
+                    showAlert('error', '导入失败: ' + result);
+                }
+            } catch (error) {
+                console.error('Excel import error:', error);
+                showAlert('error', '导入失败: ' + error.message);
+            } finally {
+                toggleLoading(false);
+                // 清空文件选择
+                event.target.value = '';
             }
         }
 
@@ -4628,7 +5895,7 @@
 
                 if (result === 'success') {
                     showAlert('success', '院系删除成功');
-                    loadDepartments();
+                    searchDepartmentsWithPagination(currentDepartmentPage);
                 } else {
                     showAlert('error', result.startsWith('error:') ? result.substring(6) : '删除失败');
                 }
@@ -5290,7 +6557,7 @@
 
                 // 从学生数据中获取年份
                 let year = student.defenseYear;
-                
+
                 // 如果学生数据中没有年份，尝试从系统配置获取
                 if (!year) {
                     try {

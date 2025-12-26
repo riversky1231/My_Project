@@ -32,17 +32,24 @@
             <id property="id" column="group_id"/>
             <result property="name" column="group_name"/>
         </association>
+        <association property="department" javaType="com.example.defensemanagement.entity.Department">
+            <id property="id" column="department_id"/>
+            <result property="name" column="department_name"/>
+            <result property="code" column="department_code"/>
+        </association>
     </resultMap>
 
     <select id="findById" resultMap="StudentResultMap">
         SELECT s.*,
                a.id as advisor_id, a.teacher_no as advisor_teacher_no, a.name as advisor_name, a.title as advisor_title,
                r.id as reviewer_id, r.teacher_no as reviewer_teacher_no, r.name as reviewer_name, r.title as reviewer_title,
-               g.id as group_id, g.name as group_name
+               g.id as group_id, g.name as group_name,
+               d.id as department_id, d.name as department_name, d.code as department_code
         FROM t_student s
         LEFT JOIN teacher a ON s.advisor_teacher_id = a.id
         LEFT JOIN teacher r ON s.reviewer_teacher_id = r.id
         LEFT JOIN defense_group g ON s.defense_group_id = g.id
+        LEFT JOIN department d ON s.department_id = d.id
         WHERE s.id = #{id}
     </select>
 
@@ -50,22 +57,26 @@
         SELECT s.*,
                a.id as advisor_id, a.teacher_no as advisor_teacher_no, a.name as advisor_name, a.title as advisor_title,
                r.id as reviewer_id, r.teacher_no as reviewer_teacher_no, r.name as reviewer_name, r.title as reviewer_title,
-               g.id as group_id, g.name as group_name
+               g.id as group_id, g.name as group_name,
+               d.id as department_id, d.name as department_name, d.code as department_code
         FROM t_student s
         LEFT JOIN teacher a ON s.advisor_teacher_id = a.id
         LEFT JOIN teacher r ON s.reviewer_teacher_id = r.id
         LEFT JOIN defense_group g ON s.defense_group_id = g.id
+        LEFT JOIN department d ON s.department_id = d.id
     </select>
 
     <select id="findByDepartmentAndYear" resultMap="StudentResultMap">
         SELECT s.*,
                a.id as advisor_id, a.teacher_no as advisor_teacher_no, a.name as advisor_name, a.title as advisor_title,
                r.id as reviewer_id, r.teacher_no as reviewer_teacher_no, r.name as reviewer_name, r.title as reviewer_title,
-               g.id as group_id, g.name as group_name
+               g.id as group_id, g.name as group_name,
+               d.id as department_id, d.name as department_name, d.code as department_code
         FROM t_student s
         LEFT JOIN teacher a ON s.advisor_teacher_id = a.id
         LEFT JOIN teacher r ON s.reviewer_teacher_id = r.id
         LEFT JOIN defense_group g ON s.defense_group_id = g.id
+        LEFT JOIN department d ON s.department_id = d.id
         WHERE s.department_id = #{departmentId} AND s.defense_year = #{year}
     </select>
     
@@ -73,11 +84,13 @@
         SELECT s.*,
                a.id as advisor_id, a.teacher_no as advisor_teacher_no, a.name as advisor_name, a.title as advisor_title,
                r.id as reviewer_id, r.teacher_no as reviewer_teacher_no, r.name as reviewer_name, r.title as reviewer_title,
-               g.id as group_id, g.name as group_name
+               g.id as group_id, g.name as group_name,
+               d.id as department_id, d.name as department_name, d.code as department_code
         FROM t_student s
         LEFT JOIN teacher a ON s.advisor_teacher_id = a.id
         LEFT JOIN teacher r ON s.reviewer_teacher_id = r.id
         LEFT JOIN defense_group g ON s.defense_group_id = g.id
+        LEFT JOIN department d ON s.department_id = d.id
         WHERE s.defense_year = #{year}
     </select>
 
@@ -85,11 +98,13 @@
         SELECT s.*,
                a.id as advisor_id, a.teacher_no as advisor_teacher_no, a.name as advisor_name, a.title as advisor_title,
                r.id as reviewer_id, r.teacher_no as reviewer_teacher_no, r.name as reviewer_name, r.title as reviewer_title,
-               g.id as group_id, g.name as group_name
+               g.id as group_id, g.name as group_name,
+               d.id as department_id, d.name as department_name, d.code as department_code
         FROM t_student s
         LEFT JOIN teacher a ON s.advisor_teacher_id = a.id
         LEFT JOIN teacher r ON s.reviewer_teacher_id = r.id
         LEFT JOIN defense_group g ON s.defense_group_id = g.id
+        LEFT JOIN department d ON s.department_id = d.id
         WHERE s.advisor_teacher_id = #{advisorId} AND s.defense_year = #{year}
     </select>
 
@@ -97,11 +112,13 @@
         SELECT s.*,
                a.id as advisor_id, a.teacher_no as advisor_teacher_no, a.name as advisor_name, a.title as advisor_title,
                r.id as reviewer_id, r.teacher_no as reviewer_teacher_no, r.name as reviewer_name, r.title as reviewer_title,
-               g.id as group_id, g.name as group_name
+               g.id as group_id, g.name as group_name,
+               d.id as department_id, d.name as department_name, d.code as department_code
         FROM t_student s
         LEFT JOIN teacher a ON s.advisor_teacher_id = a.id
         LEFT JOIN teacher r ON s.reviewer_teacher_id = r.id
         LEFT JOIN defense_group g ON s.defense_group_id = g.id
+        LEFT JOIN department d ON s.department_id = d.id
         WHERE s.reviewer_teacher_id = #{reviewerId} AND s.defense_year = #{year}
     </select>
 
@@ -109,11 +126,13 @@
         SELECT s.*,
                a.id as advisor_id, a.teacher_no as advisor_teacher_no, a.name as advisor_name, a.title as advisor_title,
                r.id as reviewer_id, r.teacher_no as reviewer_teacher_no, r.name as reviewer_name, r.title as reviewer_title,
-               g.id as group_id, g.name as group_name
+               g.id as group_id, g.name as group_name,
+               d.id as department_id, d.name as department_name, d.code as department_code
         FROM t_student s
         LEFT JOIN teacher a ON s.advisor_teacher_id = a.id
         LEFT JOIN teacher r ON s.reviewer_teacher_id = r.id
         LEFT JOIN defense_group g ON s.defense_group_id = g.id
+        LEFT JOIN department d ON s.department_id = d.id
         WHERE s.defense_group_id = #{groupId}
     </select>
 
@@ -121,11 +140,13 @@
         SELECT s.*,
                a.id as advisor_id, a.teacher_no as advisor_teacher_no, a.name as advisor_name, a.title as advisor_title,
                r.id as reviewer_id, r.teacher_no as reviewer_teacher_no, r.name as reviewer_name, r.title as reviewer_title,
-               g.id as group_id, g.name as group_name
+               g.id as group_id, g.name as group_name,
+               d.id as department_id, d.name as department_name, d.code as department_code
         FROM t_student s
         LEFT JOIN teacher a ON s.advisor_teacher_id = a.id
         LEFT JOIN teacher r ON s.reviewer_teacher_id = r.id
         LEFT JOIN defense_group g ON s.defense_group_id = g.id
+        LEFT JOIN department d ON s.department_id = d.id
         WHERE s.student_no = #{studentNo} AND s.defense_year = #{year}
     </select>
 
@@ -164,6 +185,52 @@
 
     <select id="findAllYears" resultType="java.lang.Integer">
         SELECT DISTINCT defense_year FROM t_student WHERE defense_year IS NOT NULL ORDER BY defense_year DESC
+    </select>
+
+    <select id="searchStudents" resultMap="StudentResultMap">
+        SELECT s.*,
+               a.id as advisor_id, a.teacher_no as advisor_teacher_no, a.name as advisor_name, a.title as advisor_title,
+               r.id as reviewer_id, r.teacher_no as reviewer_teacher_no, r.name as reviewer_name, r.title as reviewer_title,
+               g.id as group_id, g.name as group_name,
+               d.name as department_name, d.code as department_code
+        FROM t_student s
+        LEFT JOIN teacher a ON s.advisor_teacher_id = a.id
+        LEFT JOIN teacher r ON s.reviewer_teacher_id = r.id
+        LEFT JOIN defense_group g ON s.defense_group_id = g.id
+        LEFT JOIN department d ON s.department_id = d.id
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (s.student_no LIKE CONCAT('%', #{keyword}, '%')
+                     OR s.name LIKE CONCAT('%', #{keyword}, '%')
+                     OR s.title LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="departmentId != null">
+                AND s.department_id = #{departmentId}
+            </if>
+            <if test="year != null">
+                AND s.defense_year = #{year}
+            </if>
+        </where>
+        ORDER BY s.id DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countStudents" resultType="int">
+        SELECT COUNT(*)
+        FROM t_student s
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (s.student_no LIKE CONCAT('%', #{keyword}, '%')
+                     OR s.name LIKE CONCAT('%', #{keyword}, '%')
+                     OR s.title LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="departmentId != null">
+                AND s.department_id = #{departmentId}
+            </if>
+            <if test="year != null">
+                AND s.defense_year = #{year}
+            </if>
+        </where>
     </select>
 
 </mapper>

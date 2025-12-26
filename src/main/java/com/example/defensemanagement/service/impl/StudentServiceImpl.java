@@ -184,4 +184,15 @@ public class StudentServiceImpl implements StudentService {
         // explicitly set defense_group_id to NULL (XML update won't set null values)
         return studentMapper.updateDefenseGroupId(studentId, null) > 0;
     }
+    
+    @Override
+    public List<Student> searchStudents(String keyword, Long departmentId, Integer year, int page, int pageSize) {
+        int offset = (page - 1) * pageSize;
+        return studentMapper.searchStudents(keyword, departmentId, year, offset, pageSize);
+    }
+    
+    @Override
+    public int countStudents(String keyword, Long departmentId, Integer year) {
+        return studentMapper.countStudents(keyword, departmentId, year);
+    }
 }

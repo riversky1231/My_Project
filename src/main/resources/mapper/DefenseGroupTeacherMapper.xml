@@ -16,14 +16,21 @@
             <result property="email" column="email"/>
             <result property="phone" column="phone"/>
             <result property="status" column="status"/>
+            <association property="department" javaType="com.example.defensemanagement.entity.Department">
+                <id property="id" column="department_id"/>
+                <result property="name" column="department_name"/>
+                <result property="code" column="department_code"/>
+            </association>
         </association>
     </resultMap>
 
     <select id="findByGroupId" resultMap="DefenseGroupTeacherMap">
         SELECT dgt.*, 
-               t.id as t_id, t.teacher_no, t.name as t_name, t.department_id, t.title, t.email, t.phone, t.status
+               t.id as t_id, t.teacher_no, t.name as t_name, t.department_id, t.title, t.email, t.phone, t.status,
+               d.name as department_name, d.code as department_code
         FROM defense_group_teacher dgt
         LEFT JOIN teacher t ON dgt.teacher_id = t.id
+        LEFT JOIN department d ON t.department_id = d.id
         WHERE dgt.group_id = #{groupId}
         ORDER BY dgt.is_leader DESC, t.id ASC
     </select>

@@ -21,6 +21,13 @@
             <result column="student_defense_type" property="defenseType"/>
             <result column="student_defense_group_id" property="defenseGroupId"/>
         </collection>
+        <collection property="teachers" ofType="com.example.defensemanagement.entity.Teacher">
+            <id column="teacher_id" property="id"/>
+            <result column="teacher_no" property="teacherNo"/>
+            <result column="teacher_name" property="name"/>
+            <result column="teacher_title" property="title"/>
+            <result column="is_leader" property="isLeader"/>
+        </collection>
     </resultMap>
 
     <select id="findAllByOrderByDisplayOrderAsc" resultMap="DefenseGroupResultMap">
@@ -28,11 +35,15 @@
             dg.id, dg.name, dg.display_order, dg.score,
             s.id as student_id, s.student_no, s.name as student_name, s.class_info as student_class,
             s.title as student_title, s.defense_type as student_defense_type, s.defense_group_id as student_defense_group_id,
+            t.id as teacher_id, t.teacher_no, t.name as teacher_name, t.title as teacher_title,
+            dgt.is_leader,
             c.id as comment_id, c.content as comment_content, c.group_id as comment_group_id
         FROM defense_group dg
         LEFT JOIN t_student s ON dg.id = s.defense_group_id
+        LEFT JOIN defense_group_teacher dgt ON dg.id = dgt.group_id
+        LEFT JOIN teacher t ON dgt.teacher_id = t.id
         LEFT JOIN comment c ON dg.id = c.group_id
-        ORDER BY dg.display_order ASC, s.id ASC
+        ORDER BY dg.display_order ASC, s.id ASC, t.id ASC
     </select>
 
     <select id="findById" resultMap="DefenseGroupResultMap">
@@ -40,12 +51,16 @@
             dg.id, dg.name, dg.display_order, dg.score,
             s.id as student_id, s.student_no, s.name as student_name, s.class_info as student_class,
             s.title as student_title, s.defense_type as student_defense_type, s.defense_group_id as student_defense_group_id,
+            t.id as teacher_id, t.teacher_no, t.name as teacher_name, t.title as teacher_title,
+            dgt.is_leader,
             c.id as comment_id, c.content as comment_content, c.group_id as comment_group_id
         FROM defense_group dg
         LEFT JOIN t_student s ON dg.id = s.defense_group_id
+        LEFT JOIN defense_group_teacher dgt ON dg.id = dgt.group_id
+        LEFT JOIN teacher t ON dgt.teacher_id = t.id
         LEFT JOIN comment c ON dg.id = c.group_id
         WHERE dg.id = #{id}
-        ORDER BY s.id ASC
+        ORDER BY s.id ASC, t.id ASC
     </select>
 
     <insert id="insert" parameterType="com.example.defensemanagement.entity.DefenseGroup" useGeneratedKeys="true" keyProperty="id">

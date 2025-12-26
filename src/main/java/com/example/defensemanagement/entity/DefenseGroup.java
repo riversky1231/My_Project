@@ -10,5 +10,6 @@ public class DefenseGroup {
     private int displayOrder;
     private int score;
     private List<Student> members;  // 使用 Student 代替 GroupMember
+    private List<Teacher> teachers;  // 小组教师列表
     private Comment comment;
 }

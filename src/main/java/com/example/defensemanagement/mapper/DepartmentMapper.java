@@ -27,4 +27,24 @@ public interface DepartmentMapper {
     
     @Delete("DELETE FROM department WHERE id = #{id}")
     int deleteById(Long id);
+    
+    // 搜索院系（支持分页）
+    @Select("SELECT * FROM department " +
+            "WHERE (#{keyword} IS NULL OR #{keyword} = '' OR " +
+            "name LIKE CONCAT('%', #{keyword}, '%') OR " +
+            "code LIKE CONCAT('%', #{keyword}, '%') OR " +
+            "description LIKE CONCAT('%', #{keyword}, '%')) " +
+            "ORDER BY id DESC " +
+            "LIMIT #{offset}, #{limit}")
+    List<Department> searchDepartments(@Param("keyword") String keyword,
+                                       @Param("offset") int offset,
+                                       @Param("limit") int limit);
+    
+    // 统计院系数量（用于分页）
+    @Select("SELECT COUNT(*) FROM department " +
+            "WHERE (#{keyword} IS NULL OR #{keyword} = '' OR " +
+            "name LIKE CONCAT('%', #{keyword}, '%') OR " +
+            "code LIKE CONCAT('%', #{keyword}, '%') OR " +
+            "description LIKE CONCAT('%', #{keyword}, '%'))")
+    int countDepartments(@Param("keyword") String keyword);
 }
