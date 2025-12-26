@@ -488,7 +488,7 @@
             <div id="teacher-signature-hint" class="alert alert-info mb-3" style="display: none;">
                 <i class="bi bi-info-circle"></i>
                 <strong>提示：</strong>请前往 <a href="javascript:void(0);"
-                    onclick="showView('settings-view', document.querySelector('a[onclick*=&quot;settings-view&quot;]'))">系统设置</a>
+                    onclick="showView('settings-view', this)">系统设置</a>
                 页面上传您的签名图片，签名将用于导出成绩表。
             </div>
             <div class="module">
@@ -580,6 +580,16 @@
                 <div class="module-header" id="review-scoring-header">
                     <h4><i class="bi bi-journal-check"></i> 2. 评阅打分</h4>
                 </div>
+                <!-- 学号搜索功能（仅超级管理员可见） -->
+                <div class="input-group mb-3" id="review-student-search-container" style="display: none;">
+                    <input type="text" id="review-student-search" class="form-control" placeholder="输入学号搜索..." onkeypress="if(event.key==='Enter') searchReviewStudents()">
+                    <button class="btn btn-outline-secondary" type="button" onclick="searchReviewStudents()">
+                        <i class="bi bi-search"></i> 搜索
+                    </button>
+                    <button class="btn btn-outline-primary" type="button" onclick="loadReviewedStudents()">
+                        <i class="bi bi-arrow-clockwise"></i> 重置
+                    </button>
+                </div>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
                         <thead class="table-light">
@@ -603,6 +613,15 @@
                         </tbody>
                     </table>
                 </div>
+                <!-- Pagination for Review Students (Super Admin) -->
+                <nav class="d-flex justify-content-between align-items-center mt-3" id="review-pagination-nav" style="display: none;">
+                    <div class="d-flex align-items-center">
+                        <small class="text-muted me-3" id="review-pagination-info" style="display: none;">显示 0-0 条，共 0 条</small>
+                    </div>
+                    <ul class="pagination pagination-sm mb-0" id="review-pagination">
+                        <!-- 分页按钮将由 JavaScript 生成 -->
+                    </ul>
+                </nav>
             </div>
         </div>
 
@@ -1306,9 +1325,20 @@
             <div class="module mb-3">
                 <div class="module-header">
                     <h4><i class="bi bi-people"></i> 我的小组学生</h4>
-                    <button class="btn btn-outline-primary btn-sm" onclick="loadTeacherGroupStudents()">
-                        <i class="bi bi-arrow-clockwise"></i> 刷新
-                    </button>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary btn-sm" onclick="loadTeacherGroupStudents()">
+                            <i class="bi bi-arrow-clockwise"></i> 刷新
+                        </button>
+                        <!-- 小组筛选功能（仅超级管理员可见） -->
+                        <div class="input-group" id="ts-group-filter-container" style="display: none; width: auto;">
+                            <select class="form-select" id="ts-group-filter" onkeypress="if(event.key==='Enter') filterTeacherGroupStudents()">
+                                <option value="">全部小组</option>
+                            </select>
+                            <button class="btn btn-outline-secondary" type="button" onclick="filterTeacherGroupStudents()">
+                                <i class="bi bi-filter"></i> 筛选
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
@@ -1334,6 +1364,15 @@
                         </tbody>
                     </table>
                 </div>
+                <!-- Pagination for Teacher Scoring (Super Admin) -->
+                <nav class="d-flex justify-content-between align-items-center mt-3" id="ts-pagination-nav" style="display: none;">
+                    <div class="d-flex align-items-center">
+                        <small class="text-muted me-3" id="ts-pagination-info" style="display: none;">显示 0-0 条，共 0 条</small>
+                    </div>
+                    <ul class="pagination pagination-sm mb-0" id="ts-pagination">
+                        <!-- 分页按钮将由 JavaScript 生成 -->
+                    </ul>
+                </nav>
             </div>
         </div>
 
@@ -2271,6 +2310,34 @@
             // }
             if (viewId === 'student-management-view') {
                 loadStudents();
+                
+                // 检查用户角色，如果是答辩组长，隐藏分页信息
+                const userInfoDiv = document.querySelector('.user-info');
+                const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
+                if (userRole === 'DEFENSE_LEADER') {
+                    const studentPaginationInfo = document.getElementById('student-pagination-info');
+                    if (studentPaginationInfo) {
+                        studentPaginationInfo.style.display = 'none';
+                    }
+                    
+                    // 同时隐藏分页导航
+                    const studentPaginationNav = document.querySelector('#student-management-view nav');
+                    if (studentPaginationNav) {
+                        studentPaginationNav.style.display = 'none';
+                    }
+                    
+                    // 隐藏批量删除按钮
+                    const batchDeleteBtn = document.getElementById('batch-delete-student-btn');
+                    if (batchDeleteBtn) {
+                        batchDeleteBtn.style.display = 'none';
+                    }
+                    
+                    // 隐藏全选复选框
+                    const selectAllCheckbox = document.getElementById('student-select-all');
+                    if (selectAllCheckbox) {
+                        selectAllCheckbox.style.display = 'none';
+                    }
+                }
             }
             if (viewId === 'user-management-view') {
                 searchUsersWithPagination(1);
@@ -2316,6 +2383,16 @@
             if (viewId === 'teacher-scoring-view') {
                 // 教师小组打分页面加载
                 loadTeacherGroupStudents();
+                
+                // 检查用户角色，如果是教师或答辩组长，隐藏分页信息
+                const userInfoDiv = document.querySelector('.user-info');
+                const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
+                if (userRole === 'TEACHER' || userRole === 'DEFENSE_LEADER') {
+                    const tsPaginationInfo = document.getElementById('ts-pagination-info');
+                    if (tsPaginationInfo) {
+                        tsPaginationInfo.style.display = 'none';
+                    }
+                }
             }
             if (viewId === 'large-group-defense-view') {
                 // 大组答辩页面加载
@@ -2324,6 +2401,16 @@
             if (viewId === 'review-management-view') {
                 // 打分管理页面加载
                 loadScoringManagementData();
+                
+                // 检查用户角色，如果是教师或答辩组长，隐藏分页信息
+                const userInfoDiv = document.querySelector('.user-info');
+                const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
+                if (userRole === 'TEACHER' || userRole === 'DEFENSE_LEADER') {
+                    const reviewPaginationInfo = document.getElementById('review-pagination-info');
+                    if (reviewPaginationInfo) {
+                        reviewPaginationInfo.style.display = 'none';
+                    }
+                }
             }
         }
 
@@ -3528,6 +3615,30 @@
                 updateStudentTableHeaderForLeader();
                 hideAdminStudentButtons();
                 loadLeaderGroupScores();
+                
+                // 答辩组长模式下隐藏分页信息
+                const studentPaginationInfo = document.getElementById('student-pagination-info');
+                if (studentPaginationInfo) {
+                    studentPaginationInfo.style.display = 'none';
+                }
+                
+                // 同时隐藏分页导航
+                const studentPaginationNav = document.querySelector('#student-management-view nav');
+                if (studentPaginationNav) {
+                    studentPaginationNav.style.display = 'none';
+                }
+                
+                // 隐藏批量删除按钮
+                const batchDeleteBtn = document.getElementById('batch-delete-student-btn');
+                if (batchDeleteBtn) {
+                    batchDeleteBtn.style.display = 'none';
+                }
+                
+                // 隐藏全选复选框
+                const selectAllCheckbox = document.getElementById('student-select-all');
+                if (selectAllCheckbox) {
+                    selectAllCheckbox.style.display = 'none';
+                }
             } else if (isTeacherRole && !isAdminRole && !isDefenseLeader) {
                 // 一般教师：不显示学生管理（已删除）
                 const tbody = document.getElementById('student-list');
@@ -3637,8 +3748,20 @@
             // 更新信息
             const start = (currentPage - 1) * studentPageSize + 1;
             const end = Math.min(currentPage * studentPageSize, total);
+            
+            // 检查用户角色
+            const userInfoDiv = document.querySelector('.user-info');
+            const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
+            
             paginationInfo.textContent = `显示 ${start}-${end} 条，共 ${total} 条`;
-
+            
+            // 如果是教师或答辩组长，隐藏分页信息
+            if (userRole === 'TEACHER' || userRole === 'DEFENSE_LEADER') {
+                paginationInfo.style.display = 'none';
+            } else {
+                paginationInfo.style.display = 'inline';
+            }
+            
             // 生成分页按钮
             pagination.innerHTML = '';
 
@@ -4255,6 +4378,11 @@
                 if (advisorScoringModule) {
                     advisorScoringModule.style.display = 'none';
                 }
+                // 显示评阅打分搜索控件
+                const searchContainer = document.getElementById('review-student-search-container');
+                if (searchContainer) {
+                    searchContainer.style.display = 'flex';
+                }
                 // 删除评阅打分的标题
                 const reviewScoringHeader = document.getElementById('review-scoring-header');
                 if (reviewScoringHeader) {
@@ -4266,6 +4394,22 @@
                     loadAdvisedStudentsForScoring(),
                     loadReviewedStudents()
                 ]);
+                
+                // 隐藏搜索控件
+                const searchContainer = document.getElementById('review-student-search-container');
+                if (searchContainer) {
+                    searchContainer.style.display = 'none';
+                }
+                
+                // 检查用户角色，如果是教师或答辩组长，确保隐藏分页信息
+                const userInfoDiv = document.querySelector('.user-info');
+                const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
+                if (userRole === 'TEACHER' || userRole === 'DEFENSE_LEADER') {
+                    const reviewPaginationInfo = document.getElementById('review-pagination-info');
+                    if (reviewPaginationInfo) {
+                        reviewPaginationInfo.style.display = 'none';
+                    }
+                }
             }
         }
 
@@ -4298,6 +4442,34 @@
                 }
 
                 renderLeaderGroupScoresTable(students);
+                
+                // 检查用户角色，如果是答辩组长，隐藏分页信息
+                const userInfoDiv = document.querySelector('.user-info');
+                const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
+                if (userRole === 'DEFENSE_LEADER') {
+                    const studentPaginationInfo = document.getElementById('student-pagination-info');
+                    if (studentPaginationInfo) {
+                        studentPaginationInfo.style.display = 'none';
+                    }
+                    
+                    // 同时隐藏分页导航
+                    const studentPaginationNav = document.querySelector('#student-management-view nav');
+                    if (studentPaginationNav) {
+                        studentPaginationNav.style.display = 'none';
+                    }
+                    
+                    // 隐藏批量删除按钮
+                    const batchDeleteBtn = document.getElementById('batch-delete-student-btn');
+                    if (batchDeleteBtn) {
+                        batchDeleteBtn.style.display = 'none';
+                    }
+                    
+                    // 隐藏全选复选框
+                    const selectAllCheckbox = document.getElementById('student-select-all');
+                    if (selectAllCheckbox) {
+                        selectAllCheckbox.style.display = 'none';
+                    }
+                }
             } catch (error) {
                 console.error('加载小组打分失败:', error);
                 tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
@@ -4438,9 +4610,19 @@
         }
 
         // 加载评阅管理页面（教师作为评阅人的学生列表）
-        async function loadReviewedStudents() {
+        // 分页相关变量
+        let reviewStudentsData = []; // 存储所有评阅学生数据
+        let currentReviewPage = 1;
+        const reviewPageSize = 10;
+        let isSearchMode = false; // 标记是否为搜索模式
+
+        async function loadReviewedStudents(page = 1) {
             const tbody = document.getElementById('review-student-list');
             tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">加载中...</td></tr>';
+
+            // 检查是否是超级管理员
+            const userInfoDiv = document.querySelector('.user-info');
+            const isSuperAdmin = userInfoDiv && userInfoDiv.dataset.userRole === 'SUPER_ADMIN';
 
             try {
                 const response = await fetch('/department/student/teacher/reviewed');
@@ -4456,63 +4638,244 @@
                 // 更新页面信息
                 document.getElementById('review-teacher-info').textContent = data.teacherName ? `教师：${data.teacherName}` : '';
 
-                const students = data.students || [];
-                if (students.length === 0) {
+                reviewStudentsData = data.students || [];
+                if (reviewStudentsData.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">您还没有被指定为任何学生的评阅人</td></tr>';
+                    // 隐藏分页
+                    const paginationNav = document.getElementById('review-pagination-nav');
+                    if (paginationNav) paginationNav.style.display = 'none';
+                    // 重置搜索模式
+                    isSearchMode = false;
                     return;
                 }
 
-                // 检查是否是超级管理员
-                const userInfoDiv = document.querySelector('.user-info');
-                const isSuperAdmin = userInfoDiv && userInfoDiv.dataset.userRole === 'SUPER_ADMIN';
-
-                tbody.innerHTML = '';
-                students.forEach(s => {
-                    const defenseTypeText = s.defenseType === 'PAPER' ? '论文' : '设计';
-                    const defenseTypeBadge = s.defenseType === 'PAPER' ? 'bg-info' : 'bg-warning';
-                    const advisorScore = s.advisorScore != null ? s.advisorScore : '未评分';
-                    const reviewerScore = s.reviewerScore != null ? s.reviewerScore : '未评分';
-                    const advisorInfo = s.advisorName ? `${s.advisorName}` : '未指定';
-                    const reviewerInfo = s.reviewerName ? `${s.reviewerName}` : '未指定';
-
-                    const row = document.createElement('tr');
-                    // 超级管理员可以修改指导教师和评阅人评定成绩
-                    const advisorScoreCell = isSuperAdmin ?
-                        `<td>
-                            <span class="badge ${s.advisorScore != null ? 'bg-success' : 'bg-secondary'}">${advisorScore}</span>
-                            <button class="btn btn-sm btn-outline-primary ms-1" onclick="openAdvisorScoreModalForSuperAdmin(${s.id}, '${s.name}', ${s.advisorScore || 'null'}, '${s.defenseType}')">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                        </td>` :
-                        `<td><span class="badge ${s.advisorScore != null ? 'bg-success' : 'bg-secondary'}">${advisorScore}</span></td>`;
-                    const reviewerScoreCell = `<td>
-                            <span class="badge ${s.reviewerScore != null ? 'bg-success' : 'bg-secondary'}">
-                                ${reviewerScore}
-                            </span>
-                            <button class="btn btn-sm btn-outline-primary ms-1" onclick="openReviewerScoreModalForSuperAdmin(${s.id}, '${s.name}', ${s.reviewerScore || 'null'}, '${s.defenseType}')">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                        </td>`;
-                    row.innerHTML = `
-                        <td>${s.studentNo || ''}</td>
-                        <td><strong>${s.name || ''}</strong></td>
-                        <td>${s.departmentName || 'N/A'}</td>
-                        <td><span class="badge ${defenseTypeBadge}">${defenseTypeText}</span></td>
-                        <td>${s.title || ''}</td>
-                        <td>${advisorInfo}</td>
-                        ${advisorScoreCell}
-                        <td>${reviewerInfo}</td>
-                        ${reviewerScoreCell}
-                        <td>
-                            <span class="badge bg-primary">${s.defenseGroupName || '未分配'}</span>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
-                });
+                // 超级管理员显示分页
+                if (isSuperAdmin) {
+                    const paginationNav = document.getElementById('review-pagination-nav');
+                    if (paginationNav) paginationNav.style.display = 'flex';
+                    renderReviewStudentsPage(page);
+                                
+                    // 清空搜索框
+                    const searchInput = document.getElementById('review-student-search');
+                    if (searchInput) searchInput.value = '';
+                    isSearchMode = false; // 重置搜索模式
+                } else {
+                    // 普通教师不分页，直接显示所有
+                    const paginationNav = document.getElementById('review-pagination-nav');
+                    if (paginationNav) paginationNav.style.display = 'none';
+                    renderReviewStudentsList(reviewStudentsData, isSuperAdmin);
+                    
+                    // 检查用户角色，如果是教师或答辩组长，确保隐藏分页信息
+                    const userInfoDiv = document.querySelector('.user-info');
+                    const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
+                    if (userRole === 'TEACHER' || userRole === 'DEFENSE_LEADER') {
+                        const reviewPaginationInfo = document.getElementById('review-pagination-info');
+                        if (reviewPaginationInfo) {
+                            reviewPaginationInfo.style.display = 'none';
+                        }
+                    }
+                }
             } catch (error) {
                 console.error('加载评阅学生失败:', error);
                 tbody.innerHTML = `<tr><td colspan="10" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
             }
+        }
+
+        // 评阅学生搜索功能
+        async function searchReviewStudents() {
+            const searchInput = document.getElementById('review-student-search').value.trim();
+            const tbody = document.getElementById('review-student-list');
+            
+            // 检查是否是超级管理员
+            const userInfoDiv = document.querySelector('.user-info');
+            const isSuperAdmin = userInfoDiv && userInfoDiv.dataset.userRole === 'SUPER_ADMIN';
+            
+            if (!isSuperAdmin) {
+                showAlert('warning', '只有超级管理员可以进行搜索');
+                return;
+            }
+            
+            if (!searchInput) {
+                // 如果搜索框为空，重新加载所有数据
+                isSearchMode = false; // 重置搜索模式
+                loadReviewedStudents();
+                return;
+            }
+            
+            try {
+                tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">搜索中...</td></tr>';
+                
+                // 使用原始数据进行搜索
+                const filteredStudents = reviewStudentsData.filter(student => 
+                    student.studentNo && student.studentNo.includes(searchInput)
+                );
+                
+                if (filteredStudents.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">未找到匹配的学生</td></tr>';
+                    // 更新分页信息
+                    const paginationInfo = document.getElementById('review-pagination-info');
+                    if (paginationInfo) {
+                        paginationInfo.textContent = `显示 0 条，共 0 条`;
+                    }
+                    // 重置搜索模式
+                    isSearchMode = false;
+                    return;
+                }
+                
+                // 临时更新全局数据为搜索结果
+                const originalData = reviewStudentsData;
+                reviewStudentsData = filteredStudents;
+                isSearchMode = true;
+                
+                // 渲染搜索结果
+                renderReviewStudentsPage(1); // 从第一页开始显示
+                
+                // 恢复原始数据
+                reviewStudentsData = originalData;
+                
+                // 检查用户角色，如果是教师或答辩组长，确保隐藏分页信息
+                const userInfoDiv = document.querySelector('.user-info');
+                const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
+                if (userRole === 'TEACHER' || userRole === 'DEFENSE_LEADER') {
+                    const reviewPaginationInfo = document.getElementById('review-pagination-info');
+                    if (reviewPaginationInfo) {
+                        reviewPaginationInfo.style.display = 'none';
+                    }
+                }
+                
+            } catch (error) {
+                console.error('搜索评阅学生失败:', error);
+                tbody.innerHTML = `<tr><td colspan="10" class="text-center text-danger">搜索失败: ${error.message}</td></tr>`;
+            }
+        }
+
+        // 渲染评阅学生分页
+        function renderReviewStudentsPage(page) {
+            currentReviewPage = page;
+            const total = reviewStudentsData.length;
+            const totalPages = Math.ceil(total / reviewPageSize);
+            const start = (page - 1) * reviewPageSize;
+            const end = Math.min(page * reviewPageSize, total);
+            const pageStudents = reviewStudentsData.slice(start, end);
+
+            // 检查是否是超级管理员
+            const userInfoDiv = document.querySelector('.user-info');
+            const isSuperAdmin = userInfoDiv && userInfoDiv.dataset.userRole === 'SUPER_ADMIN';
+
+            renderReviewStudentsList(pageStudents, isSuperAdmin);
+            renderReviewPagination(page, totalPages, total);
+        }
+
+        // 渲染评阅学生列表
+        function renderReviewStudentsList(students, isSuperAdmin) {
+            const tbody = document.getElementById('review-student-list');
+            tbody.innerHTML = '';
+
+            students.forEach(s => {
+                const defenseTypeText = s.defenseType === 'PAPER' ? '论文' : '设计';
+                const defenseTypeBadge = s.defenseType === 'PAPER' ? 'bg-info' : 'bg-warning';
+                const advisorScore = s.advisorScore != null ? s.advisorScore : '未评分';
+                const reviewerScore = s.reviewerScore != null ? s.reviewerScore : '未评分';
+                const advisorInfo = s.advisorName ? `${s.advisorName}` : '未指定';
+                const reviewerInfo = s.reviewerName ? `${s.reviewerName}` : '未指定';
+
+                const row = document.createElement('tr');
+                // 超级管理员可以修改指导教师和评阅人评定成绩
+                const advisorScoreCell = isSuperAdmin ?
+                    `<td>
+                        <span class="badge ${s.advisorScore != null ? 'bg-success' : 'bg-secondary'}">${advisorScore}</span>
+                        <button class="btn btn-sm btn-outline-primary ms-1" onclick="openAdvisorScoreModalForSuperAdmin(${s.id}, '${s.name}', ${s.advisorScore || 'null'}, '${s.defenseType}')">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </td>` :
+                    `<td><span class="badge ${s.advisorScore != null ? 'bg-success' : 'bg-secondary'}">${advisorScore}</span></td>`;
+                const reviewerScoreCell = `<td>
+                        <span class="badge ${s.reviewerScore != null ? 'bg-success' : 'bg-secondary'}">
+                            ${reviewerScore}
+                        </span>
+                        <button class="btn btn-sm btn-outline-primary ms-1" onclick="openReviewerScoreModalForSuperAdmin(${s.id}, '${s.name}', ${s.reviewerScore || 'null'}, '${s.defenseType}')">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </td>`;
+                row.innerHTML = `
+                    <td>${s.studentNo || ''}</td>
+                    <td><strong>${s.name || ''}</strong></td>
+                    <td>${s.departmentName || 'N/A'}</td>
+                    <td><span class="badge ${defenseTypeBadge}">${defenseTypeText}</span></td>
+                    <td>${s.title || ''}</td>
+                    <td>${advisorInfo}</td>
+                    ${advisorScoreCell}
+                    <td>${reviewerInfo}</td>
+                    ${reviewerScoreCell}
+                    <td>
+                        <span class="badge bg-primary">${s.defenseGroupName || '未分配'}</span>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // 渲染评阅学生分页控件
+        function renderReviewPagination(currentPage, totalPages, total) {
+            const paginationInfo = document.getElementById('review-pagination-info');
+            const pagination = document.getElementById('review-pagination');
+
+            if (!paginationInfo || !pagination) return;
+
+            // 更新信息
+            const start = (currentPage - 1) * reviewPageSize + 1;
+            const end = Math.min(currentPage * reviewPageSize, total);
+            
+            // 检查用户角色
+            const userInfoDiv = document.querySelector('.user-info');
+            const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
+            
+            // 根据是否为搜索模式显示不同的分页信息
+            if (isSearchMode) {
+                paginationInfo.textContent = `显示 ${start}-${end} 条，共 ${total} 条 (搜索结果)`;
+            } else {
+                paginationInfo.textContent = `显示 ${start}-${end} 条，共 ${total} 条`;
+            }
+            
+            // 如果是教师或答辩组长，隐藏分页信息
+            if (userRole === 'TEACHER' || userRole === 'DEFENSE_LEADER') {
+                paginationInfo.style.display = 'none';
+            } else {
+                paginationInfo.style.display = 'inline';
+            }
+
+            // 生成分页按钮
+            pagination.innerHTML = '';
+
+            // 上一页
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+            prevLi.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="renderReviewStudentsPage(${currentPage - 1})">上一页</a>`;
+            pagination.appendChild(prevLi);
+
+            // 页码
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, currentPage + 2);
+            if (endPage - startPage < 4) {
+                if (startPage === 1) {
+                    endPage = Math.min(totalPages, 5);
+                } else {
+                    startPage = Math.max(1, totalPages - 4);
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                li.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="renderReviewStudentsPage(${i})">${i}</a>`;
+                pagination.appendChild(li);
+            }
+
+            // 下一页
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+            nextLi.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="renderReviewStudentsPage(${currentPage + 1})">下一页</a>`;
+            pagination.appendChild(nextLi);
         }
 
         // 打开指导教师评定成绩模态框
@@ -7150,8 +7513,15 @@
 
         // ==================== 教师小组打分功能 ====================
 
+        // 分页相关变量
+        let tsStudentsData = []; // 存储所有小组打分学生数据
+        let currentTsPage = 1;
+        const tsPageSize = 10;
+        let tsIsSuperAdmin = false;
+        let isFilterMode = false; // 标记是否为筛选模式
+
         // 加载教师所在小组的学生列表
-        async function loadTeacherGroupStudents() {
+        async function loadTeacherGroupStudents(page = 1) {
             const tbody = document.getElementById('ts-student-list');
             tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">加载中...</td></tr>';
 
@@ -7172,9 +7542,9 @@
 
                 // 检查是否是超级管理员（返回groups数组）
                 let students = [];
-                const isSuperAdmin = data.isSuperAdmin && data.groups;
+                tsIsSuperAdmin = data.isSuperAdmin && data.groups;
 
-                if (isSuperAdmin) {
+                if (tsIsSuperAdmin) {
                     // 超级管理员：显示所有小组的所有学生
                     document.getElementById('ts-group-info').textContent = '所有小组';
                     // 更新表头，添加"小组"列，但不显示"班级"、"我的打分"和"操作"列
@@ -7200,6 +7570,7 @@
                             });
                         }
                     });
+                    tsStudentsData = students;
                 } else {
                     // 普通教师：显示自己所在小组的学生
                     document.getElementById('ts-group-info').textContent = data.groupName ? `小组：${data.groupName}` : '';
@@ -7221,71 +7592,286 @@
                         `;
                     }
                     students = data.students || [];
+                    tsStudentsData = students;
                 }
 
                 if (students.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="${isSuperAdmin ? '9' : '11'}" class="text-center text-muted">暂无学生数据</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="${tsIsSuperAdmin ? '9' : '11'}" class="text-center text-muted">暂无学生数据</td></tr>`;
+                    // 隐藏分页
+                    const paginationNav = document.getElementById('ts-pagination-nav');
+                    if (paginationNav) paginationNav.style.display = 'none';
+                    // 重置筛选模式
+                    isFilterMode = false;
                     return;
                 }
 
-                tbody.innerHTML = '';
-                students.forEach(s => {
-                    const defenseTypeText = s.defenseType === 'PAPER' ? '论文' : '设计';
-                    const defenseTypeBadge = s.defenseType === 'PAPER' ? 'bg-info' : 'bg-warning';
-                    const progress = `${s.scoredTeachersCount || 0}/${s.totalTeachersCount || 0}`;
-                    const progressBadge = s.scoredTeachersCount >= s.totalTeachersCount ? 'bg-success' : 'bg-secondary';
-                    const avgScore = s.avgScore != null ? s.avgScore.toFixed(1) : '-';
-                    const adjustmentFactor = s.adjustmentFactor != null ? s.adjustmentFactor.toFixed(3) : '-';
-                    const finalDefenseScore = s.finalDefenseScore != null ? s.finalDefenseScore.toFixed(1) : '-';
-                    const myScore = s.myScore != null ? s.myScore.totalScore : null;
-                    const hasScored = s.hasScored;
-
-                    // 构建分项成绩对象
-                    let myScoreItems = {};
-                    if (s.myScore) {
-                        myScoreItems = {
-                            item1: s.myScore.item1Score,
-                            item2: s.myScore.item2Score,
-                            item3: s.myScore.item3Score,
-                            item4: s.myScore.item4Score,
-                            item5: s.myScore.item5Score,
-                            item6: s.myScore.item6Score
-                        };
+                // 超级管理员显示分页
+                if (tsIsSuperAdmin) {
+                    const paginationNav = document.getElementById('ts-pagination-nav');
+                    if (paginationNav) paginationNav.style.display = 'flex';
+                    
+                    // 显示小组筛选控件
+                    const groupFilterContainer = document.getElementById('ts-group-filter-container');
+                    if (groupFilterContainer) groupFilterContainer.style.display = 'flex';
+                    
+                    // 填充小组筛选器（如果数据包含小组信息）
+                    if (data.groups && data.groups.length > 0) {
+                        populateGroupFilter(data.groups);
                     }
-
-                    const row = document.createElement('tr');
-                    // 超级管理员显示小组名称，但不显示"班级"、"我的打分"和"操作"列
-                    const groupNameCell = isSuperAdmin && s.groupName ? `<td><span class="badge bg-info">${s.groupName}</span></td>` : '';
-                    const classCell = isSuperAdmin ? '' : `<td>${s.classInfo || ''}</td>`;
-                    const myScoreCell = isSuperAdmin ? '' : `<td>${hasScored ? `<span class="badge bg-success">${myScore}</span>` : '<span class="badge bg-secondary">未打分</span>'}</td>`;
-                    const actionCell = isSuperAdmin ? '' : `<td>
-                            <button class="btn btn-sm ${hasScored ? 'btn-outline-warning' : 'btn-outline-primary'}" 
-                                onclick='openTeacherScoringModal(${s.id}, "${s.studentNo}", "${s.name}", "${s.defenseType}", "${(s.title || '').replace(/"/g, '&quot;')}", ${JSON.stringify(myScoreItems)})'
-                            >
-                                <i class="bi ${hasScored ? 'bi-pencil' : 'bi-plus-circle'}"></i> ${hasScored ? '修改' : '打分'}
-                            </button>
-                        </td>`;
-                    row.innerHTML = `
-                        ${groupNameCell}
-                        <td>${s.studentNo || ''}</td>
-                        <td>${s.name || ''}</td>
-                        ${classCell}
-                        <td><span class="badge ${defenseTypeBadge}">${defenseTypeText}</span></td>
-                        <td>${s.title || ''}</td>
-                        <td><span class="badge ${progressBadge}">${progress}</span></td>
-                        <td>${avgScore}</td>
-                        <td><strong class="text-primary">${adjustmentFactor}</strong></td>
-                        <td><strong class="text-success">${finalDefenseScore}</strong></td>
-                        ${myScoreCell}
-                        ${actionCell}
-                    `;
-                    tbody.appendChild(row);
-                });
+                    
+                    renderTsStudentsPage(page);
+                    
+                    // 重置筛选器
+                    const groupFilter = document.getElementById('ts-group-filter');
+                    if (groupFilter) groupFilter.value = '';
+                    isFilterMode = false; // 重置筛选模式
+                } else {
+                    // 普通教师不分页，直接显示所有
+                    const paginationNav = document.getElementById('ts-pagination-nav');
+                    if (paginationNav) paginationNav.style.display = 'none';
+                    
+                    // 隐藏小组筛选控件
+                    const groupFilterContainer = document.getElementById('ts-group-filter-container');
+                    if (groupFilterContainer) groupFilterContainer.style.display = 'none';
+                    
+                    renderTsStudentsList(tsStudentsData, tsIsSuperAdmin);
+                    
+                    // 检查用户角色，如果是教师或答辩组长，确保隐藏分页信息
+                    const userInfoDiv = document.querySelector('.user-info');
+                    const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
+                    if (userRole === 'TEACHER' || userRole === 'DEFENSE_LEADER') {
+                        const tsPaginationInfo = document.getElementById('ts-pagination-info');
+                        if (tsPaginationInfo) {
+                            tsPaginationInfo.style.display = 'none';
+                        }
+                    }
+                }
             } catch (error) {
                 console.error('加载小组学生失败:', error);
                 tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
                 showAlert('error', error.message || '加载小组学生失败');
             }
+        }
+
+        // 为小组筛选功能填充小组列表
+        function populateGroupFilter(groups) {
+            const groupFilter = document.getElementById('ts-group-filter');
+            if (!groupFilter) return;
+            
+            // 清空现有选项
+            groupFilter.innerHTML = '<option value="">全部小组</option>';
+            
+            // 添加小组选项
+            groups.forEach(group => {
+                const option = document.createElement('option');
+                option.value = group.groupName;
+                option.textContent = group.groupName;
+                groupFilter.appendChild(option);
+            });
+        }
+
+        // 小组筛选功能
+        function filterTeacherGroupStudents() {
+            const selectedGroup = document.getElementById('ts-group-filter').value;
+            const tbody = document.getElementById('ts-student-list');
+            
+            // 检查是否是超级管理员
+            const userInfoDiv = document.querySelector('.user-info');
+            const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
+            const isSuperAdmin = userRole === 'SUPER_ADMIN';
+            
+            if (!isSuperAdmin) {
+                showAlert('warning', '只有超级管理员可以进行筛选');
+                return;
+            }
+            
+            if (!selectedGroup) {
+                // 如果未选择小组，显示所有学生
+                isFilterMode = false; // 重置筛选模式
+                renderTsStudentsPage(1);
+                return;
+            }
+            
+            try {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">筛选中...</td></tr>';
+                
+                // 使用原始数据进行筛选
+                const filteredStudents = tsStudentsData.filter(student => 
+                    student.groupName && student.groupName === selectedGroup
+                );
+                
+                if (filteredStudents.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">未找到匹配的学生</td></tr>';
+                    // 更新分页信息
+                    const paginationInfo = document.getElementById('ts-pagination-info');
+                    if (paginationInfo) {
+                        paginationInfo.textContent = `显示 0 条，共 0 条`;
+                    }
+                    // 重置筛选模式
+                    isFilterMode = false;
+                    return;
+                }
+                
+                // 临时更新全局数据为筛选结果
+                const originalData = tsStudentsData;
+                tsStudentsData = filteredStudents;
+                isFilterMode = true;
+                
+                // 渲染筛选结果
+                renderTsStudentsPage(1); // 从第一页开始显示
+                
+                // 恢复原始数据
+                tsStudentsData = originalData;
+                
+                // 检查用户角色，如果是教师或答辩组长，确保隐藏分页信息
+                const userInfoDiv = document.querySelector('.user-info');
+                const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
+                if (userRole === 'TEACHER' || userRole === 'DEFENSE_LEADER') {
+                    const tsPaginationInfo = document.getElementById('ts-pagination-info');
+                    if (tsPaginationInfo) {
+                        tsPaginationInfo.style.display = 'none';
+                    }
+                }
+                
+            } catch (error) {
+                console.error('筛选小组学生失败:', error);
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">筛选失败: ${error.message}</td></tr>`;
+            }
+        }
+
+        // 渲染小组打分学生分页
+        function renderTsStudentsPage(page) {
+            currentTsPage = page;
+            const total = tsStudentsData.length;
+            const totalPages = Math.ceil(total / tsPageSize);
+            const start = (page - 1) * tsPageSize;
+            const end = Math.min(page * tsPageSize, total);
+            const pageStudents = tsStudentsData.slice(start, end);
+
+            renderTsStudentsList(pageStudents, tsIsSuperAdmin);
+            renderTsPagination(page, totalPages, total);
+        }
+
+        // 渲染小组打分学生列表
+        function renderTsStudentsList(students, isSuperAdmin) {
+            const tbody = document.getElementById('ts-student-list');
+            tbody.innerHTML = '';
+
+            students.forEach(s => {
+                const defenseTypeText = s.defenseType === 'PAPER' ? '论文' : '设计';
+                const defenseTypeBadge = s.defenseType === 'PAPER' ? 'bg-info' : 'bg-warning';
+                const progress = `${s.scoredTeachersCount || 0}/${s.totalTeachersCount || 0}`;
+                const progressBadge = s.scoredTeachersCount >= s.totalTeachersCount ? 'bg-success' : 'bg-secondary';
+                const avgScore = s.avgScore != null ? s.avgScore.toFixed(1) : '-';
+                const adjustmentFactor = s.adjustmentFactor != null ? s.adjustmentFactor.toFixed(3) : '-';
+                const finalDefenseScore = s.finalDefenseScore != null ? s.finalDefenseScore.toFixed(1) : '-';
+                const myScore = s.myScore != null ? s.myScore.totalScore : null;
+                const hasScored = s.hasScored;
+
+                // 构建分项成绩对象
+                let myScoreItems = {};
+                if (s.myScore) {
+                    myScoreItems = {
+                        item1: s.myScore.item1Score,
+                        item2: s.myScore.item2Score,
+                        item3: s.myScore.item3Score,
+                        item4: s.myScore.item4Score,
+                        item5: s.myScore.item5Score,
+                        item6: s.myScore.item6Score
+                    };
+                }
+
+                const row = document.createElement('tr');
+                // 超级管理员显示小组名称，但不显示"班级"、"我的打分"和"操作"列
+                const groupNameCell = isSuperAdmin && s.groupName ? `<td><span class="badge bg-info">${s.groupName}</span></td>` : '';
+                const classCell = isSuperAdmin ? '' : `<td>${s.classInfo || ''}</td>`;
+                const myScoreCell = isSuperAdmin ? '' : `<td>${hasScored ? `<span class="badge bg-success">${myScore}</span>` : '<span class="badge bg-secondary">未打分</span>'}</td>`;
+                const actionCell = isSuperAdmin ? '' : `<td>
+                        <button class="btn btn-sm ${hasScored ? 'btn-outline-warning' : 'btn-outline-primary'}" 
+                            onclick='openTeacherScoringModal(${s.id}, "${s.studentNo}", "${s.name}", "${s.defenseType}", "${(s.title || '').replace(/"/g, '&quot;')}", ${JSON.stringify(myScoreItems)})'
+                        >
+                            <i class="bi ${hasScored ? 'bi-pencil' : 'bi-plus-circle'}"></i> ${hasScored ? '修改' : '打分'}
+                        </button>
+                    </td>`;
+                row.innerHTML = `
+                    ${groupNameCell}
+                    <td>${s.studentNo || ''}</td>
+                    <td>${s.name || ''}</td>
+                    ${classCell}
+                    <td><span class="badge ${defenseTypeBadge}">${defenseTypeText}</span></td>
+                    <td>${s.title || ''}</td>
+                    <td><span class="badge ${progressBadge}">${progress}</span></td>
+                    <td>${avgScore}</td>
+                    <td><strong class="text-primary">${adjustmentFactor}</strong></td>
+                    <td><strong class="text-success">${finalDefenseScore}</strong></td>
+                    ${myScoreCell}
+                    ${actionCell}
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // 渲染小组打分分页控件
+        function renderTsPagination(currentPage, totalPages, total) {
+            const paginationInfo = document.getElementById('ts-pagination-info');
+            const pagination = document.getElementById('ts-pagination');
+
+            if (!paginationInfo || !pagination) return;
+
+            // 更新信息
+            const start = (currentPage - 1) * tsPageSize + 1;
+            const end = Math.min(currentPage * tsPageSize, total);
+            
+            // 检查用户角色
+            const userInfoDiv = document.querySelector('.user-info');
+            const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
+            
+            // 根据是否为筛选模式显示不同的分页信息
+            if (isFilterMode) {
+                paginationInfo.textContent = `显示 ${start}-${end} 条，共 ${total} 条 (筛选结果)`;
+            } else {
+                paginationInfo.textContent = `显示 ${start}-${end} 条，共 ${total} 条`;
+            }
+            
+            // 如果是教师或答辩组长，隐藏分页信息
+            if (userRole === 'TEACHER' || userRole === 'DEFENSE_LEADER') {
+                paginationInfo.style.display = 'none';
+            } else {
+                paginationInfo.style.display = 'inline';
+            }
+
+            // 生成分页按钮
+            pagination.innerHTML = '';
+
+            // 上一页
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+            prevLi.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="renderTsStudentsPage(${currentPage - 1})">上一页</a>`;
+            pagination.appendChild(prevLi);
+
+            // 页码
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, currentPage + 2);
+            if (endPage - startPage < 4) {
+                if (startPage === 1) {
+                    endPage = Math.min(totalPages, 5);
+                } else {
+                    startPage = Math.max(1, totalPages - 4);
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                li.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="renderTsStudentsPage(${i})">${i}</a>`;
+                pagination.appendChild(li);
+            }
+
+            // 下一页
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+            nextLi.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="renderTsStudentsPage(${currentPage + 1})">下一页</a>`;
+            pagination.appendChild(nextLi);
         }
 
         // 打开教师打分模态框
