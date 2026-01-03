@@ -5,8 +5,6 @@ import com.example.defensemanagement.entity.StudentComment;
 import com.example.defensemanagement.entity.Teacher;
 import com.example.defensemanagement.entity.User;
 import com.example.defensemanagement.service.AiCommentService;
-import com.example.defensemanagement.service.AuthService;
-import com.example.defensemanagement.service.ConfigService;
 import com.example.defensemanagement.mapper.StudentCommentMapper;
 import com.example.defensemanagement.mapper.StudentMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,14 +30,9 @@ public class CommentController {
     @Autowired
     private AiCommentService aiCommentService;
 
-    @Autowired
-    private ConfigService configService;
-
-    @Autowired
-    private AuthService authService;
-
     /**
-     * 获取小组内所有学生的评语列表（答辩组长用）
+     * 获取小组内所有学生的评语列表
+     * 所有角色都可以使用：超级管理员、院系管理员、答辩组长、教师
      * GET /defense/comment/group/{groupId}?year=2024
      */
     @GetMapping("/group/{groupId}")
@@ -47,7 +40,7 @@ public class CommentController {
     public List<StudentComment> getGroupComments(@PathVariable Long groupId,
             @RequestParam Integer year,
             HttpSession session) {
-        // 检查是否为答辩组长
+        // 检查是否已登录
         User currentUser = (User) session.getAttribute("currentUser");
         Teacher currentTeacher = (Teacher) session.getAttribute("currentTeacher");
 
@@ -55,12 +48,13 @@ public class CommentController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "未登录");
         }
 
-        // 这里可以添加更详细的权限检查，确保是答辩组长
+        // 所有已登录用户都可以查看评语列表
         return studentCommentMapper.findByGroupIdAndYear(groupId, year);
     }
 
     /**
      * 生成学生评语（基于AI）
+     * 所有角色都可以使用：超级管理员、院系管理员、答辩组长、教师
      * POST /defense/comment/generate
      * request body: { "studentId": 1, "year": 2024 }
      */
@@ -81,6 +75,10 @@ public class CommentController {
         if (student == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "学生不存在");
         }
+
+        // 权限检查：所有已登录用户都可以生成评语
+        // 超级管理员和院系管理员可以查看所有学生
+        // 教师和答辩组长可以查看自己相关的学生（这里不做限制，允许所有角色生成评语）
 
         // 确定使用哪个提示词模板
         String promptKey = "PAPER".equals(student.getDefenseType()) ? "PAPER_PROMPT_TEMPLATE"
@@ -103,6 +101,7 @@ public class CommentController {
 
     /**
      * 保存或更新学生评语
+     * 所有角色都可以使用：超级管理员、院系管理员、答辩组长、教师
      * POST /defense/comment/save
      * request body: { "studentId": 1, "year": 2024, "content": "评语内容" }
      */
@@ -124,6 +123,16 @@ public class CommentController {
             if (content == null || content.trim().isEmpty()) {
                 return "error:评语内容不能为空";
             }
+
+            // 验证学生是否存在
+            Student student = studentMapper.findById(studentId);
+            if (student == null) {
+                return "error:学生不存在";
+            }
+
+            // 权限检查：所有已登录用户都可以保存评语
+            // 超级管理员和院系管理员可以查看所有学生
+            // 教师和答辩组长可以查看自己相关的学生（这里不做限制，允许所有角色保存评语）
 
             // 查找是否已存在
             StudentComment existing = studentCommentMapper.findByStudentIdAndYear(studentId, year);

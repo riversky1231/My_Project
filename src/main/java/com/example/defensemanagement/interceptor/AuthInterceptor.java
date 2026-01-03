@@ -86,7 +86,7 @@ public class AuthInterceptor implements HandlerInterceptor {
         if (path.startsWith("/department/")) {
             // 学生管理：超级管理员、院系管理员可以管理，教师可以查看自己指导的学生
             if (path.startsWith("/department/student")) {
-                // 教师专用接口：允许教师和超级管理员访问
+                // 教师专用接口：允许教师、答辩组长、超级管理员和院系管理员访问
                 if (path.startsWith("/department/student/teacher/")) {
                     // 检查是否是教师（通过 currentTeacher 或 currentUser 的角色）
                     if (currentTeacher != null) {
@@ -94,11 +94,13 @@ public class AuthInterceptor implements HandlerInterceptor {
                     }
                     if (currentUser != null && currentUser.getRole() != null) {
                         String roleName = currentUser.getRole().getName();
-                        if ("TEACHER".equals(roleName) || "DEFENSE_LEADER".equals(roleName) || "SUPER_ADMIN".equals(roleName)) {
+                        // 允许所有角色：超级管理员、院系管理员、答辩组长、教师
+                        if ("SUPER_ADMIN".equals(roleName) || "DEPT_ADMIN".equals(roleName) || 
+                            "TEACHER".equals(roleName) || "DEFENSE_LEADER".equals(roleName)) {
                             return true;
                         }
                     }
-                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "需要教师权限");
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "需要登录");
                     return false;
                 }
                 
@@ -178,6 +180,25 @@ public class AuthInterceptor implements HandlerInterceptor {
                     }
                 }
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "需要教师权限");
+                return false;
+            }
+            
+            // 评语相关 API，允许所有已登录用户访问（包括超级管理员、院系管理员、答辩组长、教师）
+            if (path.startsWith("/defense/comment/")) {
+                // 如果有教师会话，允许访问
+                if (currentTeacher != null) {
+                    return true;
+                }
+                // 如果有用户会话，检查角色
+                if (currentUser != null && currentUser.getRole() != null) {
+                    String roleName = currentUser.getRole().getName();
+                    // 允许所有角色：超级管理员、院系管理员、答辩组长、教师
+                    if ("SUPER_ADMIN".equals(roleName) || "DEPT_ADMIN".equals(roleName) || 
+                        "TEACHER".equals(roleName) || "DEFENSE_LEADER".equals(roleName)) {
+                        return true;
+                    }
+                }
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "需要登录");
                 return false;
             }
             

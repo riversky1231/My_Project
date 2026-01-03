@@ -14,6 +14,7 @@ import com.example.defensemanagement.mapper.LargeGroupScoreMapper;
 import com.example.defensemanagement.mapper.DefenseGroupMapper;
 import com.example.defensemanagement.mapper.DefenseGroupTeacherMapper;
 import com.example.defensemanagement.mapper.TeacherMapper;
+import com.example.defensemanagement.mapper.DepartmentMapper;
 import com.example.defensemanagement.entity.Teacher;
 import com.example.defensemanagement.service.ConfigService;
 import com.example.defensemanagement.service.ScoreService;
@@ -56,6 +57,9 @@ public class ScoreServiceImpl implements ScoreService {
     
     @Autowired
     private TeacherMapper teacherMapper;
+    
+    @Autowired
+    private DepartmentMapper departmentMapper;
 
     @Override
     @Transactional
@@ -346,6 +350,21 @@ public class ScoreServiceImpl implements ScoreService {
             studentInfo.put("studentNo", s.getStudentNo());
             studentInfo.put("name", s.getName());
             studentInfo.put("classInfo", s.getClassInfo());
+            // 设置院系信息
+            String departmentName = null;
+            if (s.getDepartment() != null && s.getDepartment().getName() != null && !s.getDepartment().getName().isEmpty()) {
+                departmentName = s.getDepartment().getName();
+            } else if (s.getDepartmentId() != null) {
+                try {
+                    com.example.defensemanagement.entity.Department dept = departmentMapper.findById(s.getDepartmentId());
+                    if (dept != null && dept.getName() != null && !dept.getName().isEmpty()) {
+                        departmentName = dept.getName();
+                    }
+                } catch (Exception e) {
+                    System.err.println("查询院系信息时出错: " + e.getMessage());
+                }
+            }
+            studentInfo.put("departmentName", departmentName);
             studentInfo.put("defenseType", s.getDefenseType());
             studentInfo.put("title", s.getTitle());
             studentInfo.put("defenseYear", s.getDefenseYear());
@@ -442,6 +461,21 @@ public class ScoreServiceImpl implements ScoreService {
                 studentInfo.put("id", s.getId());
                 studentInfo.put("studentNo", s.getStudentNo());
                 studentInfo.put("name", s.getName());
+                // 设置院系信息
+                String departmentName = null;
+                if (s.getDepartment() != null && s.getDepartment().getName() != null && !s.getDepartment().getName().isEmpty()) {
+                    departmentName = s.getDepartment().getName();
+                } else if (s.getDepartmentId() != null) {
+                    try {
+                        com.example.defensemanagement.entity.Department dept = departmentMapper.findById(s.getDepartmentId());
+                        if (dept != null && dept.getName() != null && !dept.getName().isEmpty()) {
+                            departmentName = dept.getName();
+                        }
+                    } catch (Exception e) {
+                        System.err.println("查询院系信息时出错: " + e.getMessage());
+                    }
+                }
+                studentInfo.put("departmentName", departmentName);
                 studentInfo.put("defenseType", s.getDefenseType());
                 studentInfo.put("title", s.getTitle());
                 

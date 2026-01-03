@@ -877,15 +877,53 @@ public class StudentController {
                 }
 
                 // 设置成绩信息
+                // 优先从TeacherScoreRecord获取最新的总分（因为它是分项分数计算出的最新结果）
+                // 如果TeacherScoreRecord不存在，再从StudentFinalScore获取
+                Integer advisorScore = null;
+                Integer reviewerScore = null;
+                
+                // 优先从TeacherScoreRecord获取指导教师分数
+                if (s.getAdvisorTeacherId() != null) {
+                    TeacherScoreRecord advisorRecord = teacherScoreRecordMapper.findByStudentIdAndTeacherIdAndYear(
+                            s.getId(), s.getAdvisorTeacherId(), currentYear);
+                    if (advisorRecord != null && advisorRecord.getTotalScore() != null) {
+                        advisorScore = advisorRecord.getTotalScore();
+                    }
+                }
+                
+                // 如果TeacherScoreRecord中没有，尝试从StudentFinalScore获取
+                if (advisorScore == null) {
+                    StudentFinalScore score = scoreMap.get(s.getId());
+                    if (score != null) {
+                        advisorScore = score.getAdvisorScore();
+                    }
+                }
+                
+                // 优先从TeacherScoreRecord获取评阅人分数
+                if (s.getReviewerTeacherId() != null) {
+                    TeacherScoreRecord reviewerRecord = teacherScoreRecordMapper.findByStudentIdAndTeacherIdAndYear(
+                            s.getId(), s.getReviewerTeacherId(), currentYear);
+                    if (reviewerRecord != null && reviewerRecord.getTotalScore() != null) {
+                        reviewerScore = reviewerRecord.getTotalScore();
+                    }
+                }
+                
+                // 如果TeacherScoreRecord中没有，尝试从StudentFinalScore获取
+                if (reviewerScore == null) {
+                    StudentFinalScore score = scoreMap.get(s.getId());
+                    if (score != null) {
+                        reviewerScore = score.getReviewerScore();
+                    }
+                }
+                
                 StudentFinalScore score = scoreMap.get(s.getId());
+                
+                info.put("advisorScore", advisorScore);
+                info.put("reviewerScore", reviewerScore);
                 if (score != null) {
-                    info.put("advisorScore", score.getAdvisorScore());
-                    info.put("reviewerScore", score.getReviewerScore());
                     info.put("finalDefenseScore", score.getFinalDefenseScore());
                     info.put("totalGrade", score.getTotalGrade());
                 } else {
-                    info.put("advisorScore", null);
-                    info.put("reviewerScore", null);
                     info.put("finalDefenseScore", null);
                     info.put("totalGrade", null);
                 }
@@ -1073,15 +1111,53 @@ public class StudentController {
                 }
 
                 // 设置成绩信息
+                // 优先从TeacherScoreRecord获取最新的总分（因为它是分项分数计算出的最新结果）
+                // 如果TeacherScoreRecord不存在，再从StudentFinalScore获取
+                Integer advisorScore = null;
+                Integer reviewerScore = null;
+                
+                // 优先从TeacherScoreRecord获取指导教师分数
+                if (s.getAdvisorTeacherId() != null) {
+                    TeacherScoreRecord advisorRecord = teacherScoreRecordMapper.findByStudentIdAndTeacherIdAndYear(
+                            s.getId(), s.getAdvisorTeacherId(), currentYear);
+                    if (advisorRecord != null && advisorRecord.getTotalScore() != null) {
+                        advisorScore = advisorRecord.getTotalScore();
+                    }
+                }
+                
+                // 如果TeacherScoreRecord中没有，尝试从StudentFinalScore获取
+                if (advisorScore == null) {
+                    StudentFinalScore score = scoreMap.get(s.getId());
+                    if (score != null) {
+                        advisorScore = score.getAdvisorScore();
+                    }
+                }
+                
+                // 优先从TeacherScoreRecord获取评阅人分数
+                if (s.getReviewerTeacherId() != null) {
+                    TeacherScoreRecord reviewerRecord = teacherScoreRecordMapper.findByStudentIdAndTeacherIdAndYear(
+                            s.getId(), s.getReviewerTeacherId(), currentYear);
+                    if (reviewerRecord != null && reviewerRecord.getTotalScore() != null) {
+                        reviewerScore = reviewerRecord.getTotalScore();
+                    }
+                }
+                
+                // 如果TeacherScoreRecord中没有，尝试从StudentFinalScore获取
+                if (reviewerScore == null) {
+                    StudentFinalScore score = scoreMap.get(s.getId());
+                    if (score != null) {
+                        reviewerScore = score.getReviewerScore();
+                    }
+                }
+                
                 StudentFinalScore score = scoreMap.get(s.getId());
+                
+                info.put("advisorScore", advisorScore);
+                info.put("reviewerScore", reviewerScore);
                 if (score != null) {
-                    info.put("advisorScore", score.getAdvisorScore());
-                    info.put("reviewerScore", score.getReviewerScore());
                     info.put("finalDefenseScore", score.getFinalDefenseScore());
                     info.put("totalGrade", score.getTotalGrade());
                 } else {
-                    info.put("advisorScore", null);
-                    info.put("reviewerScore", null);
                     info.put("finalDefenseScore", null);
                     info.put("totalGrade", null);
                 }
@@ -1140,7 +1216,7 @@ public class StudentController {
     }
 
     /**
-     * 获取学生的指导教师或评阅人的打分记录（用于超级管理员修改分项分数）
+     * 获取学生的指导教师或评阅人的打分记录（用于超级管理员修改分项分数，或教师查看自己的打分记录）
      * GET /department/student/teacher/scoreRecord?studentId=1&type=advisor/reviewer
      */
     @GetMapping("/teacher/scoreRecord")
@@ -1154,10 +1230,8 @@ public class StudentController {
         boolean isSuperAdmin = currentUser != null && currentUser.getRole() != null &&
                 "SUPER_ADMIN".equals(currentUser.getRole().getName());
 
-        if (!isSuperAdmin) {
-            result.put("error", "权限不足");
-            return result;
-        }
+        // 获取当前教师（可能是答辩组长或普通教师）
+        Teacher currentTeacher = getTeacherFromSession(session);
 
         Integer currentYear = configService.getCurrentDefenseYear();
         if (currentYear == null) {
@@ -1186,12 +1260,38 @@ public class StudentController {
             return result;
         }
 
+        // 权限检查：如果不是超级管理员，必须是该学生的指导教师或评阅人
+        if (!isSuperAdmin) {
+            if (currentTeacher == null) {
+                result.put("error", "权限不足：请先登录教师账号");
+                return result;
+            }
+            // 检查当前教师是否是该学生的指导教师或评阅人
+            if (!currentTeacher.getId().equals(teacherId)) {
+                result.put("error", "权限不足：您不是该学生的" + ("advisor".equals(type) ? "指导教师" : "评阅人"));
+                return result;
+            }
+        }
+
         // 查找该教师的打分记录
         TeacherScoreRecord record = teacherScoreRecordMapper.findByStudentIdAndTeacherIdAndYear(studentId, teacherId,
                 currentYear);
+        
+        // 如果记录不存在，创建一个空的记录对象，允许用户创建新记录
         if (record == null) {
-            result.put("error", "未找到打分记录");
-            return result;
+            record = new TeacherScoreRecord();
+            record.setStudentId(studentId);
+            record.setTeacherId(teacherId);
+            record.setYear(currentYear);
+            record.setDefenseGroupId(student.getDefenseGroupId());
+            // 分项分数和总分都初始化为0或null
+            record.setItem1Score(null);
+            record.setItem2Score(null);
+            record.setItem3Score(null);
+            record.setItem4Score(null);
+            record.setItem5Score(null);
+            record.setItem6Score(null);
+            record.setTotalScore(null);
         }
 
         result.put("record", record);
@@ -1204,7 +1304,7 @@ public class StudentController {
     }
 
     /**
-     * 更新教师的打分记录（用于超级管理员和院系管理员修改分项分数）
+     * 更新教师的打分记录（用于超级管理员、院系管理员和教师修改分项分数）
      * POST /department/student/teacher/updateScoreRecord
      */
     @PostMapping("/teacher/updateScoreRecord")
@@ -1220,12 +1320,16 @@ public class StudentController {
             @RequestParam(required = false) Integer item6,
             HttpSession session) {
 
+        User currentUser = (User) session.getAttribute("currentUser");
+        Teacher currentTeacher = getTeacherFromSession(session);
+        
         // 检查是否是超级管理员或院系管理员
-        String permissionError = checkDeptAdmin(session);
-        if (permissionError != null) {
-            return permissionError;
+        boolean isAdmin = false;
+        if (currentUser != null && currentUser.getRole() != null) {
+            String roleName = currentUser.getRole().getName();
+            isAdmin = "SUPER_ADMIN".equals(roleName) || "DEPT_ADMIN".equals(roleName);
         }
-
+        
         Integer currentYear = configService.getCurrentDefenseYear();
         if (currentYear == null) {
             return "error:请先设置当前答辩年份";
@@ -1247,6 +1351,16 @@ public class StudentController {
 
         if (teacherId == null) {
             return "error:该学生未分配" + ("advisor".equals(type) ? "指导教师" : "评阅人");
+        }
+
+        // 如果不是管理员，验证当前教师是否是该学生的指导教师或评阅人
+        if (!isAdmin) {
+            if (currentTeacher == null) {
+                return "error:权限不足：请先登录教师账号";
+            }
+            if (!currentTeacher.getId().equals(teacherId)) {
+                return "error:权限不足：您不是该学生的" + ("advisor".equals(type) ? "指导教师" : "评阅人");
+            }
         }
 
         // 查找该教师的打分记录（如果没有记录，创建新记录）
@@ -1404,12 +1518,32 @@ public class StudentController {
             studentInfo.put("studentNo", student.getStudentNo());
             studentInfo.put("studentName", student.getName());
             studentInfo.put("classInfo", student.getClassInfo());
-            // 设置院系信息
-            if (student.getDepartment() != null) {
-                studentInfo.put("departmentName", student.getDepartment().getName());
-            } else {
-                studentInfo.put("departmentName", null);
+            // 设置院系信息（优先使用department对象，如果没有则尝试从departmentId查询）
+            String departmentName = null;
+            // 首先尝试从department对象获取
+            if (student.getDepartment() != null && student.getDepartment().getName() != null && !student.getDepartment().getName().isEmpty()) {
+                departmentName = student.getDepartment().getName();
+                System.out.println("学生ID: " + student.getId() + " - 从department对象获取院系名称: " + departmentName);
+            } 
+            // 如果department对象为空或没有名称，且departmentId存在，则查询
+            if (departmentName == null && student.getDepartmentId() != null) {
+                try {
+                    com.example.defensemanagement.entity.Department dept = departmentMapper.findById(student.getDepartmentId());
+                    if (dept != null && dept.getName() != null && !dept.getName().isEmpty()) {
+                        departmentName = dept.getName();
+                        System.out.println("学生ID: " + student.getId() + " - 从departmentId(" + student.getDepartmentId() + ")查询到院系名称: " + departmentName);
+                    } else {
+                        System.out.println("学生ID: " + student.getId() + " - 警告：departmentId(" + student.getDepartmentId() + ")对应的院系不存在");
+                    }
+                } catch (Exception e) {
+                    System.err.println("学生ID: " + student.getId() + " - 查询院系信息时出错: " + e.getMessage());
+                    e.printStackTrace();
+                }
             }
+            if (departmentName == null) {
+                System.out.println("学生ID: " + student.getId() + " - 警告：无法获取院系名称，departmentId=" + student.getDepartmentId() + ", department对象=" + (student.getDepartment() != null ? "存在但无名称" : "null"));
+            }
+            studentInfo.put("departmentName", departmentName);
             studentInfo.put("defenseType", student.getDefenseType());
             studentInfo.put("title", student.getTitle());
 
