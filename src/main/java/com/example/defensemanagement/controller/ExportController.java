@@ -281,9 +281,89 @@ public class ExportController {
         
         ph.put("{{TOTAL_ROWS}}", String.valueOf(rowNum - 1));
         
+        // 加载签名图片
+        Map<String, byte[]> img = new HashMap<>();
+        try {
+            // 获取小组组长
+            DefenseGroupTeacher leader = defenseGroupTeacherMapper.findLeaderByGroupId(groupId);
+            Long leaderTeacherId = null;
+            if (leader != null && leader.getTeacherId() != null) {
+                leaderTeacherId = leader.getTeacherId();
+                byte[] bytes = loadSignature("teacher_" + leaderTeacherId);
+                if (bytes != null) {
+                    img.put("{{SIGN_LEADER}}", bytes);
+                    img.put("{{SIGN_GROUP_LEADER}}", bytes); // 兼容性占位符
+                    System.out.println("[统分表] 已加载答辩组长签名: teacher_" + leaderTeacherId + ", 大小: " + bytes.length);
+                } else {
+                    System.out.println("[统分表] 警告：未找到答辩组长签名: teacher_" + leaderTeacherId);
+                }
+            } else {
+                System.out.println("[统分表] 警告：未找到答辩组长，小组ID: " + groupId);
+            }
+            
+            // 加载评委签名（支持最多5个评委）
+            System.out.println("[统分表] 开始加载评委签名，小组教师总数: " + (groupTeachers != null ? groupTeachers.size() : 0));
+            if (groupTeachers != null && !groupTeachers.isEmpty()) {
+                int judgeIndex = 1;
+                for (DefenseGroupTeacher groupTeacher : groupTeachers) {
+                    if (groupTeacher.getTeacherId() == null) {
+                        System.out.println("[统分表] 跳过教师ID为空的记录");
+                        continue;
+                    }
+                    
+                    // 跳过组长（组长签名已经单独加载）
+                    if (leaderTeacherId != null && groupTeacher.getTeacherId().equals(leaderTeacherId)) {
+                        System.out.println("[统分表] 跳过组长 teacher_" + groupTeacher.getTeacherId() + "（已单独加载）");
+                        continue;
+                    }
+                    
+                    System.out.println("[统分表] 尝试加载评委" + judgeIndex + "签名: teacher_" + groupTeacher.getTeacherId());
+                    byte[] bytes = loadSignature("teacher_" + groupTeacher.getTeacherId());
+                    if (bytes != null) {
+                        // 支持多个评委签名：{{SIGN_JUDGE_1}}, {{SIGN_JUDGE_2}}, {{SIGN_JUDGE_3}}, {{SIGN_JUDGE_4}}, {{SIGN_JUDGE_5}}
+                        String judgeKey = "{{SIGN_JUDGE_" + judgeIndex + "}}";
+                        img.put(judgeKey, bytes);
+                        System.out.println("[统分表] ✓ 已加载评委" + judgeIndex + "签名到 " + judgeKey + ": teacher_" + groupTeacher.getTeacherId() + ", 大小: " + bytes.length);
+                        // 第一个评委也可以使用通用占位符
+                        if (judgeIndex == 1) {
+                            img.put("{{SIGN_JUDGE}}", bytes);
+                            System.out.println("[统分表] ✓ 已加载第一个评委签名到 {{SIGN_JUDGE}}");
+                        }
+                        judgeIndex++;
+                        // 最多支持5个评委签名
+                        if (judgeIndex > 5) {
+                            System.out.println("[统分表] 已达到最大评委数量限制（5个）");
+                            break;
+                        }
+                    } else {
+                        System.out.println("[统分表] ✗ 未找到评委" + judgeIndex + "签名文件: teacher_" + groupTeacher.getTeacherId());
+                        // 即使没有签名文件，也继续处理下一个评委，保持索引连续
+                        judgeIndex++;
+                        if (judgeIndex > 5) break;
+                    }
+                }
+                System.out.println("[统分表] 评委签名加载完成，共加载 " + (judgeIndex - 1) + " 个评委签名");
+            } else {
+                System.out.println("[统分表] 警告：小组没有教师数据");
+            }
+            
+            // 输出所有已加载的签名键
+            System.out.println("[统分表] 已加载的签名占位符: " + img.keySet());
+            System.out.println("[统分表] 签名图片数量: " + img.size());
+            for (Map.Entry<String, byte[]> entry : img.entrySet()) {
+                System.out.println("[统分表] 签名占位符: " + entry.getKey() + ", 图片大小: " + (entry.getValue() != null ? entry.getValue().length : 0) + " 字节");
+            }
+        } catch (Exception e) {
+            // 签名加载失败不影响导出，只记录日志
+            System.err.println("[统分表] 警告：加载签名失败: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
         // 渲染文档
+        System.out.println("[统分表] 开始渲染文档，占位符数量: " + ph.size() + ", 图片数量: " + img.size());
         String filename = encode("毕业论文(设计)答辩小组统分表-" + groupName + ".docx");
-        byte[] doc = docTemplateService.renderDoc(resolveTemplate("group-summary", GROUP_SUMMARY_TEMPLATE), ph, new HashMap<>());
+        byte[] doc = docTemplateService.renderDoc(resolveTemplate("group-summary", GROUP_SUMMARY_TEMPLATE), ph, img);
+        System.out.println("[统分表] 文档渲染完成，文档大小: " + doc.length + " 字节");
         return attachment(doc, filename);
     }
 
@@ -1162,7 +1242,7 @@ public class ExportController {
      * @param isProcessForm 是否为过程表（需要评委签名）
      */
     private void fillSignatures(Map<String, byte[]> img, Student stu, boolean isGradeForm, boolean isProcessForm) {
-        // 指导教师签名
+        // 指导教师签名 - 对应占位符：{{SIGN_ADVISOR}} 或 {{SIGN_ADVISOR_TEACHER}}
         if (stu.getAdvisorTeacherId() != null) {
             byte[] bytes = loadSignature("teacher_" + stu.getAdvisorTeacherId());
             if (bytes != null) {
@@ -1174,7 +1254,7 @@ public class ExportController {
             }
         }
         
-        // 评阅教师签名
+        // 评阅教师签名 - 对应占位符：{{SIGN_REVIEWER}} 或 {{SIGN_REVIEWER_TEACHER}}
         if (stu.getReviewerTeacherId() != null) {
             byte[] bytes = loadSignature("teacher_" + stu.getReviewerTeacherId());
             if (bytes != null) {
@@ -1186,7 +1266,7 @@ public class ExportController {
             }
         }
         
-        // 答辩组长签名（用于答辩成绩表和成绩评定表）
+        // 答辩组长签名（用于答辩成绩表和成绩评定表）- 对应占位符：{{SIGN_LEADER}} 或 {{SIGN_GROUP_LEADER}}
         if (stu.getDefenseGroupId() != null) {
             try {
                 DefenseGroupTeacher leader = defenseGroupTeacherMapper.findLeaderByGroupId(stu.getDefenseGroupId());
@@ -1208,24 +1288,70 @@ public class ExportController {
             }
         }
         
-        // 系主任签名（用于成绩评定表）
+        // 系主任签名（用于成绩评定表）- 对应占位符：{{SIGN_DEPT_HEAD}} 或 {{SIGN_DEAN}}
         if (isGradeForm && stu.getDepartmentId() != null) {
             try {
+                System.out.println("开始查找系主任签名，学生院系ID: " + stu.getDepartmentId());
                 // 查找该院系的院系管理员（DEPT_ADMIN角色）作为系主任
                 List<com.example.defensemanagement.entity.User> deptAdmins = 
                     userService.getUsersByRole("DEPT_ADMIN");
-                for (com.example.defensemanagement.entity.User admin : deptAdmins) {
-                    if (admin.getDepartmentId() != null && 
-                        admin.getDepartmentId().equals(stu.getDepartmentId())) {
-                        byte[] bytes = loadSignature("user_" + admin.getId());
+                System.out.println("找到 " + (deptAdmins != null ? deptAdmins.size() : 0) + " 个院系管理员");
+                
+                boolean found = false;
+                com.example.defensemanagement.entity.User fallbackAdmin = null; // 备选院系管理员
+                
+                if (deptAdmins != null) {
+                    // 首先尝试查找匹配的院系管理员
+                    for (com.example.defensemanagement.entity.User admin : deptAdmins) {
+                        System.out.println("检查院系管理员: ID=" + admin.getId() + ", 用户名=" + admin.getUsername() + ", 院系ID=" + admin.getDepartmentId());
+                        if (admin.getDepartmentId() != null && 
+                            admin.getDepartmentId().equals(stu.getDepartmentId())) {
+                            System.out.println("找到匹配的院系管理员: user_" + admin.getId() + ", 开始加载签名");
+                            byte[] bytes = loadSignature("user_" + admin.getId());
+                            if (bytes != null) {
+                                img.put("{{SIGN_DEPT_HEAD}}", bytes);
+                                img.put("{{SIGN_DEAN}}", bytes); // 兼容性占位符
+                                System.out.println("已加载系主任签名: user_" + admin.getId() + ", 大小: " + bytes.length);
+                                found = true;
+                                break; // 只取第一个找到的
+                            } else {
+                                System.out.println("警告：未找到系主任签名文件: user_" + admin.getId());
+                            }
+                        }
+                        // 记录第一个可用的院系管理员作为备选
+                        if (fallbackAdmin == null && admin.getDepartmentId() != null) {
+                            fallbackAdmin = admin;
+                        }
+                    }
+                    
+                    // 如果找不到匹配的院系管理员，使用第一个可用的作为备选
+                    if (!found && fallbackAdmin != null) {
+                        System.out.println("未找到匹配的院系管理员（学生院系ID: " + stu.getDepartmentId() + "），使用备选院系管理员: user_" + fallbackAdmin.getId());
+                        byte[] bytes = loadSignature("user_" + fallbackAdmin.getId());
                         if (bytes != null) {
                             img.put("{{SIGN_DEPT_HEAD}}", bytes);
                             img.put("{{SIGN_DEAN}}", bytes); // 兼容性占位符
-                            break; // 只取第一个找到的
+                            System.out.println("已加载备选系主任签名: user_" + fallbackAdmin.getId() + ", 大小: " + bytes.length);
+                            found = true;
+                        } else {
+                            System.out.println("警告：未找到备选系主任签名文件: user_" + fallbackAdmin.getId());
                         }
                     }
                 }
-            } catch (Exception ignored) {}
+                
+                if (!found) {
+                    System.out.println("警告：未找到可用的系主任签名（学生院系ID: " + stu.getDepartmentId() + "）");
+                }
+            } catch (Exception e) {
+                System.err.println("加载系主任签名时出错: " + e.getMessage());
+                e.printStackTrace();
+            }
+        } else {
+            if (!isGradeForm) {
+                System.out.println("不是成绩评定表，跳过系主任签名");
+            } else if (stu.getDepartmentId() == null) {
+                System.out.println("学生院系ID为空，跳过系主任签名");
+            }
         }
         
         // 评委签名（用于过程表，可能需要多个评委的签名）
@@ -1348,4 +1474,6 @@ public class ExportController {
         double totalScaled(double f) { return total * f; }
     }
 }
+
+
 

@@ -139,16 +139,15 @@ public class UserServiceImpl implements UserService {
             if (user.getRoleId() != null) {
                 Role role = roleMapper.findById(user.getRoleId());
                 if (role != null && "TEACHER".equals(role.getName())) {
-                    // 生成教师编号（使用用户名去掉 teacher_ 前缀，或使用 user ID）
-                    String teacherNo = user.getUsername().startsWith("teacher_") 
-                        ? user.getUsername().substring(8).toUpperCase() 
-                        : "T" + String.format("%03d", user.getId());
+                    // 教师编号 = 用户名（user.username）
+                    String teacherNo = user.getUsername();
                     
                     // 检查教师编号是否已存在
                     Teacher existingTeacher = teacherMapper.findByTeacherNo(teacherNo);
                     if (existingTeacher == null) {
+                        // 教师编号不存在，创建新的教师记录
                         Teacher teacher = new Teacher();
-                        teacher.setTeacherNo(teacherNo);
+                        teacher.setTeacherNo(teacherNo); // 教师编号 = 用户名
                         teacher.setName(user.getRealName() != null ? user.getRealName() : user.getUsername());
                         teacher.setDepartmentId(user.getDepartmentId());
                         teacher.setEmail(user.getEmail());
@@ -157,6 +156,13 @@ public class UserServiceImpl implements UserService {
                         teacher.setPassword(user.getPassword()); // 使用相同的加密密码
                         teacher.setUserId(user.getId()); // 关联到 user 表
                         teacherMapper.insert(teacher);
+                    } else {
+                        // 教师编号已存在，检查是否属于当前用户
+                        if (existingTeacher.getUserId() != null && !existingTeacher.getUserId().equals(user.getId())) {
+                            // 教师编号已被其他用户使用，抛出异常
+                            throw new RuntimeException("教师编号 " + teacherNo + " 已被其他用户使用");
+                        }
+                        // 如果教师编号已存在且属于当前用户，不需要重复创建（可能是更新操作）
                     }
                 }
             }
@@ -242,10 +248,28 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public boolean deleteUser(Long userId) {
         if (userId == null) {
             return false;
         }
+        
+        // 查找用户信息
+        User user = userMapper.findById(userId);
+        if (user == null) {
+            return false;
+        }
+        
+        // 如果用户是教师角色，先删除对应的教师记录
+        if (user.getRoleId() != null) {
+            Role role = roleMapper.findById(user.getRoleId());
+            if (role != null && "TEACHER".equals(role.getName())) {
+                // 通过user_id查找教师记录并删除
+                teacherMapper.deleteByUserId(userId);
+            }
+        }
+        
+        // 删除用户记录
         return userMapper.deleteById(userId) > 0;
     }
 

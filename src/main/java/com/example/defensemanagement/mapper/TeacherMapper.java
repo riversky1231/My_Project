@@ -46,6 +46,9 @@ public interface TeacherMapper {
     @Update("UPDATE teacher SET status = #{status}, updated_time = CURRENT_TIMESTAMP WHERE id = #{id}")
     int updateStatus(@Param("id") Long id, @Param("status") Integer status);
     
+    @Update("UPDATE teacher SET teacher_no = #{teacherNo}, updated_time = CURRENT_TIMESTAMP WHERE id = #{id}")
+    int updateTeacherNo(@Param("id") Long id, @Param("teacherNo") String teacherNo);
+    
     @Select("SELECT * FROM teacher WHERE user_id = #{userId}")
     @Results({
         @Result(property = "teacherNo", column = "teacher_no"),
@@ -53,4 +56,10 @@ public interface TeacherMapper {
         @Result(property = "userId", column = "user_id")
     })
     Teacher findByUserId(Long userId);
+    
+    @Delete("DELETE FROM teacher WHERE id = #{id}")
+    int deleteById(@Param("id") Long id);
+    
+    @Delete("DELETE FROM teacher WHERE user_id = #{userId}")
+    int deleteByUserId(@Param("userId") Long userId);
 }

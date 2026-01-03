@@ -791,24 +791,92 @@ public class AdminController {
                         }
                     }
 
+                    // 判断是否为教师角色
+                    boolean isTeacher = false;
+                    if (roleId != null) {
+                        Role role = roleMapper.findById(roleId);
+                        if (role != null && "TEACHER".equals(role.getName())) {
+                            isTeacher = true;
+                        }
+                    }
+
+                    // 如果是教师角色，用户名就是教师编号，需要检查
+                    if (isTeacher) {
+                        if (username.isEmpty()) {
+                            failCount++;
+                            errorMessages.append("第").append(rowIndex + 1).append("行：教师角色必须提供用户名（作为教师编号）；");
+                            continue;
+                        }
+                        
+                        // 检查教师编号（用户名）是否已存在
+                        if (teacherMapper.findByTeacherNo(username) != null) {
+                            failCount++;
+                            errorMessages.append("第").append(rowIndex + 1).append("行：教师编号（用户名） ").append(username)
+                                    .append("已存在；");
+                            continue;
+                        }
+                    }
+
                     // 创建用户对象
                     User user = new User();
                     user.setUsername(username);
-                    // 默认密码为"123456"，用户首次登录后应修改密码
-                    user.setPassword(passwordEncoder.encode("123456"));
+                    // 密码固定为"123456"（明文，saveUser方法会自动加密）
+                    user.setPassword("123456");
                     user.setRealName(realName.isEmpty() ? null : realName);
                     user.setRoleId(roleId);
                     user.setDepartmentId(departmentId);
                     user.setStatus(status);
                     // 其他字段保持为null
 
-                    // 保存用户
+                    // 保存用户（如果是教师角色，UserServiceImpl.saveUser会自动创建教师记录）
+                    // saveUser方法会自动将密码加密后存入数据库
                     userService.saveUser(user);
+                    
+                    // 如果是教师角色，确保教师记录的信息正确（UserServiceImpl.saveUser已自动创建，这里只需要更新信息）
+                    if (isTeacher && !username.isEmpty()) {
+                        // 查找教师记录（UserServiceImpl.saveUser应该已自动创建）
+                        com.example.defensemanagement.entity.Teacher existingTeacher = teacherMapper.findByUserId(user.getId());
+                        
+                        if (existingTeacher != null) {
+                            // 更新教师记录的信息，确保与Excel中的数据一致
+                            existingTeacher.setName(realName.isEmpty() ? username : realName);
+                            existingTeacher.setDepartmentId(departmentId);
+                            existingTeacher.setStatus(status);
+                            // 确保教师编号 = 用户名（虽然应该已经一致，但为了保险还是更新一下）
+                            if (!username.equals(existingTeacher.getTeacherNo())) {
+                                teacherMapper.updateTeacherNo(existingTeacher.getId(), username);
+                            }
+                            // 更新密码为123456的加密值（与用户表一致）
+                            teacherMapper.updatePassword(existingTeacher.getId(), user.getPassword());
+                            teacherMapper.update(existingTeacher);
+                        } else {
+                            // 如果不存在（理论上不应该发生，因为UserServiceImpl.saveUser会自动创建），手动创建
+                            com.example.defensemanagement.entity.Teacher newTeacher = new com.example.defensemanagement.entity.Teacher();
+                            newTeacher.setTeacherNo(username); // 教师编号 = 用户名
+                            newTeacher.setName(realName.isEmpty() ? username : realName);
+                            newTeacher.setDepartmentId(departmentId);
+                            newTeacher.setStatus(status);
+                            newTeacher.setPassword(user.getPassword()); // 使用用户表的加密密码（saveUser已加密）
+                            newTeacher.setUserId(user.getId());
+                            teacherMapper.insert(newTeacher);
+                        }
+                    }
+                    
                     successCount++;
 
                 } catch (Exception e) {
                     failCount++;
-                    errorMessages.append("第").append(rowIndex + 1).append("行：").append(e.getMessage()).append("；");
+                    String errorMsg = e.getMessage();
+                    if (errorMsg == null || errorMsg.isEmpty()) {
+                        errorMsg = e.getClass().getSimpleName();
+                        if (e.getCause() != null) {
+                            errorMsg += ": " + e.getCause().getMessage();
+                        }
+                    }
+                    errorMessages.append("第").append(rowIndex + 1).append("行：").append(errorMsg).append("；");
+                    // 打印完整异常堆栈以便调试
+                    System.err.println("导入用户Excel第" + (rowIndex + 1) + "行失败：");
+                    e.printStackTrace();
                 }
             }
 
@@ -832,7 +900,16 @@ public class AdminController {
             return result.toString();
 
         } catch (Exception e) {
-            return "error:导入失败：" + e.getMessage();
+            System.err.println("导入用户Excel失败：");
+            e.printStackTrace();
+            String errorMsg = e.getMessage();
+            if (errorMsg == null || errorMsg.isEmpty()) {
+                errorMsg = e.getClass().getSimpleName();
+                if (e.getCause() != null) {
+                    errorMsg += ": " + e.getCause().getMessage();
+                }
+            }
+            return "error:导入失败：" + errorMsg;
         }
     }
 

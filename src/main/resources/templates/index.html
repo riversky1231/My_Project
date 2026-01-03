@@ -446,8 +446,8 @@
                                                         class="badge bg-success ms-2">组长</span>
                                                 </div>
                                                 <small class="text-muted"
-                                                    th:if="${teacher.title != null && !teacher.title.isEmpty()}">
-                                                    <span th:text="'职称：' + ${teacher.title}">职称</span>
+                                                    th:if="${teacher.department != null && teacher.department.name != null}">
+                                                    <span th:text="'所属学院：' + ${teacher.department.name}">所属学院</span>
                                                 </small>
                                             </div>
                                         </li>
@@ -501,7 +501,6 @@
                                 </th>
                                 <th>学号</th>
                                 <th>姓名</th>
-                                <th id="student-class-header" style="display: none;">班级</th>
                                 <th>所属院系</th>
                                 <th>类型</th>
                                 <th>题目</th>
@@ -1346,7 +1345,7 @@
                             <tr>
                                 <th>学号</th>
                                 <th>姓名</th>
-                                <th>班级</th>
+                                <th>所属院系</th>
                                 <th>类型</th>
                                 <th>题目</th>
                                 <th>打分进度</th>
@@ -3688,13 +3687,7 @@
 
         // 更新学生管理表头为管理员版
         function updateStudentTableHeaderForAdmin() {
-            const classHeader = document.getElementById('student-class-header');
-            const userInfoDiv = document.querySelector('.user-info');
-            const isSuperAdmin = userInfoDiv && userInfoDiv.dataset.userRole === 'SUPER_ADMIN';
-            if (classHeader) {
-                // 超级管理员不显示"班级"列，院系管理员显示
-                classHeader.style.display = isSuperAdmin ? 'none' : '';
-            }
+            // 班级列已删除，此函数不再需要，保留以保持兼容性
         }
 
         // 隐藏管理员专用按钮（添加学生等）
@@ -3732,7 +3725,7 @@
                 showAlert('error', error.message || '获取学生列表失败');
                 const userInfoDiv = document.querySelector('.user-info');
                 const isSuperAdmin = userInfoDiv && userInfoDiv.dataset.userRole === 'SUPER_ADMIN';
-                const colCount = isSuperAdmin ? 9 : 10;
+                const colCount = 9; // 所有用户都不显示班级列（错误提示时没有勾选框列）
                 document.getElementById('student-list').innerHTML =
                     `<tr><td colspan="${colCount}" class="text-center text-danger">加载失败: ${error.message || '未知错误'}</td></tr>`;
             }
@@ -3838,7 +3831,7 @@
             // 检查是否是超级管理员
             const userInfoDiv = document.querySelector('.user-info');
             const isSuperAdmin = userInfoDiv && userInfoDiv.dataset.userRole === 'SUPER_ADMIN';
-            const colCount = isSuperAdmin ? 10 : 11; // 超级管理员少一列（班级），加上勾选框列
+            const colCount = 10; // 所有用户都不显示班级列，加上勾选框列
 
             if (!students || students.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="${colCount}" class="text-center text-muted">暂无学生数据</td></tr>`;
@@ -3862,8 +3855,8 @@
             }
 
             filtered.forEach(student => {
-                // 超级管理员不显示"班级"列
-                const classCell = isSuperAdmin ? '' : `<td>${student.classInfo || 'N/A'}</td>`;
+                // 不再显示"班级"列
+                const classCell = '';
                 // 获取院系名称
                 const departmentName = student.department ? student.department.name : (student.departmentId ? 'ID:' + student.departmentId : 'N/A');
                 const row = `
@@ -7241,34 +7234,24 @@
                 return;
             }
 
-            // 获取当前年份
-            let year = window.currentDashboardYear;
-            if (!year) {
-                try {
-                    const yearResp = await fetch('/admin/config/year/current');
-                    if (yearResp.ok) {
-                        year = await yearResp.json();
-                        window.currentDashboardYear = year;
-                    }
-                } catch (e) {
-                    console.error('Failed to get current year:', e);
-                }
-            }
-
-            if (!year) {
-                document.getElementById('dashboard-student-comments').innerHTML =
-                    '<div class="alert alert-warning">请先设置当前答辩年份</div>';
-                return;
-            }
-
             try {
-                // 从学生列表接口获取所有学生，然后按小组和年份过滤
+                // 直接调用学生列表接口，后端已经实现了年份过滤
                 const allStudentsResp = await fetch('/department/student/list');
                 if (!allStudentsResp.ok) {
-                    throw new Error('获取学生列表失败');
+                    // 如果返回错误，可能是年份未设置或其他原因
+                    const errorText = await allStudentsResp.text();
+                    if (allStudentsResp.status === 400 && errorText.includes('年份')) {
+                        document.getElementById('dashboard-student-comments').innerHTML =
+                            '<div class="alert alert-warning">请先设置当前答辩年份</div>';
+                    } else {
+                        throw new Error('获取学生列表失败: ' + errorText);
+                    }
+                    return;
                 }
+                
                 const allStudents = await allStudentsResp.json();
-                const groupStudents = allStudents.filter(s => s.defenseGroupId == groupId && s.defenseYear == year);
+                // 后端已经按年份过滤，这里只需要按小组过滤
+                const groupStudents = allStudents.filter(s => s.defenseGroupId == groupId);
 
                 if (groupStudents.length === 0) {
                     document.getElementById('dashboard-student-comments').innerHTML =
@@ -7276,15 +7259,47 @@
                     return;
                 }
 
+                // 从学生数据中获取年份（用于获取评语）
+                // 优先使用学生的 defenseYear，如果所有学生都有相同的年份
+                let year = null;
+                if (groupStudents.length > 0) {
+                    // 尝试从第一个学生的 defenseYear 获取
+                    if (groupStudents[0].defenseYear) {
+                        year = groupStudents[0].defenseYear;
+                    } else {
+                        // 如果第一个学生没有年份，尝试从其他学生获取
+                        for (let i = 1; i < groupStudents.length; i++) {
+                            if (groupStudents[i].defenseYear) {
+                                year = groupStudents[i].defenseYear;
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                // 如果学生数据中都没有年份，尝试从系统配置获取
+                if (!year) {
+                    try {
+                        const yearResp = await fetch('/admin/config/year/current');
+                        if (yearResp.ok) {
+                            year = await yearResp.json();
+                        }
+                    } catch (e) {
+                        console.warn('Failed to get current year:', e);
+                    }
+                }
+
                 // 然后获取该小组的学生评语
                 let comments = [];
-                try {
-                    const commentsResp = await fetch(`/defense/comment/group/${groupId}?year=${year}`);
-                    if (commentsResp.ok) {
-                        comments = await commentsResp.json();
+                if (year) {
+                    try {
+                        const commentsResp = await fetch(`/defense/comment/group/${groupId}?year=${year}`);
+                        if (commentsResp.ok) {
+                            comments = await commentsResp.json();
+                        }
+                    } catch (e) {
+                        console.warn('Failed to load comments:', e);
                     }
-                } catch (e) {
-                    console.warn('Failed to load comments:', e);
                 }
 
                 // 将评语按学生ID建立映射
@@ -7354,7 +7369,7 @@
                             <strong>${studentName}</strong>
                             <small class="text-muted ms-2">${student.defenseType === 'PAPER' ? '论文' : '设计'}</small>
                         </div>
-                        <button class="btn btn-sm btn-outline-primary" onclick='editStudentComment(${student.id}, ${year})'>
+                        <button class="btn btn-sm btn-outline-primary" onclick='editStudentComment(${student.id}, ${year || student.defenseYear || null})'>
                             <i class="bi bi-pencil"></i> ${comment ? '编辑' : '添加'}评语
                         </button>
                     </div>
@@ -7580,7 +7595,7 @@
                         tableHead.innerHTML = `
                             <th>学号</th>
                             <th>姓名</th>
-                            <th>班级</th>
+                            <th>所属院系</th>
                             <th>类型</th>
                             <th>题目</th>
                             <th>打分进度</th>
@@ -7782,9 +7797,9 @@
                 }
 
                 const row = document.createElement('tr');
-                // 超级管理员显示小组名称，但不显示"班级"、"我的打分"和"操作"列
+                // 超级管理员显示小组名称，但不显示"所属院系"、"我的打分"和"操作"列
                 const groupNameCell = isSuperAdmin && s.groupName ? `<td><span class="badge bg-info">${s.groupName}</span></td>` : '';
-                const classCell = isSuperAdmin ? '' : `<td>${s.classInfo || ''}</td>`;
+                const classCell = isSuperAdmin ? '' : `<td>${s.departmentName || 'N/A'}</td>`;
                 const myScoreCell = isSuperAdmin ? '' : `<td>${hasScored ? `<span class="badge bg-success">${myScore}</span>` : '<span class="badge bg-secondary">未打分</span>'}</td>`;
                 const actionCell = isSuperAdmin ? '' : `<td>
                         <button class="btn btn-sm ${hasScored ? 'btn-outline-warning' : 'btn-outline-primary'}" 
