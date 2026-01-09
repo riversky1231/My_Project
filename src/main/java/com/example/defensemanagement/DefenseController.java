@@ -155,12 +155,68 @@ public class DefenseController {
         }
         
         DefenseGroup g = new DefenseGroup();
-        g.setName(request.getName());
+        
+        // 如果名称为空或null，自动生成
+        if (request.getName() == null || request.getName().trim().isEmpty()) {
+            String autoName = generateGroupName();
+            g.setName(autoName);
+        } else {
+            g.setName(request.getName());
+        }
+        
         g.setScore(request.getScore());
         // Put it at the end by default; user can reorder via updateOrder.
         int order = defenseService.getAllGroups() != null ? defenseService.getAllGroups().size() : 0;
         g.setDisplayOrder(order);
         defenseService.addGroup(g);
+    }
+
+    /**
+     * 批量创建小组
+     * POST /group/addBatch
+     */
+    @PostMapping("/group/addBatch")
+    @ResponseBody
+    public String addGroupsBatch(@RequestBody BatchAddGroupRequest request, HttpSession session) {
+        // 检查权限：只有超级管理员可以添加小组
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser == null || !"SUPER_ADMIN".equals(currentUser.getRole().getName())) {
+            return "error:权限不足：只有超级管理员可以添加小组";
+        }
+        
+        int count = request.getCount();
+        if (count < 1 || count > 50) {
+            return "error:小组个数必须在1-50之间";
+        }
+        
+        try {
+            // 获取当前小组数量
+            List<DefenseGroup> existingGroups = defenseService.getAllGroups();
+            int currentCount = existingGroups != null ? existingGroups.size() : 0;
+            
+            // 批量创建小组
+            for (int i = 1; i <= count; i++) {
+                DefenseGroup g = new DefenseGroup();
+                g.setName("第" + (currentCount + i) + "小组");
+                g.setScore(0);
+                g.setDisplayOrder(currentCount + i - 1);
+                defenseService.addGroup(g);
+            }
+            
+            return "success:成功创建" + count + "个小组";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "error:批量创建失败：" + e.getMessage();
+        }
+    }
+
+    /**
+     * 自动生成小组名称（第n+1小组格式）
+     */
+    private String generateGroupName() {
+        List<DefenseGroup> existingGroups = defenseService.getAllGroups();
+        int currentCount = existingGroups != null ? existingGroups.size() : 0;
+        return "第" + (currentCount + 1) + "小组";
     }
 
     @DeleteMapping("/group/{id}")
@@ -208,5 +264,12 @@ public class DefenseController {
         public void setScore(int score) { this.score = score; }
         public List<String> getMembers() { return members; }
         public void setMembers(List<String> members) { this.members = members; }
+    }
+
+    public static class BatchAddGroupRequest {
+        private int count;
+
+        public int getCount() { return count; }
+        public void setCount(int count) { this.count = count; }
     }
 }

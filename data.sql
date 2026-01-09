@@ -184,7 +184,7 @@ CREATE TABLE `large_group_score`  (
                                       INDEX `idx_teacher_year`(`teacher_id` ASC, `year` ASC) USING BTREE,
                                       CONSTRAINT `large_group_score_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `t_student` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
                                       CONSTRAINT `large_group_score_ibfk_2` FOREIGN KEY (`teacher_id`) REFERENCES `teacher` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 11 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '大组答辩成绩表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 12 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '大组答辩成绩表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of large_group_score
@@ -199,6 +199,7 @@ INSERT INTO `large_group_score` VALUES (7, 11, 1, 2024, 94, '2025-12-24 18:32:18
 INSERT INTO `large_group_score` VALUES (8, 6, 1, 2024, 93, '2025-12-24 18:32:25', '2025-12-24 18:32:25');
 INSERT INTO `large_group_score` VALUES (9, 9, 2, 2024, 99, '2025-12-24 21:37:15', '2025-12-24 21:37:15');
 INSERT INTO `large_group_score` VALUES (10, 6, 2, 2024, 93, '2025-12-24 21:37:22', '2025-12-24 21:37:22');
+INSERT INTO `large_group_score` VALUES (11, 9, 3, 2024, 100, '2026-01-03 23:35:07', '2026-01-03 23:35:07');
 
 -- ----------------------------
 -- Table structure for role
@@ -242,7 +243,7 @@ CREATE TABLE `student_comment`  (
 -- Records of student_comment
 -- ----------------------------
 INSERT INTO `student_comment` VALUES (1, 2, 2024, '该生设计思路清晰，实现方案合理，演示效果良好，答辩表现优秀。', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
-INSERT INTO `student_comment` VALUES (2, 3, 2024, '论文选题具有实际意义，研究方法科学，数据分析充分，答辩表达清晰。', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `student_comment` VALUES (2, 3, 2024, '评语：陈思琪同学的论文《微服务网关安全加固》选题具有较强的现实意义，能够将零信任理念与熔断策略相结合，体现出较好的创新意识和技术整合能力。答辩过程中表达清晰，逻辑严谨，展示了扎实的专业基础和独立思考能力，整体表现优秀。', '2025-12-18 12:38:58', '2026-01-03 23:44:44');
 INSERT INTO `student_comment` VALUES (3, 4, 2024, '设计作品功能完整，技术实现到位，用户体验良好，答辩回答问题准确。', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 INSERT INTO `student_comment` VALUES (4, 5, 2024, '论文研究深入，理论分析透彻，实验验证充分，答辩表现优秀。', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 INSERT INTO `student_comment` VALUES (5, 6, 2024, '设计创新性强，技术方案合理，实现效果良好，答辩回答问题准确。', '2025-12-18 12:38:58', '2025-12-18 12:38:58');
@@ -271,15 +272,15 @@ CREATE TABLE `student_final_score`  (
 -- ----------------------------
 -- Records of student_final_score
 -- ----------------------------
-INSERT INTO `student_final_score` VALUES (2, 2, 2024, 86, 79, 84.70, 83.40, 1.027, 83, 83, '2025-12-18 12:38:58');
+INSERT INTO `student_final_score` VALUES (2, 2, 2024, 86, 79, 89.20, 85.20, 1.029, 87, 83, '2025-12-18 12:38:58');
 INSERT INTO `student_final_score` VALUES (3, 3, 2024, 92, 90, 93.00, 91.80, 0.995, 94, 93, '2025-12-18 12:38:58');
-INSERT INTO `student_final_score` VALUES (4, 4, 2024, 85, 84, 74.60, 80.50, 0.995, 75, 80, '2025-12-18 12:38:58');
+INSERT INTO `student_final_score` VALUES (4, 4, 2024, 85, 64, 74.60, 74.50, 0.995, 75, 80, '2025-12-18 12:38:58');
 INSERT INTO `student_final_score` VALUES (5, 5, 2024, 90, 90, 77.00, 84.80, 0.939, 82, NULL, '2025-12-18 12:38:58');
 INSERT INTO `student_final_score` VALUES (6, 6, 2024, 84, 82, 93.00, 87.00, 1.057, 88, 93, '2025-12-18 12:38:58');
 INSERT INTO `student_final_score` VALUES (7, 7, 2025, 95, 94, 96.00, 95.60, 1.030, 93, 96, '2025-12-18 12:38:58');
 INSERT INTO `student_final_score` VALUES (8, 8, 2025, 90, 89, 85.00, 87.20, 0.980, 87, 85, '2025-12-18 12:38:58');
-INSERT INTO `student_final_score` VALUES (9, 9, 2024, 87, 85, 93.50, 89.00, 1.027, 91, 94, '2025-12-18 12:38:58');
-INSERT INTO `student_final_score` VALUES (10, 10, 2024, 89, 88, 89.60, 88.90, 0.995, 90, 86, '2025-12-18 12:38:58');
+INSERT INTO `student_final_score` VALUES (9, 9, 2024, 94, 85, 95.70, 92.00, 1.029, 93, 96, '2025-12-18 12:38:58');
+INSERT INTO `student_final_score` VALUES (10, 10, 2024, 100, 88, 89.60, 92.20, 0.995, 90, 86, '2025-12-18 12:38:58');
 INSERT INTO `student_final_score` VALUES (11, 11, 2024, 91, 89, 92.00, 90.80, 0.939, 98, 92, '2025-12-18 12:38:58');
 
 -- ----------------------------
@@ -429,7 +430,7 @@ CREATE TABLE `teacher_score_record`  (
 -- ----------------------------
 INSERT INTO `teacher_score_record` VALUES (3, 2, 1, 1, 2024, 13, 13, 12, 14, 13, 14, 79, '2025-12-24 09:28:43', '2025-12-18 12:38:58');
 INSERT INTO `teacher_score_record` VALUES (4, 2, 1, 2, 2024, 14, 14, 13, 20, 12, 13, 86, '2025-12-24 17:27:01', '2025-12-18 12:38:58');
-INSERT INTO `teacher_score_record` VALUES (5, 3, 2, 3, 2024, 46, 24, 23, NULL, NULL, NULL, 93, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (5, 3, 2, 3, 2024, 46, 24, 22, NULL, NULL, NULL, 92, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 INSERT INTO `teacher_score_record` VALUES (6, 4, 2, 4, 2024, 13, 14, 13, 22, 13, 11, 86, '2025-12-24 18:23:09', '2025-12-18 12:38:58');
 INSERT INTO `teacher_score_record` VALUES (7, 5, 3, 5, 2024, 41, 21, 20, NULL, NULL, NULL, 82, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 INSERT INTO `teacher_score_record` VALUES (8, 6, 4, 5, 2024, 12, 12, 11, NULL, NULL, NULL, 76, '2025-12-18 12:38:58', '2025-12-18 12:38:58');

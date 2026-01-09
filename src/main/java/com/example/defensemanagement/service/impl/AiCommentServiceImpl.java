@@ -5,14 +5,21 @@ import com.example.defensemanagement.service.ConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * 调用通义千问 DashScope 文本生成接口。
@@ -157,6 +164,161 @@ public class AiCommentServiceImpl implements AiCommentService {
         } catch (Exception e) {
             return "【提示】调用大模型出错：" + e.getMessage() +
                     (e.getCause() != null ? " (原因: " + e.getCause().getMessage() + ")" : "");
+        }
+    }
+
+    @Override
+    public String generateCommentStream(String promptTemplateKey, String context, Consumer<String> onChunk) {
+        String template = configService.getPromptTemplate(promptTemplateKey);
+        String apiKey = configService.getConfigValue(ConfigServiceImpl.KEY_QWEN_API_KEY);
+
+        if (!StringUtils.hasText(template)) {
+            String error = "【提示】尚未配置评语提示词模板，无法调用大模型。";
+            if (onChunk != null) onChunk.accept(error);
+            return error;
+        }
+        if (!StringUtils.hasText(apiKey)) {
+            String error = "【提示】尚未配置大模型 API Key，无法调用大模型。";
+            if (onChunk != null) onChunk.accept(error);
+            return error;
+        }
+
+        String prompt = template + "\n上下文：" + (context == null ? "" : context);
+
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.add(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey);
+
+            // 构建请求体 - 通义千问DashScope API格式（兼容OpenAI格式）
+            Map<String, Object> body = new HashMap<>();
+            body.put("model", DEFAULT_MODEL);
+            body.put("stream", true); // 启用流式响应
+
+            // 构建messages数组
+            java.util.List<Map<String, String>> messages = new java.util.ArrayList<>();
+            Map<String, String> userMessage = new HashMap<>();
+            userMessage.put("role", "user");
+            userMessage.put("content", prompt);
+            messages.add(userMessage);
+            body.put("messages", messages);
+
+            // 创建支持流式响应的RestTemplate
+            ClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+            RestTemplate streamRestTemplate = new RestTemplate(factory);
+
+            StringBuilder fullContent = new StringBuilder();
+
+            // 执行请求并处理流式响应
+            org.springframework.web.client.ResponseExtractor<String> responseExtractor = response -> {
+                InputStream inputStream = response.getBody();
+                if (inputStream == null) {
+                    String error = "【提示】调用大模型失败：无响应流";
+                    if (onChunk != null) onChunk.accept(error);
+                    return error;
+                }
+
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        if (line.trim().isEmpty()) continue;
+                        
+                        // SSE格式：data: {...}
+                        if (line.startsWith("data: ")) {
+                            String jsonData = line.substring(6).trim();
+                            
+                            // 流结束标记
+                            if ("[DONE]".equals(jsonData)) {
+                                break;
+                            }
+
+                            try {
+                                com.fasterxml.jackson.databind.ObjectMapper objectMapper = 
+                                    new com.fasterxml.jackson.databind.ObjectMapper();
+                                @SuppressWarnings("unchecked")
+                                Map<String, Object> data = objectMapper.readValue(jsonData, Map.class);
+
+                                // 检查错误
+                                if (data.containsKey("error")) {
+                                    Object errorObj = data.get("error");
+                                    if (errorObj instanceof Map) {
+                                        Object messageObj = ((Map<?, ?>) errorObj).get("message");
+                                        String errorMsg = messageObj != null ? messageObj.toString() : "未知错误";
+                                        String error = "【提示】调用大模型失败：" + errorMsg;
+                                        if (onChunk != null) onChunk.accept(error);
+                                        return error;
+                                    }
+                                }
+
+                                // 解析choices[0].delta.content
+                                Object choicesObj = data.get("choices");
+                                if (choicesObj instanceof List && !((List<?>) choicesObj).isEmpty()) {
+                                    Object first = ((List<?>) choicesObj).get(0);
+                                    if (first instanceof Map) {
+                                        Object deltaObj = ((Map<?, ?>) first).get("delta");
+                                        if (deltaObj instanceof Map) {
+                                            Object contentObj = ((Map<?, ?>) deltaObj).get("content");
+                                            if (contentObj != null) {
+                                                String chunk = contentObj.toString();
+                                                fullContent.append(chunk);
+                                                if (onChunk != null) {
+                                                    onChunk.accept(chunk);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+                                // 忽略单个JSON解析错误，继续处理下一行
+                                System.err.println("解析SSE数据失败: " + jsonData + ", 错误: " + e.getMessage());
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    String error = "【提示】读取流式响应失败：" + e.getMessage();
+                    if (onChunk != null) onChunk.accept(error);
+                    return error;
+                }
+
+                return fullContent.toString();
+            };
+
+            java.net.URI uri = java.net.URI.create(DASH_SCOPE_URL);
+            String result = streamRestTemplate.execute(uri, HttpMethod.POST, 
+                    request -> {
+                        request.getHeaders().addAll(headers);
+                        com.fasterxml.jackson.databind.ObjectMapper mapper = 
+                            new com.fasterxml.jackson.databind.ObjectMapper();
+                        mapper.writeValue(request.getBody(), body);
+                    }, 
+                    responseExtractor);
+
+            if (result == null || result.isEmpty()) {
+                result = fullContent.toString();
+                if (result.isEmpty()) {
+                    result = "【提示】调用大模型成功但未获取到内容";
+                    if (onChunk != null) onChunk.accept(result);
+                }
+            }
+            return result;
+
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            String errorBody = e.getResponseBodyAsString();
+            String error = "【提示】调用大模型失败：HTTP " + e.getStatusCode() + " - " +
+                    (errorBody != null && !errorBody.isEmpty() ? errorBody : e.getMessage());
+            if (onChunk != null) onChunk.accept(error);
+            return error;
+        } catch (org.springframework.web.client.HttpServerErrorException e) {
+            String errorBody = e.getResponseBodyAsString();
+            String error = "【提示】调用大模型失败：HTTP " + e.getStatusCode() + " - " +
+                    (errorBody != null && !errorBody.isEmpty() ? errorBody : e.getMessage());
+            if (onChunk != null) onChunk.accept(error);
+            return error;
+        } catch (Exception e) {
+            String error = "【提示】调用大模型出错：" + e.getMessage() +
+                    (e.getCause() != null ? " (原因: " + e.getCause().getMessage() + ")" : "");
+            if (onChunk != null) onChunk.accept(error);
+            return error;
         }
     }
 }

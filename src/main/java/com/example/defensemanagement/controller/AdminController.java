@@ -23,7 +23,15 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import java.io.InputStream;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -910,6 +918,355 @@ public class AdminController {
                 }
             }
             return "error:导入失败：" + errorMsg;
+        }
+    }
+
+    /**
+     * 下载院系Excel导入模板
+     * GET /admin/departments/template/download
+     */
+    @GetMapping("/departments/template/download")
+    public ResponseEntity<byte[]> downloadDepartmentTemplate(HttpSession session) {
+        // 权限检查：只有超级管理员和院系管理员可以下载模板
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser == null || !authService.hasPermission(currentUser, "CREATE_DEPARTMENT")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        try {
+            // 创建Excel工作簿
+            Workbook workbook = new XSSFWorkbook();
+            Sheet sheet = workbook.createSheet("院系导入模板");
+
+            // 创建表头样式
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerFont.setFontHeightInPoints((short) 12);
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setAlignment(HorizontalAlignment.CENTER);
+
+            // 创建表头行
+            Row headerRow = sheet.createRow(0);
+            String[] headers = {"ID", "院系名称", "院系代码", "描述"};
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            // 添加示例数据行
+            Row exampleRow1 = sheet.createRow(1);
+            exampleRow1.createCell(0).setCellValue("1");
+            exampleRow1.createCell(1).setCellValue("计算机科学与技术学院");
+            exampleRow1.createCell(2).setCellValue("CS");
+            exampleRow1.createCell(3).setCellValue("计算机相关专业");
+
+            Row exampleRow2 = sheet.createRow(2);
+            exampleRow2.createCell(0).setCellValue("2");
+            exampleRow2.createCell(1).setCellValue("软件学院");
+            exampleRow2.createCell(2).setCellValue("SE");
+            exampleRow2.createCell(3).setCellValue("软件工程相关专业");
+
+            Row exampleRow3 = sheet.createRow(3);
+            exampleRow3.createCell(0).setCellValue("3");
+            exampleRow3.createCell(1).setCellValue("信息与通信工程学院");
+            exampleRow3.createCell(2).setCellValue("ICE");
+            exampleRow3.createCell(3).setCellValue("通信工程相关专业");
+
+            // 自动调整列宽
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+                // 设置最小列宽
+                if (sheet.getColumnWidth(i) < 3000) {
+                    sheet.setColumnWidth(i, 3000);
+                }
+            }
+
+            // 将工作簿写入字节数组
+            java.io.ByteArrayOutputStream outputStream = new java.io.ByteArrayOutputStream();
+            workbook.write(outputStream);
+            workbook.close();
+
+            byte[] bytes = outputStream.toByteArray();
+            outputStream.close();
+
+            // 设置响应头
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            responseHeaders.setContentDispositionFormData("attachment", "院系导入模板.xlsx");
+            responseHeaders.setContentLength(bytes.length);
+
+            return ResponseEntity.ok()
+                    .headers(responseHeaders)
+                    .body(bytes);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * 上传院系Excel导入模板
+     * POST /admin/departments/template/upload
+     */
+    @PostMapping("/departments/template/upload")
+    @ResponseBody
+    public String uploadDepartmentTemplate(@RequestParam("file") MultipartFile file, HttpSession session) {
+        // 权限检查：只有超级管理员和院系管理员可以上传模板
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser == null || !authService.hasPermission(currentUser, "CREATE_DEPARTMENT")) {
+            return "error:权限不足";
+        }
+
+        if (file == null || file.isEmpty()) {
+            return "error:请选择Excel文件";
+        }
+
+        String fileName = file.getOriginalFilename();
+        if (fileName == null || (!fileName.endsWith(".xlsx") && !fileName.endsWith(".xls"))) {
+            return "error:文件格式不正确，请上传.xlsx或.xls格式的Excel文件";
+        }
+
+        try {
+            // 创建模板存储目录
+            String uploadDir = System.getProperty("user.dir") + File.separator + "templates" + File.separator + "department";
+            File dir = new File(uploadDir);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+
+            // 保存模板文件
+            String templateFileName = "department_import_template.xlsx";
+            Path templatePath = Paths.get(uploadDir, templateFileName);
+            Files.copy(file.getInputStream(), templatePath, StandardCopyOption.REPLACE_EXISTING);
+
+            return "success:模板上传成功";
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "error:模板上传失败：" + e.getMessage();
+        }
+    }
+
+    /**
+     * 获取已上传的院系Excel导入模板
+     * GET /admin/departments/template/get
+     */
+    @GetMapping("/departments/template/get")
+    public ResponseEntity<byte[]> getDepartmentTemplate(HttpSession session) {
+        // 权限检查：只有超级管理员和院系管理员可以获取模板
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser == null || !authService.hasPermission(currentUser, "CREATE_DEPARTMENT")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        try {
+            String uploadDir = System.getProperty("user.dir") + File.separator + "templates" + File.separator + "department";
+            String templateFileName = "department_import_template.xlsx";
+            Path templatePath = Paths.get(uploadDir, templateFileName);
+
+            File templateFile = templatePath.toFile();
+            if (!templateFile.exists()) {
+                // 如果模板不存在，返回默认模板
+                return downloadDepartmentTemplate(session);
+            }
+
+            // 读取模板文件
+            byte[] bytes = Files.readAllBytes(templatePath);
+
+            // 设置响应头
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            responseHeaders.setContentDispositionFormData("attachment", templateFileName);
+            responseHeaders.setContentLength(bytes.length);
+
+            return ResponseEntity.ok()
+                    .headers(responseHeaders)
+                    .body(bytes);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * 下载用户Excel导入模板
+     * GET /admin/users/template/download
+     */
+    @GetMapping("/users/template/download")
+    public ResponseEntity<byte[]> downloadUserTemplate(HttpSession session) {
+        // 权限检查：只有超级管理员可以下载模板
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser == null || !authService.hasPermission(currentUser, "CREATE_USER")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        try {
+            // 创建Excel工作簿
+            Workbook workbook = new XSSFWorkbook();
+            Sheet sheet = workbook.createSheet("用户导入模板");
+
+            // 创建表头样式
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerFont.setFontHeightInPoints((short) 12);
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setAlignment(HorizontalAlignment.CENTER);
+
+            // 创建表头行
+            Row headerRow = sheet.createRow(0);
+            String[] headers = {"用户名", "真实姓名", "角色", "院系", "状态"};
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            // 添加示例数据行
+            Row exampleRow1 = sheet.createRow(1);
+            exampleRow1.createCell(0).setCellValue("admin001");
+            exampleRow1.createCell(1).setCellValue("张三");
+            exampleRow1.createCell(2).setCellValue("SUPER_ADMIN");
+            exampleRow1.createCell(3).setCellValue("CS");
+            exampleRow1.createCell(4).setCellValue("1");
+
+            Row exampleRow2 = sheet.createRow(2);
+            exampleRow2.createCell(0).setCellValue("T001");
+            exampleRow2.createCell(1).setCellValue("李四");
+            exampleRow2.createCell(2).setCellValue("TEACHER");
+            exampleRow2.createCell(3).setCellValue("计算机科学与技术学院");
+            exampleRow2.createCell(4).setCellValue("启用");
+
+            Row exampleRow3 = sheet.createRow(3);
+            exampleRow3.createCell(0).setCellValue("dept_admin");
+            exampleRow3.createCell(1).setCellValue("王五");
+            exampleRow3.createCell(2).setCellValue("院系管理员");
+            exampleRow3.createCell(3).setCellValue("CS");
+            exampleRow3.createCell(4).setCellValue("1");
+
+            // 自动调整列宽
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+                // 设置最小列宽
+                if (sheet.getColumnWidth(i) < 3000) {
+                    sheet.setColumnWidth(i, 3000);
+                }
+            }
+
+            // 将工作簿写入字节数组
+            java.io.ByteArrayOutputStream outputStream = new java.io.ByteArrayOutputStream();
+            workbook.write(outputStream);
+            workbook.close();
+
+            byte[] bytes = outputStream.toByteArray();
+            outputStream.close();
+
+            // 设置响应头
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            responseHeaders.setContentDispositionFormData("attachment", "用户导入模板.xlsx");
+            responseHeaders.setContentLength(bytes.length);
+
+            return ResponseEntity.ok()
+                    .headers(responseHeaders)
+                    .body(bytes);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * 上传用户Excel导入模板
+     * POST /admin/users/template/upload
+     */
+    @PostMapping("/users/template/upload")
+    @ResponseBody
+    public String uploadUserTemplate(@RequestParam("file") MultipartFile file, HttpSession session) {
+        // 权限检查：只有超级管理员可以上传模板
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser == null || !authService.hasPermission(currentUser, "CREATE_USER")) {
+            return "error:权限不足";
+        }
+
+        if (file == null || file.isEmpty()) {
+            return "error:请选择Excel文件";
+        }
+
+        String fileName = file.getOriginalFilename();
+        if (fileName == null || (!fileName.endsWith(".xlsx") && !fileName.endsWith(".xls"))) {
+            return "error:文件格式不正确，请上传.xlsx或.xls格式的Excel文件";
+        }
+
+        try {
+            // 创建模板存储目录
+            String uploadDir = System.getProperty("user.dir") + File.separator + "templates" + File.separator + "user";
+            File dir = new File(uploadDir);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+
+            // 保存模板文件
+            String templateFileName = "user_import_template.xlsx";
+            Path templatePath = Paths.get(uploadDir, templateFileName);
+            Files.copy(file.getInputStream(), templatePath, StandardCopyOption.REPLACE_EXISTING);
+
+            return "success:模板上传成功";
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "error:模板上传失败：" + e.getMessage();
+        }
+    }
+
+    /**
+     * 获取已上传的用户Excel导入模板
+     * GET /admin/users/template/get
+     */
+    @GetMapping("/users/template/get")
+    public ResponseEntity<byte[]> getUserTemplate(HttpSession session) {
+        // 权限检查：只有超级管理员可以获取模板
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser == null || !authService.hasPermission(currentUser, "CREATE_USER")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        try {
+            String uploadDir = System.getProperty("user.dir") + File.separator + "templates" + File.separator + "user";
+            String templateFileName = "user_import_template.xlsx";
+            Path templatePath = Paths.get(uploadDir, templateFileName);
+
+            File templateFile = templatePath.toFile();
+            if (!templateFile.exists()) {
+                // 如果模板不存在，返回默认模板
+                return downloadUserTemplate(session);
+            }
+
+            // 读取模板文件
+            byte[] bytes = Files.readAllBytes(templatePath);
+
+            // 设置响应头
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            responseHeaders.setContentDispositionFormData("attachment", templateFileName);
+            responseHeaders.setContentLength(bytes.length);
+
+            return ResponseEntity.ok()
+                    .headers(responseHeaders)
+                    .body(bytes);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 

@@ -480,8 +480,17 @@
                         onclick="document.getElementById('excel-import-input').click()">
                         <i class="bi bi-file-earmark-excel"></i> Excel导入
                     </button>
+                    <button class="btn btn-info ms-2" onclick="downloadStudentTemplate()">
+                        <i class="bi bi-download"></i> 下载模板
+                    </button>
+                    <button class="btn btn-warning ms-2"
+                        onclick="document.getElementById('template-upload-input').click()">
+                        <i class="bi bi-upload"></i> 上传模板
+                    </button>
                     <input type="file" id="excel-import-input" accept=".xlsx,.xls" style="display: none;"
                         onchange="handleExcelImport(event)">
+                    <input type="file" id="template-upload-input" accept=".xlsx,.xls" style="display: none;"
+                        onchange="handleTemplateUpload(event)">
                 </div>
             </header>
             <!-- 教师签名上传提示（仅教师可见） -->
@@ -642,8 +651,17 @@
                         onclick="document.getElementById('user-excel-import-input').click()">
                         <i class="bi bi-file-earmark-excel"></i> Excel导入
                     </button>
+                    <button class="btn btn-info ms-2" onclick="downloadUserTemplate()">
+                        <i class="bi bi-download"></i> 下载模板
+                    </button>
+                    <button class="btn btn-warning ms-2"
+                        onclick="document.getElementById('user-template-upload-input').click()">
+                        <i class="bi bi-upload"></i> 上传模板
+                    </button>
                     <input type="file" id="user-excel-import-input" accept=".xlsx,.xls" style="display: none;"
                         onchange="handleUserExcelImport(event)">
+                    <input type="file" id="user-template-upload-input" accept=".xlsx,.xls" style="display: none;"
+                        onchange="handleUserTemplateUpload(event)">
                 </div>
             </header>
             <div class="module">
@@ -703,8 +721,17 @@
                         onclick="document.getElementById('department-excel-import-input').click()">
                         <i class="bi bi-file-earmark-excel"></i> Excel导入
                     </button>
+                    <button class="btn btn-info ms-2" onclick="downloadDepartmentTemplate()">
+                        <i class="bi bi-download"></i> 下载模板
+                    </button>
+                    <button class="btn btn-warning ms-2"
+                        onclick="document.getElementById('department-template-upload-input').click()">
+                        <i class="bi bi-upload"></i> 上传模板
+                    </button>
                     <input type="file" id="department-excel-import-input" accept=".xlsx,.xls" style="display: none;"
                         onchange="handleDepartmentExcelImport(event)">
+                    <input type="file" id="department-template-upload-input" accept=".xlsx,.xls" style="display: none;"
+                        onchange="handleDepartmentTemplateUpload(event)">
                 </div>
             </header>
             <div class="module">
@@ -1397,17 +1424,17 @@
                                     <div class="col-md-4">
                                         <label class="form-label">论文质量 (满50分)</label>
                                         <input type="number" class="form-control ts-paper-item" id="ts-item1" min="0"
-                                            max="50" placeholder="0-50">
+                                            max="50" placeholder="0-50" oninput="validateScoreInput(this, 50)">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">答辩自述报告 (满25分)</label>
                                         <input type="number" class="form-control ts-paper-item" id="ts-item2" min="0"
-                                            max="25" placeholder="0-25">
+                                            max="25" placeholder="0-25" oninput="validateScoreInput(this, 25)">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">回答问题情况 (满25分)</label>
                                         <input type="number" class="form-control ts-paper-item" id="ts-item3" min="0"
-                                            max="25" placeholder="0-25">
+                                            max="25" placeholder="0-25" oninput="validateScoreInput(this, 25)">
                                     </div>
                                 </div>
                             </div>
@@ -1419,32 +1446,32 @@
                                     <div class="col-md-4">
                                         <label class="form-label">设计质量1 (满15分)</label>
                                         <input type="number" class="form-control ts-design-item" id="ts-d-item1" min="0"
-                                            max="15" placeholder="0-15">
+                                            max="15" placeholder="0-15" oninput="validateScoreInput(this, 15)">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">设计质量2 (满15分)</label>
                                         <input type="number" class="form-control ts-design-item" id="ts-d-item2" min="0"
-                                            max="15" placeholder="0-15">
+                                            max="15" placeholder="0-15" oninput="validateScoreInput(this, 15)">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">设计质量3 (满15分)</label>
                                         <input type="number" class="form-control ts-design-item" id="ts-d-item3" min="0"
-                                            max="15" placeholder="0-15">
+                                            max="15" placeholder="0-15" oninput="validateScoreInput(this, 15)">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">答辩自述报告 (满25分)</label>
                                         <input type="number" class="form-control ts-design-item" id="ts-d-item4" min="0"
-                                            max="25" placeholder="0-25">
+                                            max="25" placeholder="0-25" oninput="validateScoreInput(this, 25)">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">回答问题1 (满15分)</label>
                                         <input type="number" class="form-control ts-design-item" id="ts-d-item5" min="0"
-                                            max="15" placeholder="0-15">
+                                            max="15" placeholder="0-15" oninput="validateScoreInput(this, 15)">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">回答问题2 (满15分)</label>
                                         <input type="number" class="form-control ts-design-item" id="ts-d-item6" min="0"
-                                            max="15" placeholder="0-15">
+                                            max="15" placeholder="0-15" oninput="validateScoreInput(this, 15)">
                                     </div>
                                 </div>
                             </div>
@@ -1604,8 +1631,25 @@
                 <div class="modal-body">
                     <form id="addGroupForm">
                         <div class="mb-3">
-                            <label for="groupName" class="form-label">小组名称</label>
-                            <input type="text" class="form-control" id="groupName" required placeholder="请输入小组名称">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="batchCreateMode" onchange="toggleBatchCreateMode()">
+                                <label class="form-check-label" for="batchCreateMode">
+                                    批量创建多个小组
+                                </label>
+                            </div>
+                        </div>
+                        <div id="singleGroupMode">
+                            <div class="mb-3">
+                                <label for="groupName" class="form-label">小组名称</label>
+                                <input type="text" class="form-control" id="groupName" placeholder="请输入小组名称（留空则自动生成）">
+                            </div>
+                        </div>
+                        <div id="batchGroupMode" style="display: none;">
+                            <div class="mb-3">
+                                <label for="batchGroupCount" class="form-label">要创建的小组个数</label>
+                                <input type="number" class="form-control" id="batchGroupCount" min="1" max="50" value="1" placeholder="请输入要创建的小组个数">
+                                <small class="form-text text-muted">小组名称将自动生成为"第n+1小组"、"第n+2小组"等格式</small>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -3463,6 +3507,59 @@
             }
         }
 
+        // 下载用户Excel导入模板
+        function downloadUserTemplate() {
+            window.location.href = '/admin/users/template/download';
+        }
+
+        // 上传用户Excel导入模板
+        async function handleUserTemplateUpload(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                return;
+            }
+
+            // 验证文件类型
+            const fileName = file.name.toLowerCase();
+            if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+                showAlert('error', '请选择Excel文件（.xlsx或.xls格式）');
+                event.target.value = '';
+                return;
+            }
+
+            // 确认上传
+            if (!confirm('确定要上传Excel模板吗？上传后将替换现有模板。')) {
+                event.target.value = '';
+                return;
+            }
+
+            toggleLoading(true);
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/admin/users/template/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.text();
+
+                if (result.startsWith('success')) {
+                    showAlert('success', '模板上传成功！');
+                } else {
+                    const errorMsg = result.startsWith('error:') ? result.substring(6) : result;
+                    showAlert('error', '模板上传失败：' + errorMsg);
+                }
+            } catch (error) {
+                console.error('Upload template error:', error);
+                showAlert('error', '模板上传失败，请检查网络连接');
+            } finally {
+                toggleLoading(false);
+                event.target.value = '';
+            }
+        }
+
         // 用户Excel导入处理函数
         async function handleUserExcelImport(event) {
             const file = event.target.files[0];
@@ -4207,6 +4304,59 @@
             }
         }
 
+        // 下载学生Excel导入模板
+        function downloadStudentTemplate() {
+            window.location.href = '/department/student/template/download';
+        }
+
+        // 上传学生Excel导入模板
+        async function handleTemplateUpload(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                return;
+            }
+
+            // 验证文件类型
+            const fileName = file.name.toLowerCase();
+            if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+                showAlert('error', '请选择Excel文件（.xlsx或.xls格式）');
+                event.target.value = '';
+                return;
+            }
+
+            // 确认上传
+            if (!confirm('确定要上传Excel模板吗？上传后将替换现有模板。')) {
+                event.target.value = '';
+                return;
+            }
+
+            toggleLoading(true);
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/department/student/template/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.text();
+
+                if (result.startsWith('success')) {
+                    showAlert('success', '模板上传成功！');
+                } else {
+                    const errorMsg = result.startsWith('error:') ? result.substring(6) : result;
+                    showAlert('error', '模板上传失败：' + errorMsg);
+                }
+            } catch (error) {
+                console.error('Upload template error:', error);
+                showAlert('error', '模板上传失败，请检查网络连接');
+            } finally {
+                toggleLoading(false);
+                event.target.value = '';
+            }
+        }
+
         // Excel导入处理函数
         async function handleExcelImport(event) {
             const file = event.target.files[0];
@@ -4907,42 +5057,42 @@
                     modalHtml += `
                         <div class="mb-3">
                             <label class="form-label">论文质量 (满分50)</label>
-                            <input type="number" class="form-control" id="as-item1" min="0" max="50" value="${record ? (record.item1Score || 0) : 0}">
+                            <input type="number" class="form-control" id="as-item1" min="0" max="50" value="${record ? (record.item1Score || 0) : 0}" oninput="validateScoreInput(this, 50)">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">自述报告 (满分25)</label>
-                            <input type="number" class="form-control" id="as-item2" min="0" max="25" value="${record ? (record.item2Score || 0) : 0}">
+                            <input type="number" class="form-control" id="as-item2" min="0" max="25" value="${record ? (record.item2Score || 0) : 0}" oninput="validateScoreInput(this, 25)">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">回答问题 (满分25)</label>
-                            <input type="number" class="form-control" id="as-item3" min="0" max="25" value="${record ? (record.item3Score || 0) : 0}">
+                            <input type="number" class="form-control" id="as-item3" min="0" max="25" value="${record ? (record.item3Score || 0) : 0}" oninput="validateScoreInput(this, 25)">
                         </div>
                     `;
                 } else {
                     modalHtml += `
                         <div class="mb-3">
                             <label class="form-label">设计质量1 (满分15)</label>
-                            <input type="number" class="form-control" id="as-item1" min="0" max="15" value="${record ? (record.item1Score || 0) : 0}">
+                            <input type="number" class="form-control" id="as-item1" min="0" max="15" value="${record ? (record.item1Score || 0) : 0}" oninput="validateScoreInput(this, 15)">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">设计质量2 (满分15)</label>
-                            <input type="number" class="form-control" id="as-item2" min="0" max="15" value="${record ? (record.item2Score || 0) : 0}">
+                            <input type="number" class="form-control" id="as-item2" min="0" max="15" value="${record ? (record.item2Score || 0) : 0}" oninput="validateScoreInput(this, 15)">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">设计质量3 (满分15)</label>
-                            <input type="number" class="form-control" id="as-item3" min="0" max="15" value="${record ? (record.item3Score || 0) : 0}">
+                            <input type="number" class="form-control" id="as-item3" min="0" max="15" value="${record ? (record.item3Score || 0) : 0}" oninput="validateScoreInput(this, 15)">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">自述报告 (满分25)</label>
-                            <input type="number" class="form-control" id="as-item4" min="0" max="25" value="${record ? (record.item4Score || 0) : 0}">
+                            <input type="number" class="form-control" id="as-item4" min="0" max="25" value="${record ? (record.item4Score || 0) : 0}" oninput="validateScoreInput(this, 25)">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">回答问题1 (满分15)</label>
-                            <input type="number" class="form-control" id="as-item5" min="0" max="15" value="${record ? (record.item5Score || 0) : 0}">
+                            <input type="number" class="form-control" id="as-item5" min="0" max="15" value="${record ? (record.item5Score || 0) : 0}" oninput="validateScoreInput(this, 15)">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">回答问题2 (满分15)</label>
-                            <input type="number" class="form-control" id="as-item6" min="0" max="15" value="${record ? (record.item6Score || 0) : 0}">
+                            <input type="number" class="form-control" id="as-item6" min="0" max="15" value="${record ? (record.item6Score || 0) : 0}" oninput="validateScoreInput(this, 15)">
                         </div>
                     `;
                 }
@@ -4999,6 +5149,24 @@
             }
         }
 
+        // 验证分数输入，确保不超过满分
+        function validateScoreInput(input, maxScore) {
+            let value = parseFloat(input.value);
+            
+            // 如果输入为空或无效，设置为0
+            if (isNaN(value) || value < 0) {
+                input.value = 0;
+                return;
+            }
+            
+            // 如果超过满分，自动修正为满分并提示
+            if (value > maxScore) {
+                input.value = maxScore;
+                const label = input.previousElementSibling ? input.previousElementSibling.textContent : '该评分项';
+                showAlert('warning', `${label}的分数不能超过${maxScore}分，已自动调整为${maxScore}分`);
+            }
+        }
+
         // 更新指导教师打分总分（普通教师）
         function updateAdvisorScoreTotalForTeacher() {
             const defenseType = document.getElementById('as-modal-defense-type').value;
@@ -5026,6 +5194,32 @@
         async function submitAdvisorScoreWithItems() {
             const studentId = document.getElementById('as-modal-student-id').value;
             const defenseType = document.getElementById('as-modal-defense-type').value;
+
+            // 提交前再次验证分数
+            let hasError = false;
+            if (defenseType === 'PAPER') {
+                const item1 = parseInt(document.getElementById('as-item1').value) || 0;
+                const item2 = parseInt(document.getElementById('as-item2').value) || 0;
+                const item3 = parseInt(document.getElementById('as-item3').value) || 0;
+                if (item1 > 50 || item2 > 25 || item3 > 25) {
+                    hasError = true;
+                }
+            } else {
+                const item1 = parseInt(document.getElementById('as-item1').value) || 0;
+                const item2 = parseInt(document.getElementById('as-item2').value) || 0;
+                const item3 = parseInt(document.getElementById('as-item3').value) || 0;
+                const item4 = parseInt(document.getElementById('as-item4').value) || 0;
+                const item5 = parseInt(document.getElementById('as-item5').value) || 0;
+                const item6 = parseInt(document.getElementById('as-item6').value) || 0;
+                if (item1 > 15 || item2 > 15 || item3 > 15 || item4 > 25 || item5 > 15 || item6 > 15) {
+                    hasError = true;
+                }
+            }
+            
+            if (hasError) {
+                showAlert('error', '存在超过满分的分数，请检查后重新提交');
+                return;
+            }
 
             let params = new URLSearchParams();
             params.append('studentId', studentId);
@@ -5244,42 +5438,42 @@
                     modalHtml += `
                         <div class="mb-3">
                             <label class="form-label">论文质量 (满分50)</label>
-                            <input type="number" class="form-control" id="rs-item1" min="0" max="50" value="${record.item1Score || 0}">
+                            <input type="number" class="form-control" id="rs-item1" min="0" max="50" value="${record.item1Score || 0}" oninput="validateScoreInput(this, 50)">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">自述报告 (满分25)</label>
-                            <input type="number" class="form-control" id="rs-item2" min="0" max="25" value="${record.item2Score || 0}">
+                            <input type="number" class="form-control" id="rs-item2" min="0" max="25" value="${record.item2Score || 0}" oninput="validateScoreInput(this, 25)">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">回答问题 (满分25)</label>
-                            <input type="number" class="form-control" id="rs-item3" min="0" max="25" value="${record.item3Score || 0}">
+                            <input type="number" class="form-control" id="rs-item3" min="0" max="25" value="${record.item3Score || 0}" oninput="validateScoreInput(this, 25)">
                         </div>
                     `;
                 } else {
                     modalHtml += `
                         <div class="mb-3">
                             <label class="form-label">设计质量1 (满分15)</label>
-                            <input type="number" class="form-control" id="rs-item1" min="0" max="15" value="${record.item1Score || 0}">
+                            <input type="number" class="form-control" id="rs-item1" min="0" max="15" value="${record.item1Score || 0}" oninput="validateScoreInput(this, 15)">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">设计质量2 (满分15)</label>
-                            <input type="number" class="form-control" id="rs-item2" min="0" max="15" value="${record.item2Score || 0}">
+                            <input type="number" class="form-control" id="rs-item2" min="0" max="15" value="${record.item2Score || 0}" oninput="validateScoreInput(this, 15)">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">设计质量3 (满分15)</label>
-                            <input type="number" class="form-control" id="rs-item3" min="0" max="15" value="${record.item3Score || 0}">
+                            <input type="number" class="form-control" id="rs-item3" min="0" max="15" value="${record.item3Score || 0}" oninput="validateScoreInput(this, 15)">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">自述报告 (满分25)</label>
-                            <input type="number" class="form-control" id="rs-item4" min="0" max="25" value="${record.item4Score || 0}">
+                            <input type="number" class="form-control" id="rs-item4" min="0" max="25" value="${record.item4Score || 0}" oninput="validateScoreInput(this, 25)">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">回答问题1 (满分15)</label>
-                            <input type="number" class="form-control" id="rs-item5" min="0" max="15" value="${record.item5Score || 0}">
+                            <input type="number" class="form-control" id="rs-item5" min="0" max="15" value="${record.item5Score || 0}" oninput="validateScoreInput(this, 15)">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">回答问题2 (满分15)</label>
-                            <input type="number" class="form-control" id="rs-item6" min="0" max="15" value="${record.item6Score || 0}">
+                            <input type="number" class="form-control" id="rs-item6" min="0" max="15" value="${record.item6Score || 0}" oninput="validateScoreInput(this, 15)">
                         </div>
                     `;
                 }
@@ -5364,6 +5558,32 @@
             const studentId = document.getElementById('rs-modal-student-id').value;
             const defenseType = document.getElementById('rs-modal-defense-type').value;
 
+            // 提交前再次验证分数
+            let hasError = false;
+            if (defenseType === 'PAPER') {
+                const item1 = parseInt(document.getElementById('rs-item1').value) || 0;
+                const item2 = parseInt(document.getElementById('rs-item2').value) || 0;
+                const item3 = parseInt(document.getElementById('rs-item3').value) || 0;
+                if (item1 > 50 || item2 > 25 || item3 > 25) {
+                    hasError = true;
+                }
+            } else {
+                const item1 = parseInt(document.getElementById('rs-item1').value) || 0;
+                const item2 = parseInt(document.getElementById('rs-item2').value) || 0;
+                const item3 = parseInt(document.getElementById('rs-item3').value) || 0;
+                const item4 = parseInt(document.getElementById('rs-item4').value) || 0;
+                const item5 = parseInt(document.getElementById('rs-item5').value) || 0;
+                const item6 = parseInt(document.getElementById('rs-item6').value) || 0;
+                if (item1 > 15 || item2 > 15 || item3 > 15 || item4 > 25 || item5 > 15 || item6 > 15) {
+                    hasError = true;
+                }
+            }
+            
+            if (hasError) {
+                showAlert('error', '存在超过满分的分数，请检查后重新提交');
+                return;
+            }
+
             let params = new URLSearchParams();
             params.append('studentId', studentId);
             params.append('type', 'reviewer');
@@ -5440,42 +5660,42 @@
                     modalHtml += `
                         <div class="mb-3">
                             <label class="form-label">论文质量 (满分50)</label>
-                            <input type="number" class="form-control" id="as-item1" min="0" max="50" value="${record.item1Score || 0}">
+                            <input type="number" class="form-control" id="as-item1" min="0" max="50" value="${record.item1Score || 0}" oninput="validateScoreInput(this, 50)">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">自述报告 (满分25)</label>
-                            <input type="number" class="form-control" id="as-item2" min="0" max="25" value="${record.item2Score || 0}">
+                            <input type="number" class="form-control" id="as-item2" min="0" max="25" value="${record.item2Score || 0}" oninput="validateScoreInput(this, 25)">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">回答问题 (满分25)</label>
-                            <input type="number" class="form-control" id="as-item3" min="0" max="25" value="${record.item3Score || 0}">
+                            <input type="number" class="form-control" id="as-item3" min="0" max="25" value="${record.item3Score || 0}" oninput="validateScoreInput(this, 25)">
                         </div>
                     `;
                 } else {
                     modalHtml += `
                         <div class="mb-3">
                             <label class="form-label">设计质量1 (满分15)</label>
-                            <input type="number" class="form-control" id="as-item1" min="0" max="15" value="${record.item1Score || 0}">
+                            <input type="number" class="form-control" id="as-item1" min="0" max="15" value="${record.item1Score || 0}" oninput="validateScoreInput(this, 15)">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">设计质量2 (满分15)</label>
-                            <input type="number" class="form-control" id="as-item2" min="0" max="15" value="${record.item2Score || 0}">
+                            <input type="number" class="form-control" id="as-item2" min="0" max="15" value="${record.item2Score || 0}" oninput="validateScoreInput(this, 15)">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">设计质量3 (满分15)</label>
-                            <input type="number" class="form-control" id="as-item3" min="0" max="15" value="${record.item3Score || 0}">
+                            <input type="number" class="form-control" id="as-item3" min="0" max="15" value="${record.item3Score || 0}" oninput="validateScoreInput(this, 15)">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">自述报告 (满分25)</label>
-                            <input type="number" class="form-control" id="as-item4" min="0" max="25" value="${record.item4Score || 0}">
+                            <input type="number" class="form-control" id="as-item4" min="0" max="25" value="${record.item4Score || 0}" oninput="validateScoreInput(this, 25)">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">回答问题1 (满分15)</label>
-                            <input type="number" class="form-control" id="as-item5" min="0" max="15" value="${record.item5Score || 0}">
+                            <input type="number" class="form-control" id="as-item5" min="0" max="15" value="${record.item5Score || 0}" oninput="validateScoreInput(this, 15)">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">回答问题2 (满分15)</label>
-                            <input type="number" class="form-control" id="as-item6" min="0" max="15" value="${record.item6Score || 0}">
+                            <input type="number" class="form-control" id="as-item6" min="0" max="15" value="${record.item6Score || 0}" oninput="validateScoreInput(this, 15)">
                         </div>
                     `;
                 }
@@ -5559,6 +5779,32 @@
         async function submitAdvisorScoreForSuperAdmin() {
             const studentId = document.getElementById('as-modal-student-id').value;
             const defenseType = document.getElementById('as-modal-defense-type').value;
+
+            // 提交前再次验证分数
+            let hasError = false;
+            if (defenseType === 'PAPER') {
+                const item1 = parseInt(document.getElementById('as-item1').value) || 0;
+                const item2 = parseInt(document.getElementById('as-item2').value) || 0;
+                const item3 = parseInt(document.getElementById('as-item3').value) || 0;
+                if (item1 > 50 || item2 > 25 || item3 > 25) {
+                    hasError = true;
+                }
+            } else {
+                const item1 = parseInt(document.getElementById('as-item1').value) || 0;
+                const item2 = parseInt(document.getElementById('as-item2').value) || 0;
+                const item3 = parseInt(document.getElementById('as-item3').value) || 0;
+                const item4 = parseInt(document.getElementById('as-item4').value) || 0;
+                const item5 = parseInt(document.getElementById('as-item5').value) || 0;
+                const item6 = parseInt(document.getElementById('as-item6').value) || 0;
+                if (item1 > 15 || item2 > 15 || item3 > 15 || item4 > 25 || item5 > 15 || item6 > 15) {
+                    hasError = true;
+                }
+            }
+            
+            if (hasError) {
+                showAlert('error', '存在超过满分的分数，请检查后重新提交');
+                return;
+            }
 
             let params = new URLSearchParams();
             params.append('studentId', studentId);
@@ -6369,6 +6615,59 @@
                 showAlert('error', '操作失败，请检查网络连接');
             } finally {
                 toggleLoading(false);
+            }
+        }
+
+        // 下载院系Excel导入模板
+        function downloadDepartmentTemplate() {
+            window.location.href = '/admin/departments/template/download';
+        }
+
+        // 上传院系Excel导入模板
+        async function handleDepartmentTemplateUpload(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                return;
+            }
+
+            // 验证文件类型
+            const fileName = file.name.toLowerCase();
+            if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+                showAlert('error', '请选择Excel文件（.xlsx或.xls格式）');
+                event.target.value = '';
+                return;
+            }
+
+            // 确认上传
+            if (!confirm('确定要上传Excel模板吗？上传后将替换现有模板。')) {
+                event.target.value = '';
+                return;
+            }
+
+            toggleLoading(true);
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/admin/departments/template/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.text();
+
+                if (result.startsWith('success')) {
+                    showAlert('success', '模板上传成功！');
+                } else {
+                    const errorMsg = result.startsWith('error:') ? result.substring(6) : result;
+                    showAlert('error', '模板上传失败：' + errorMsg);
+                }
+            } catch (error) {
+                console.error('Upload template error:', error);
+                showAlert('error', '模板上传失败，请检查网络连接');
+            } finally {
+                toggleLoading(false);
+                event.target.value = '';
             }
         }
 
@@ -7242,36 +7541,62 @@
                 selectedStudentId: studentId
             });
 
+            // 清空评语内容区域
+            const commentContent = document.getElementById('comment-content');
+            commentContent.value = '';
+            
             toggleLoading(true);
-            try {
-                const response = await fetch('/defense/comment/generate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        studentId: currentCommentStudentId,
-                        year: currentCommentYear
-                    })
-                });
+            
+            // 使用EventSource接收流式数据
+            const eventSource = new EventSource(
+                `/defense/comment/generateStream?studentId=${currentCommentStudentId}&year=${currentCommentYear}`
+            );
 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(errorText || '生成评语失败');
-                }
+            eventSource.onmessage = function(event) {
+                // 接收到数据片段，追加到评语内容
+                const chunk = event.data;
+                commentContent.value += chunk;
+                // 自动滚动到底部
+                commentContent.scrollTop = commentContent.scrollHeight;
+            };
 
-                const result = await response.json();
-
-                if (result.comment) {
-                    document.getElementById('comment-content').value = result.comment;
-                    showAlert('success', '评语生成成功');
-                } else {
-                    showAlert('error', '评语生成失败：未返回评语内容');
-                }
-            } catch (e) {
-                console.error('Generate comment error:', e);
-                showAlert('error', '评语生成失败：' + e.message);
-            } finally {
+            eventSource.onerror = function(event) {
+                console.error('SSE error:', event);
+                eventSource.close();
                 toggleLoading(false);
-            }
+                
+                // 如果还没有任何内容，显示错误
+                if (!commentContent.value || commentContent.value.trim() === '') {
+                    showAlert('error', '评语生成失败：连接中断');
+                } else {
+                    showAlert('warning', '评语生成完成（可能不完整）');
+                }
+            };
+
+            // 监听流结束（通过检查是否在5秒内没有新数据）
+            let lastUpdateTime = Date.now();
+            const checkInterval = setInterval(() => {
+                const now = Date.now();
+                // 如果超过5秒没有更新，认为流已结束
+                if (now - lastUpdateTime > 5000 && eventSource.readyState === EventSource.CONNECTING) {
+                    clearInterval(checkInterval);
+                    eventSource.close();
+                    toggleLoading(false);
+                    if (commentContent.value && commentContent.value.trim() !== '') {
+                        showAlert('success', '评语生成完成');
+                    }
+                }
+            }, 1000);
+
+            // 监听流正常结束
+            eventSource.addEventListener('complete', function() {
+                clearInterval(checkInterval);
+                eventSource.close();
+                toggleLoading(false);
+                if (commentContent.value && commentContent.value.trim() !== '') {
+                    showAlert('success', '评语生成完成');
+                }
+            });
         }
 
         async function saveStudentComment() {
@@ -7634,29 +7959,110 @@
 
         // Archive functions are now removed.
 
-        function addGroup() {
-            const groupName = document.getElementById('groupName').value;
-
-            if (!groupName.trim()) {
-                showAlert('warning', '请输入小组名称');
-                return;
+        // 切换批量创建模式
+        function toggleBatchCreateMode() {
+            const batchMode = document.getElementById('batchCreateMode').checked;
+            const singleMode = document.getElementById('singleGroupMode');
+            const batchModeDiv = document.getElementById('batchGroupMode');
+            
+            if (batchMode) {
+                singleMode.style.display = 'none';
+                batchModeDiv.style.display = 'block';
+            } else {
+                singleMode.style.display = 'block';
+                batchModeDiv.style.display = 'none';
             }
+        }
 
-            fetch('/group/add', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: groupName,
-                    score: 0, // 默认初始得分为0
-                    members: [] // kept for backward compatibility; backend ignores it
-                })
-            }).then(response => {
-                if (response.ok) {
-                    location.reload(); // 刷新页面
-                } else {
-                    showAlert('error', '添加小组失败');
+        // 重置添加小组表单
+        function resetAddGroupForm() {
+            document.getElementById('batchCreateMode').checked = false;
+            document.getElementById('groupName').value = '';
+            document.getElementById('batchGroupCount').value = 1;
+            toggleBatchCreateMode();
+        }
+
+        // 弹窗关闭时重置表单
+        document.addEventListener('DOMContentLoaded', function() {
+            const addGroupModal = document.getElementById('addGroupModal');
+            if (addGroupModal) {
+                addGroupModal.addEventListener('hidden.bs.modal', function() {
+                    resetAddGroupForm();
+                });
+            }
+        });
+
+        // 添加小组（支持单个和批量）
+        async function addGroup() {
+            const batchMode = document.getElementById('batchCreateMode').checked;
+            
+            if (batchMode) {
+                // 批量创建模式
+                const count = parseInt(document.getElementById('batchGroupCount').value);
+                if (!count || count < 1 || count > 50) {
+                    showAlert('warning', '请输入有效的小组个数（1-50）');
+                    return;
                 }
-            });
+                
+                toggleLoading(true);
+                try {
+                    const response = await fetch('/group/addBatch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            count: count
+                        })
+                    });
+                    
+                    const result = await response.text();
+                    if (response.ok) {
+                        showAlert('success', `成功创建${count}个小组！`);
+                        bootstrap.Modal.getInstance(document.getElementById('addGroupModal')).hide();
+                        // 重新加载小组列表
+                        location.reload();
+                    } else {
+                        showAlert('error', '批量创建失败：' + result);
+                    }
+                } catch (error) {
+                    console.error('批量创建小组失败:', error);
+                    showAlert('error', '批量创建失败，请检查网络连接');
+                } finally {
+                    toggleLoading(false);
+                }
+            } else {
+                // 单个创建模式
+                const groupName = document.getElementById('groupName').value.trim();
+                
+                // 如果名称为空，使用自动生成
+                const requestBody = {
+                    name: groupName || null, // null表示自动生成
+                    score: 0,
+                    members: []
+                };
+
+                toggleLoading(true);
+                try {
+                    const response = await fetch('/group/add', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestBody)
+                    });
+                    
+                    if (response.ok) {
+                        showAlert('success', '添加小组成功！');
+                        bootstrap.Modal.getInstance(document.getElementById('addGroupModal')).hide();
+                        location.reload();
+                    } else {
+                        const errorText = await response.text();
+                        showAlert('error', '添加小组失败：' + errorText);
+                    }
+                } catch (error) {
+                    console.error('添加小组失败:', error);
+                    showAlert('error', '添加失败，请检查网络连接');
+                } finally {
+                    toggleLoading(false);
+                }
+            }
         }
 
         // 优化的提示框函数

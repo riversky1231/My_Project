@@ -10,9 +10,12 @@ import com.example.defensemanagement.mapper.StudentMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import javax.servlet.http.HttpSession;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +56,63 @@ public class CommentController {
     }
 
     /**
-     * 生成学生评语（基于AI）
+     * 流式生成学生评语（基于AI，使用SSE）
+     * 所有角色都可以使用：超级管理员、院系管理员、答辩组长、教师
+     * GET /defense/comment/generateStream?studentId=1&year=2024
+     */
+    @GetMapping(value = "/generateStream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter generateCommentStream(
+            @RequestParam Long studentId,
+            @RequestParam Integer year,
+            HttpSession session) {
+        
+        User currentUser = (User) session.getAttribute("currentUser");
+        Teacher currentTeacher = (Teacher) session.getAttribute("currentTeacher");
+
+        if (currentUser == null && currentTeacher == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "未登录");
+        }
+
+        Student student = studentMapper.findById(studentId);
+        if (student == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "学生不存在");
+        }
+
+        // 确定使用哪个提示词模板
+        String promptKey = "PAPER".equals(student.getDefenseType()) ? "PAPER_PROMPT_TEMPLATE"
+                : "DESIGN_PROMPT_TEMPLATE";
+
+        // 构建上下文
+        String context = "学生姓名：" + (student.getName() != null ? student.getName() : "") +
+                "\n题目：" + (student.getTitle() != null ? student.getTitle() : "") +
+                "\n摘要：" + (student.getSummary() != null ? student.getSummary() : "");
+
+        // 创建SSE发射器，设置超时时间为5分钟
+        SseEmitter emitter = new SseEmitter(300000L);
+
+        // 在后台线程中执行流式生成
+        new Thread(() -> {
+            try {
+                aiCommentService.generateCommentStream(promptKey, context, chunk -> {
+                    try {
+                        if (chunk != null) {
+                            emitter.send(SseEmitter.event().data(chunk != null ? chunk : ""));
+                        }
+                    } catch (IOException e) {
+                        emitter.completeWithError(e);
+                    }
+                });
+                emitter.complete();
+            } catch (Exception e) {
+                emitter.completeWithError(e);
+            }
+        }).start();
+
+        return emitter;
+    }
+
+    /**
+     * 生成学生评语（基于AI，非流式，保持向后兼容）
      * 所有角色都可以使用：超级管理员、院系管理员、答辩组长、教师
      * POST /defense/comment/generate
      * request body: { "studentId": 1, "year": 2024 }

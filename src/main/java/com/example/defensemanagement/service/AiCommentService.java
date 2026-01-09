@@ -1,5 +1,7 @@
 package com.example.defensemanagement.service;
 
+import java.util.function.Consumer;
+
 public interface AiCommentService {
 
     /**
@@ -9,5 +11,14 @@ public interface AiCommentService {
      * @return 生成的评语
      */
     String generateComment(String promptTemplateKey, String context);
+
+    /**
+     * 流式生成评语，实时返回生成的内容片段
+     * @param promptTemplateKey 配置中的模板 key
+     * @param context 上下文
+     * @param onChunk 接收到内容片段时的回调函数
+     * @return 完整的生成评语
+     */
+    String generateCommentStream(String promptTemplateKey, String context, Consumer<String> onChunk);
 }
 
