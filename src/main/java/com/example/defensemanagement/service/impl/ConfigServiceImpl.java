@@ -91,12 +91,14 @@ public class ConfigServiceImpl implements ConfigService {
     @Override
     public Integer getCurrentDefenseYear() {
         String yearStr = getConfigValue(KEY_CURRENT_YEAR);
-        if (yearStr == null)
-            return null;
+        if (yearStr == null) {
+            // 如果没有配置，返回当前年份
+            return java.time.LocalDate.now().getYear();
+        }
         try {
             return Integer.parseInt(yearStr);
         } catch (NumberFormatException e) {
-            return null;
+            return java.time.LocalDate.now().getYear();
         }
     }
 

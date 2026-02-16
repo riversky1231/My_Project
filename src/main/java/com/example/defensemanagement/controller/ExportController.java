@@ -542,7 +542,15 @@ public class ExportController {
             if (groupId == null) {
                 Map<String, Object> result = new HashMap<>();
                 result.put("students", new java.util.ArrayList<>());
-                result.put("message", "您不是任何小组的组长");
+                // 检查用户角色是否为答辩组长
+                User currentUser = (User) session.getAttribute("currentUser");
+                boolean isDefenseLeaderRole = currentUser != null && currentUser.getRole() != null && 
+                        "DEFENSE_LEADER".equals(currentUser.getRole().getName());
+                if (isDefenseLeaderRole) {
+                    result.put("message", "您已被设置为答辩组长，但尚未被分配到任何答辩小组，请联系管理员");
+                } else {
+                    result.put("message", "您不是任何小组的组长");
+                }
                 return ResponseEntity.ok(result);
             }
             
@@ -618,7 +626,15 @@ public class ExportController {
             
             if (groupId == null) {
                 Map<String, Object> error = new HashMap<>();
-                error.put("error", "您不是任何小组的组长");
+                // 检查用户角色是否为答辩组长
+                User currentUser = (User) session.getAttribute("currentUser");
+                boolean isDefenseLeaderRole = currentUser != null && currentUser.getRole() != null && 
+                        "DEFENSE_LEADER".equals(currentUser.getRole().getName());
+                if (isDefenseLeaderRole) {
+                    error.put("error", "您已被设置为答辩组长，但尚未被分配到任何答辩小组，请联系管理员");
+                } else {
+                    error.put("error", "您不是任何小组的组长");
+                }
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
             }
             

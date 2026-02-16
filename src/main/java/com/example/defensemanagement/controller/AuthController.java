@@ -24,36 +24,38 @@ public class AuthController {
     @PostMapping("/login")
     public String login(@RequestParam String username, 
                        @RequestParam String password, 
+                       @RequestParam String role,
+                       @RequestParam String captcha,
                        HttpSession session, 
                        Model model) {
         
-        System.out.println("登录尝试: username=" + username + ", password=" + password);
-        
-        // 首先尝试用户登录
-        User user = authService.login(username, password);
-        System.out.println("用户登录结果: " + user);
-        
-        if (user != null) {
-            session.setAttribute("currentUser", user);
-            session.setAttribute("userType", "USER");
-            System.out.println("用户登录成功，重定向到首页");
-            return "redirect:/?login=success";
+        System.out.println("登录尝试: username=" + username + ", role=" + role);
+
+        // 验证验证码
+        String sessionCaptcha = (String) session.getAttribute("captcha");
+        if (captcha == null || sessionCaptcha == null || !captcha.toLowerCase().equals(sessionCaptcha)) {
+            model.addAttribute("error", "验证码错误");
+            return "login";
         }
         
-        // 如果用户登录失败，尝试教师登录
-        Teacher teacher = authService.teacherLogin(username, password);
-        System.out.println("教师登录结果: " + teacher);
-        
-        if (teacher != null) {
-            session.setAttribute("currentTeacher", teacher);
-            session.setAttribute("userType", "TEACHER");
-            System.out.println("教师登录成功，重定向到首页");
-            return "redirect:/?login=success";
+        if ("TEACHER".equals(role)) {
+            Teacher teacher = authService.teacherLogin(username, password);
+            if (teacher != null) {
+                session.setAttribute("currentTeacher", teacher);
+                session.setAttribute("userType", "TEACHER");
+                return "redirect:/?login=success";
+            }
+        } else {
+            User user = authService.login(username, password);
+            if (user != null && user.getRole() != null && role.equals(user.getRole().getName())) {
+                session.setAttribute("currentUser", user);
+                session.setAttribute("userType", "USER");
+                return "redirect:/?login=success";
+            }
         }
         
         // 登录失败
-        System.out.println("登录失败");
-        model.addAttribute("error", "用户名或密码错误");
+        model.addAttribute("error", "用户名、密码或角色选择不匹配");
         return "login";
     }
 

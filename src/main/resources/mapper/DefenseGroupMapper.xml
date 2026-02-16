@@ -3,98 +3,102 @@
 <mapper namespace="com.example.defensemanagement.mapper.DefenseGroupMapper">
 
     <resultMap id="DefenseGroupResultMap" type="com.example.defensemanagement.entity.DefenseGroup">
-        <id column="id" property="id"/>
-        <result column="name" property="name"/>
-        <result column="display_order" property="displayOrder"/>
-        <result column="score" property="score"/>
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="department_id" property="departmentId" />
+        <result column="display_order" property="displayOrder" />
+        <result column="score" property="score" />
+        <association property="department"
+            javaType="com.example.defensemanagement.entity.Department">
+            <id column="group_dept_id" property="id" />
+            <result column="group_dept_name" property="name" />
+            <result column="group_dept_code" property="code" />
+        </association>
         <association property="comment" javaType="com.example.defensemanagement.entity.Comment">
-            <id column="comment_id" property="id"/>
-            <result column="comment_content" property="content"/>
-            <result column="comment_group_id" property="groupId"/>
+            <id column="comment_id" property="id" />
+            <result column="comment_content" property="content" />
+            <result column="comment_group_id" property="groupId" />
         </association>
         <collection property="members" ofType="com.example.defensemanagement.entity.Student">
-            <id column="student_id" property="id"/>
-            <result column="student_no" property="studentNo"/>
-            <result column="student_name" property="name"/>
-            <result column="student_class" property="classInfo"/>
-            <result column="student_title" property="title"/>
-            <result column="student_defense_type" property="defenseType"/>
-            <result column="student_defense_group_id" property="defenseGroupId"/>
+            <id column="student_id" property="id" />
+            <result column="student_no" property="studentNo" />
+            <result column="student_name" property="name" />
+            <result column="student_class" property="classInfo" />
+            <result column="student_title" property="title" />
+            <result column="student_defense_type" property="defenseType" />
+            <result column="student_defense_group_id" property="defenseGroupId" />
         </collection>
         <collection property="teachers" ofType="com.example.defensemanagement.entity.Teacher">
-            <id column="teacher_id" property="id"/>
-            <result column="teacher_no" property="teacherNo"/>
-            <result column="teacher_name" property="name"/>
-            <result column="teacher_title" property="title"/>
-            <result column="is_leader" property="isLeader"/>
-            <association property="department" javaType="com.example.defensemanagement.entity.Department">
-                <id column="teacher_department_id" property="id"/>
-                <result column="teacher_department_name" property="name"/>
-                <result column="teacher_department_code" property="code"/>
+            <id column="teacher_id" property="id" />
+            <result column="teacher_no" property="teacherNo" />
+            <result column="teacher_name" property="name" />
+            <result column="teacher_title" property="title" />
+            <result column="is_leader" property="isLeader" />
+            <association property="department"
+                javaType="com.example.defensemanagement.entity.Department">
+                <id column="teacher_department_id" property="id" />
+                <result column="teacher_department_name" property="name" />
+                <result column="teacher_department_code" property="code" />
             </association>
         </collection>
     </resultMap>
 
-    <select id="findAllByOrderByDisplayOrderAsc" resultMap="DefenseGroupResultMap">
-        SELECT 
-            dg.id, dg.name, dg.display_order, dg.score,
-            s.id as student_id, s.student_no, s.name as student_name, s.class_info as student_class,
-            s.title as student_title, s.defense_type as student_defense_type, s.defense_group_id as student_defense_group_id,
-            t.id as teacher_id, t.teacher_no, t.name as teacher_name, t.title as teacher_title,
-            t.department_id as teacher_department_id,
-            d.name as teacher_department_name, d.code as teacher_department_code,
-            dgt.is_leader,
-            c.id as comment_id, c.content as comment_content, c.group_id as comment_group_id
-        FROM defense_group dg
-        LEFT JOIN t_student s ON dg.id = s.defense_group_id
-        LEFT JOIN defense_group_teacher dgt ON dg.id = dgt.group_id
-        LEFT JOIN teacher t ON dgt.teacher_id = t.id
-        LEFT JOIN department d ON t.department_id = d.id
-        LEFT JOIN comment c ON dg.id = c.group_id
-        ORDER BY dg.display_order ASC, s.id ASC, t.id ASC
-    </select>
+    <select id="findAllByOrderByDisplayOrderAsc" resultMap="DefenseGroupResultMap"> SELECT dg.id,
+        dg.name, dg.department_id, dg.display_order, dg.score, gd.id as group_dept_id, gd.name as
+        group_dept_name, gd.code as group_dept_code, s.id as student_id, s.student_no, s.name as
+        student_name, s.class_info as student_class, s.title as student_title, s.defense_type as
+        student_defense_type, s.defense_group_id as student_defense_group_id, t.id as teacher_id,
+        t.teacher_no, t.name as teacher_name, t.title as teacher_title, t.department_id as
+        teacher_department_id, d.name as teacher_department_name, d.code as teacher_department_code,
+        dgt.is_leader, c.id as comment_id, c.content as comment_content, c.group_id as
+        comment_group_id FROM defense_group dg LEFT JOIN department gd ON dg.department_id = gd.id
+        LEFT JOIN t_student s ON dg.id = s.defense_group_id LEFT JOIN defense_group_teacher dgt ON
+        dg.id = dgt.group_id LEFT JOIN teacher t ON dgt.teacher_id = t.id LEFT JOIN department d ON
+        t.department_id = d.id LEFT JOIN comment c ON dg.id = c.group_id ORDER BY dg.display_order
+        ASC, s.id ASC, t.id ASC </select>
 
-    <select id="findById" resultMap="DefenseGroupResultMap">
-        SELECT 
-            dg.id, dg.name, dg.display_order, dg.score,
-            s.id as student_id, s.student_no, s.name as student_name, s.class_info as student_class,
-            s.title as student_title, s.defense_type as student_defense_type, s.defense_group_id as student_defense_group_id,
-            t.id as teacher_id, t.teacher_no, t.name as teacher_name, t.title as teacher_title,
-            t.department_id as teacher_department_id,
-            d.name as teacher_department_name, d.code as teacher_department_code,
-            dgt.is_leader,
-            c.id as comment_id, c.content as comment_content, c.group_id as comment_group_id
-        FROM defense_group dg
-        LEFT JOIN t_student s ON dg.id = s.defense_group_id
-        LEFT JOIN defense_group_teacher dgt ON dg.id = dgt.group_id
-        LEFT JOIN teacher t ON dgt.teacher_id = t.id
-        LEFT JOIN department d ON t.department_id = d.id
-        LEFT JOIN comment c ON dg.id = c.group_id
-        WHERE dg.id = #{id}
-        ORDER BY s.id ASC, t.id ASC
-    </select>
+    <!-- 按院系查询小组 -->
+    <select id="findByDepartmentId" resultMap="DefenseGroupResultMap"> SELECT dg.id, dg.name,
+        dg.department_id, dg.display_order, dg.score, gd.id as group_dept_id, gd.name as
+        group_dept_name, gd.code as group_dept_code, s.id as student_id, s.student_no, s.name as
+        student_name, s.class_info as student_class, s.title as student_title, s.defense_type as
+        student_defense_type, s.defense_group_id as student_defense_group_id, t.id as teacher_id,
+        t.teacher_no, t.name as teacher_name, t.title as teacher_title, t.department_id as
+        teacher_department_id, d.name as teacher_department_name, d.code as teacher_department_code,
+        dgt.is_leader, c.id as comment_id, c.content as comment_content, c.group_id as
+        comment_group_id FROM defense_group dg LEFT JOIN department gd ON dg.department_id = gd.id
+        LEFT JOIN t_student s ON dg.id = s.defense_group_id LEFT JOIN defense_group_teacher dgt ON
+        dg.id = dgt.group_id LEFT JOIN teacher t ON dgt.teacher_id = t.id LEFT JOIN department d ON
+        t.department_id = d.id LEFT JOIN comment c ON dg.id = c.group_id WHERE dg.department_id =
+        #{departmentId} ORDER BY dg.display_order ASC, s.id ASC, t.id ASC </select>
 
-    <insert id="insert" parameterType="com.example.defensemanagement.entity.DefenseGroup" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO defense_group (name, display_order, score)
-        VALUES (#{name}, #{displayOrder}, #{score})
-    </insert>
+    <select id="findById" resultMap="DefenseGroupResultMap"> SELECT dg.id, dg.name,
+        dg.department_id, dg.display_order, dg.score, gd.id as group_dept_id, gd.name as
+        group_dept_name, gd.code as group_dept_code, s.id as student_id, s.student_no, s.name as
+        student_name, s.class_info as student_class, s.title as student_title, s.defense_type as
+        student_defense_type, s.defense_group_id as student_defense_group_id, t.id as teacher_id,
+        t.teacher_no, t.name as teacher_name, t.title as teacher_title, t.department_id as
+        teacher_department_id, d.name as teacher_department_name, d.code as teacher_department_code,
+        dgt.is_leader, c.id as comment_id, c.content as comment_content, c.group_id as
+        comment_group_id FROM defense_group dg LEFT JOIN department gd ON dg.department_id = gd.id
+        LEFT JOIN t_student s ON dg.id = s.defense_group_id LEFT JOIN defense_group_teacher dgt ON
+        dg.id = dgt.group_id LEFT JOIN teacher t ON dgt.teacher_id = t.id LEFT JOIN department d ON
+        t.department_id = d.id LEFT JOIN comment c ON dg.id = c.group_id WHERE dg.id = #{id} ORDER
+        BY s.id ASC, t.id ASC </select>
 
-    <update id="update" parameterType="com.example.defensemanagement.entity.DefenseGroup">
-        UPDATE defense_group 
-        SET name = #{name}, display_order = #{displayOrder}, score = #{score}
-        WHERE id = #{id}
-    </update>
+    <insert id="insert" parameterType="com.example.defensemanagement.entity.DefenseGroup"
+        useGeneratedKeys="true" keyProperty="id"> INSERT INTO defense_group (name, department_id,
+        display_order, score) VALUES (#{name}, #{departmentId}, #{displayOrder}, #{score}) </insert>
 
-    <delete id="delete">
-        DELETE FROM defense_group WHERE id = #{id}
-    </delete>
+    <update id="update" parameterType="com.example.defensemanagement.entity.DefenseGroup"> UPDATE
+        defense_group SET name = #{name}, department_id = #{departmentId}, display_order =
+        #{displayOrder}, score = #{score} WHERE id = #{id} </update>
 
-    <update id="updateScore">
-        UPDATE defense_group SET score = #{score} WHERE id = #{id}
-    </update>
+    <delete id="delete"> DELETE FROM defense_group WHERE id = #{id} </delete>
 
-    <update id="updateDisplayOrder">
-        UPDATE defense_group SET display_order = #{displayOrder} WHERE id = #{id}
-    </update>
+    <update id="updateScore"> UPDATE defense_group SET score = #{score} WHERE id = #{id} </update>
+
+    <update id="updateDisplayOrder"> UPDATE defense_group SET display_order = #{displayOrder} WHERE
+        id = #{id} </update>
 
 </mapper>

@@ -8,6 +8,7 @@ import com.example.defensemanagement.entity.User;
 import com.example.defensemanagement.entity.Teacher;
 import com.example.defensemanagement.entity.DefenseGroupTeacher;
 import com.example.defensemanagement.mapper.DefenseGroupTeacherMapper;
+import com.example.defensemanagement.mapper.DefenseGroupMapper;
 import com.example.defensemanagement.mapper.TeacherMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -25,6 +26,9 @@ public class DefenseController {
     
     @Autowired
     private DefenseGroupTeacherMapper defenseGroupTeacherMapper;
+    
+    @Autowired
+    private DefenseGroupMapper defenseGroupMapper;
     
     @Autowired
     private TeacherMapper teacherMapper;
@@ -72,7 +76,43 @@ public class DefenseController {
             }
         }
         
-        model.addAttribute("groups", defenseService.getAllGroups());
+        // 根据用户角色返回对应的小组数据（数据隔离）
+        List<DefenseGroup> groups;
+        if (currentUser != null && currentUser.getRole() != null) {
+            String roleName = currentUser.getRole().getName();
+            if ("SUPER_ADMIN".equals(roleName)) {
+                // 超级管理员：返回所有小组
+                groups = defenseService.getAllGroups();
+            } else if ("DEPT_ADMIN".equals(roleName)) {
+                // 院系管理员：返回本院系小组
+                Long departmentId = currentUser.getDepartmentId();
+                if (departmentId != null) {
+                    groups = defenseGroupMapper.findByDepartmentId(departmentId);
+                } else {
+                    groups = java.util.Collections.emptyList();
+                }
+            } else {
+                // 其他角色（教师/答辩组长）：返回本院系小组
+                Long departmentId = currentTeacher != null ? currentTeacher.getDepartmentId() : null;
+                if (departmentId != null) {
+                    groups = defenseGroupMapper.findByDepartmentId(departmentId);
+                } else {
+                    groups = java.util.Collections.emptyList();
+                }
+            }
+        } else if (currentTeacher != null) {
+            // 教师登录：返回本院系小组
+            Long departmentId = currentTeacher.getDepartmentId();
+            if (departmentId != null) {
+                groups = defenseGroupMapper.findByDepartmentId(departmentId);
+            } else {
+                groups = java.util.Collections.emptyList();
+            }
+        } else {
+            groups = java.util.Collections.emptyList();
+        }
+        
+        model.addAttribute("groups", groups);
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("currentTeacher", currentTeacher);
         model.addAttribute("isDefenseLeader", isDefenseLeader);
@@ -147,28 +187,53 @@ public class DefenseController {
 
     @PostMapping("/group/add")
     @ResponseBody
-    public void addGroup(@RequestBody AddGroupRequest request, HttpSession session) {
-        // 检查权限：只有超级管理员可以添加小组
+    public String addGroup(@RequestBody AddGroupRequest request, HttpSession session) {
+        // 检查权限：超级管理员或院系管理员可以添加小组
         User currentUser = (User) session.getAttribute("currentUser");
-        if (currentUser == null || !"SUPER_ADMIN".equals(currentUser.getRole().getName())) {
-            throw new RuntimeException("权限不足：只有超级管理员可以添加小组");
+        if (currentUser == null) {
+            return "error:请先登录";
         }
         
-        DefenseGroup g = new DefenseGroup();
+        String roleName = currentUser.getRole() != null ? currentUser.getRole().getName() : null;
+        Long departmentId = null;
         
-        // 如果名称为空或null，自动生成
-        if (request.getName() == null || request.getName().trim().isEmpty()) {
-            String autoName = generateGroupName();
-            g.setName(autoName);
+        if ("SUPER_ADMIN".equals(roleName)) {
+            // 超级管理员可以为任何院系创建小组，但需要指定departmentId
+            departmentId = request.getDepartmentId();
+            if (departmentId == null) {
+                return "error:请指定小组所属院系";
+            }
+        } else if ("DEPT_ADMIN".equals(roleName)) {
+            // 院系管理员只能为本院系创建小组
+            departmentId = currentUser.getDepartmentId();
+            if (departmentId == null) {
+                return "error:院系信息未配置";
+            }
         } else {
-            g.setName(request.getName());
+            return "error:权限不足：只有管理员可以添加小组";
         }
         
-        g.setScore(request.getScore());
-        // Put it at the end by default; user can reorder via updateOrder.
-        int order = defenseService.getAllGroups() != null ? defenseService.getAllGroups().size() : 0;
-        g.setDisplayOrder(order);
-        defenseService.addGroup(g);
+        try {
+            DefenseGroup g = new DefenseGroup();
+            
+            // 如果名称为空或null，自动生成
+            if (request.getName() == null || request.getName().trim().isEmpty()) {
+                String autoName = generateGroupName();
+                g.setName(autoName);
+            } else {
+                g.setName(request.getName());
+            }
+            
+            g.setScore(request.getScore());
+            g.setDepartmentId(departmentId);
+            // Put it at the end by default; user can reorder via updateOrder.
+            int order = defenseService.getAllGroups() != null ? defenseService.getAllGroups().size() : 0;
+            g.setDisplayOrder(order);
+            defenseService.addGroup(g);
+            return "success";
+        } catch (Exception e) {
+            return "error:" + e.getMessage();
+        }
     }
 
     /**
@@ -178,10 +243,29 @@ public class DefenseController {
     @PostMapping("/group/addBatch")
     @ResponseBody
     public String addGroupsBatch(@RequestBody BatchAddGroupRequest request, HttpSession session) {
-        // 检查权限：只有超级管理员可以添加小组
+        // 检查权限：超级管理员或院系管理员可以添加小组
         User currentUser = (User) session.getAttribute("currentUser");
-        if (currentUser == null || !"SUPER_ADMIN".equals(currentUser.getRole().getName())) {
-            return "error:权限不足：只有超级管理员可以添加小组";
+        if (currentUser == null) {
+            return "error:请先登录";
+        }
+        
+        String roleName = currentUser.getRole() != null ? currentUser.getRole().getName() : null;
+        Long departmentId = null;
+        
+        if ("SUPER_ADMIN".equals(roleName)) {
+            // 超级管理员需要指定departmentId
+            departmentId = request.getDepartmentId();
+            if (departmentId == null) {
+                return "error:请指定小组所属院系";
+            }
+        } else if ("DEPT_ADMIN".equals(roleName)) {
+            // 院系管理员只能为本院系创建小组
+            departmentId = currentUser.getDepartmentId();
+            if (departmentId == null) {
+                return "error:院系信息未配置";
+            }
+        } else {
+            return "error:权限不足：只有管理员可以添加小组";
         }
         
         int count = request.getCount();
@@ -199,6 +283,7 @@ public class DefenseController {
                 DefenseGroup g = new DefenseGroup();
                 g.setName("第" + (currentCount + i) + "小组");
                 g.setScore(0);
+                g.setDepartmentId(departmentId);
                 g.setDisplayOrder(currentCount + i - 1);
                 defenseService.addGroup(g);
             }
@@ -222,16 +307,28 @@ public class DefenseController {
     @DeleteMapping("/group/{id}")
     @ResponseBody
     public String deleteGroup(@PathVariable Long id, HttpSession session) {
-        // 检查权限：只有超级管理员可以删除小组
+        // 检查权限：超级管理员或院系管理员可以删除小组
         User currentUser = (User) session.getAttribute("currentUser");
-        if (currentUser == null || !"SUPER_ADMIN".equals(currentUser.getRole().getName())) {
-            return "error:权限不足：只有超级管理员可以删除小组";
+        if (currentUser == null) {
+            return "error:请先登录";
         }
+        
+        String roleName = currentUser.getRole() != null ? currentUser.getRole().getName() : null;
         
         // 检查组内是否有成员
         DefenseGroup group = defenseService.getGroupById(id);
         if (group == null) {
             return "error:小组不存在";
+        }
+        
+        // 院系管理员只能删除本院系的小组
+        if ("DEPT_ADMIN".equals(roleName)) {
+            Long userDeptId = currentUser.getDepartmentId();
+            if (userDeptId == null || !userDeptId.equals(group.getDepartmentId())) {
+                return "error:只能删除本院系的小组";
+            }
+        } else if (!"SUPER_ADMIN".equals(roleName)) {
+            return "error:权限不足：只有管理员可以删除小组";
         }
         
         if (group.getMembers() != null && !group.getMembers().isEmpty()) {
@@ -256,20 +353,26 @@ public class DefenseController {
     public static class AddGroupRequest {
         private String name;
         private int score;
+        private Long departmentId;
         private List<String> members;
 
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
         public int getScore() { return score; }
         public void setScore(int score) { this.score = score; }
+        public Long getDepartmentId() { return departmentId; }
+        public void setDepartmentId(Long departmentId) { this.departmentId = departmentId; }
         public List<String> getMembers() { return members; }
         public void setMembers(List<String> members) { this.members = members; }
     }
 
     public static class BatchAddGroupRequest {
         private int count;
+        private Long departmentId;
 
         public int getCount() { return count; }
         public void setCount(int count) { this.count = count; }
+        public Long getDepartmentId() { return departmentId; }
+        public void setDepartmentId(Long departmentId) { this.departmentId = departmentId; }
     }
 }

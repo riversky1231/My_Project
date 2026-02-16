@@ -245,10 +245,12 @@ public class ScoreController {
     @GetMapping("/teacher/group/students")
     @ResponseBody
     public Map<String, Object> getTeacherGroupStudents(HttpSession session) {
-        // 检查是否是超级管理员
+        // 检查是否是超级管理员或院系管理员
         User currentUser = (User) session.getAttribute("currentUser");
         boolean isSuperAdmin = currentUser != null && currentUser.getRole() != null && 
                                "SUPER_ADMIN".equals(currentUser.getRole().getName());
+        boolean isDeptAdmin = currentUser != null && currentUser.getRole() != null && 
+                              "DEPT_ADMIN".equals(currentUser.getRole().getName());
         
         Teacher teacher = getTeacherFromSession(session);
         Integer year = getCurrentDefenseYear();
@@ -259,6 +261,26 @@ public class ScoreController {
             result = scoreService.getAllGroupStudentsForSuperAdmin(year);
             result.put("teacherId", null);
             result.put("teacherName", "超级管理员");
+        } else if (isDeptAdmin) {
+            // 院系管理员：返回本院系的所有小组学生
+            Map<String, Object> allData = scoreService.getAllGroupStudentsForSuperAdmin(year);
+            Long deptId = currentUser.getDepartmentId();
+            // 过滤本院系的小组
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> allGroups = (List<Map<String, Object>>) allData.get("groups");
+            if (allGroups != null) {
+                List<Map<String, Object>> deptGroups = allGroups.stream()
+                        .filter(g -> {
+                            Object groupDeptId = g.get("departmentId");
+                            return groupDeptId != null && groupDeptId.equals(deptId);
+                        })
+                        .collect(java.util.stream.Collectors.toList());
+                allData.put("groups", deptGroups);
+            }
+            result = allData;
+            result.put("teacherId", null);
+            result.put("teacherName", "院系管理员");
+            result.put("isDeptAdmin", true);
         } else {
             // 普通教师：返回自己所在小组的学生
             if (teacher == null) {
@@ -302,10 +324,12 @@ public class ScoreController {
     @GetMapping("/largegroup/candidates")
     @ResponseBody
     public Map<String, Object> getLargeGroupCandidates(HttpSession session) {
-        // 检查是否是超级管理员
+        // 检查是否是超级管理员或院系管理员
         User currentUser = (User) session.getAttribute("currentUser");
         boolean isSuperAdmin = currentUser != null && currentUser.getRole() != null && 
                                "SUPER_ADMIN".equals(currentUser.getRole().getName());
+        boolean isDeptAdmin = currentUser != null && currentUser.getRole() != null && 
+                              "DEPT_ADMIN".equals(currentUser.getRole().getName());
         
         Teacher teacher = getTeacherFromSession(session);
         Integer year = getCurrentDefenseYear();
@@ -316,6 +340,24 @@ public class ScoreController {
             result.put("candidates", scoreService.getLargeGroupCandidates(year, null));
             result.put("teacherId", null);
             result.put("teacherName", "超级管理员");
+        } else if (isDeptAdmin) {
+            // 院系管理员：返回本院系的候选人（不需要打分权限）
+            List<Map<String, Object>> allCandidates = scoreService.getLargeGroupCandidates(year, null);
+            Long deptId = currentUser.getDepartmentId();
+            // 按院系过滤候选人
+            List<Map<String, Object>> deptCandidates = allCandidates.stream()
+                    .filter(c -> {
+                        Object groupDeptId = c.get("departmentId");
+                        if (groupDeptId == null || deptId == null) return false;
+                        // 统一转换为Long进行比较
+                        Long gDeptId = groupDeptId instanceof Number ? ((Number) groupDeptId).longValue() : null;
+                        return deptId.equals(gDeptId);
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+            result.put("candidates", deptCandidates);
+            result.put("teacherId", null);
+            result.put("teacherName", "院系管理员");
+            result.put("isDeptAdmin", true);
         } else {
             // 普通教师：返回自己能看到和打分的候选人
             if (teacher == null) {

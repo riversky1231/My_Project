@@ -516,6 +516,7 @@ public class ScoreServiceImpl implements ScoreService {
             Map<String, Object> groupInfo = new HashMap<>();
             groupInfo.put("groupId", group.getId());
             groupInfo.put("groupName", group.getName());
+            groupInfo.put("departmentId", group.getDepartmentId()); // 添加院系ID用于过滤
             groupInfo.put("students", studentList);
             groupList.add(groupInfo);
         }
@@ -598,6 +599,7 @@ public class ScoreServiceImpl implements ScoreService {
                 Map<String, Object> candidate = new HashMap<>();
                 candidate.put("groupId", group.getId());
                 candidate.put("groupName", group.getName());
+                candidate.put("departmentId", group.getDepartmentId()); // 添加院系ID用于过滤
                 candidate.put("studentId", topStudent.getId());
                 candidate.put("studentNo", topStudent.getStudentNo());
                 candidate.put("studentName", topStudent.getName());

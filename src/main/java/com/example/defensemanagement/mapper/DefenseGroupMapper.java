@@ -11,6 +11,11 @@ public interface DefenseGroupMapper {
     
     List<DefenseGroup> findAllByOrderByDisplayOrderAsc();
     
+    /**
+     * 按院系ID查询答辩小组
+     */
+    List<DefenseGroup> findByDepartmentId(@Param("departmentId") Long departmentId);
+    
     DefenseGroup findById(Long id);
     
     void insert(DefenseGroup defenseGroup);

@@ -32,6 +32,19 @@ public class ConfigController {
         }
         return null; // 权限通过
     }
+    
+    // 检查管理员权限（超级管理员或院系管理员）
+    private String checkAdmin(HttpSession session) {
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser == null) {
+            return "error:未登录";
+        }
+        String roleName = currentUser.getRole() != null ? currentUser.getRole().getName() : null;
+        if (!"SUPER_ADMIN".equals(roleName) && !"DEPT_ADMIN".equals(roleName)) {
+            return "error:权限不足";
+        }
+        return null; // 权限通过
+    }
 
     /**
      * 获取评分指标配置列表
@@ -40,8 +53,8 @@ public class ConfigController {
     @GetMapping("/evaluation/list")
     @ResponseBody
     public List<EvaluationItem> getEvaluationItems(@RequestParam String type, HttpSession session) {
-        // 权限检查 (这里假设超级管理员或其他高权限角色才能查看)
-        if (checkSuperAdmin(session) != null) {
+        // 允许超级管理员和院系管理员查看
+        if (checkAdmin(session) != null) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "权限不足");
         }
 
@@ -57,7 +70,8 @@ public class ConfigController {
     public String saveEvaluationItems(@RequestParam String type,
             @RequestBody List<EvaluationItem> items,
             HttpSession session) {
-        String permissionError = checkSuperAdmin(session);
+        // 允许超级管理员和院系管理员保存
+        String permissionError = checkAdmin(session);
         if (permissionError != null) {
             return permissionError;
         }
@@ -77,7 +91,8 @@ public class ConfigController {
     @PostMapping("/year/set")
     @ResponseBody
     public String setCurrentDefenseYear(@RequestParam Integer year, HttpSession session) {
-        String permissionError = checkSuperAdmin(session);
+        // 允许超级管理员和院系管理员设置年份
+        String permissionError = checkAdmin(session);
         if (permissionError != null) {
             return permissionError;
         }

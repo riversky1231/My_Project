@@ -34,8 +34,8 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         // 排除不需要权限验证的路径
-        if (path.equals("/login") || path.startsWith("/css/") ||
-                path.startsWith("/js/") || path.startsWith("/images/")) {
+        if (path.equals("/login") || path.equals("/captcha") || path.startsWith("/css/") ||
+                path.startsWith("/js/") || path.startsWith("/images/") || path.equals("/image.png")) {
             return true;
         }
 
@@ -73,6 +73,18 @@ public class AuthInterceptor implements HandlerInterceptor {
             // controller)
             if (path.equals("/admin/users/save") && "POST".equalsIgnoreCase(request.getMethod())) {
                 return true; // Permission will be checked in the controller
+            }
+
+            // Allow config API access for admins (SUPER_ADMIN and DEPT_ADMIN)
+            if (path.startsWith("/admin/config/")) {
+                if (currentUser != null && currentUser.getRole() != null) {
+                    String roleName = currentUser.getRole().getName();
+                    if ("SUPER_ADMIN".equals(roleName) || "DEPT_ADMIN".equals(roleName)) {
+                        return true;
+                    }
+                }
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "权限不足");
+                return false;
             }
 
             // For all other /admin/ paths (like department management), only super admins
@@ -167,15 +179,16 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         if (path.startsWith("/defense/")) {
-            // 教师小组打分和大组答辩相关 API，允许所有教师访问
+            // 教师小组打分和大组答辩相关 API，允许教师和管理员访问
             if (path.startsWith("/defense/score/teacher/") || path.startsWith("/defense/score/largegroup/")) {
-                // 检查是否是教师或超级管理员（通过 currentTeacher 或 currentUser 的角色）
+                // 检查是否是教师或管理员（通过 currentTeacher 或 currentUser 的角色）
                 if (currentTeacher != null) {
                     return true;
                 }
                 if (currentUser != null && currentUser.getRole() != null) {
                     String roleName = currentUser.getRole().getName();
-                    if ("TEACHER".equals(roleName) || "DEFENSE_LEADER".equals(roleName) || "SUPER_ADMIN".equals(roleName)) {
+                    if ("TEACHER".equals(roleName) || "DEFENSE_LEADER".equals(roleName) 
+                        || "SUPER_ADMIN".equals(roleName) || "DEPT_ADMIN".equals(roleName)) {
                         return true;
                     }
                 }

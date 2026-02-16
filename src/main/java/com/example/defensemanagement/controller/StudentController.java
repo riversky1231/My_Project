@@ -227,6 +227,9 @@ public class StudentController {
 
     /**
      * 获取答辩小组列表（用于前端下拉选择）
+     * - 超级管理员：返回所有小组
+     * - 院系管理员：返回本院系小组
+     * - 教师/答辩组长：返回本院系小组
      * GET /department/student/groups
      */
     @GetMapping("/groups")
@@ -238,15 +241,29 @@ public class StudentController {
         // 允许超级管理员、院系管理员和教师访问
         if (currentUser != null) {
             String roleName = currentUser.getRole() != null ? currentUser.getRole().getName() : null;
-            if ("SUPER_ADMIN".equals(roleName) || "DEPT_ADMIN".equals(roleName)) {
-                // 返回所有答辩小组（按显示顺序排序）
+            
+            // 超级管理员：返回所有小组
+            if ("SUPER_ADMIN".equals(roleName)) {
                 return defenseGroupMapper.findAllByOrderByDisplayOrderAsc();
+            }
+            
+            // 院系管理员：返回本院系小组
+            if ("DEPT_ADMIN".equals(roleName)) {
+                Long departmentId = currentUser.getDepartmentId();
+                if (departmentId == null) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "院系信息未配置");
+                }
+                return defenseGroupMapper.findByDepartmentId(departmentId);
             }
         }
 
-        // 教师也可以访问（用于查看自己指导的学生所在的小组）
+        // 教师/答辩组长：返回本院系小组
         if (currentTeacher != null) {
-            return defenseGroupMapper.findAllByOrderByDisplayOrderAsc();
+            Long departmentId = currentTeacher.getDepartmentId();
+            if (departmentId == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "教师院系信息未配置");
+            }
+            return defenseGroupMapper.findByDepartmentId(departmentId);
         }
 
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "权限不足");
@@ -1194,10 +1211,12 @@ public class StudentController {
     public Map<String, Object> getReviewedStudentsWithScores(HttpSession session) {
         Map<String, Object> result = new HashMap<>();
 
-        // 检查是否是超级管理员
+        // 检查是否是超级管理员或院系管理员
         User currentUser = (User) session.getAttribute("currentUser");
         boolean isSuperAdmin = currentUser != null && currentUser.getRole() != null &&
                 "SUPER_ADMIN".equals(currentUser.getRole().getName());
+        boolean isDeptAdmin = currentUser != null && currentUser.getRole() != null &&
+                "DEPT_ADMIN".equals(currentUser.getRole().getName());
 
         Teacher teacher = getTeacherFromSession(session);
         Integer currentYear = configService.getCurrentDefenseYear();
@@ -1212,6 +1231,13 @@ public class StudentController {
             }
             result.put("teacherId", null);
             result.put("teacherName", "超级管理员");
+        } else if (isDeptAdmin) {
+            // 院系管理员：返回本院系的所有学生
+            Long departmentId = currentUser.getDepartmentId();
+            students = studentService.findByDepartmentAndYear(departmentId, currentYear);
+            result.put("teacherId", null);
+            result.put("teacherName", "院系管理员");
+            result.put("isDeptAdmin", true);
         } else {
             // 普通教师：返回自己作为评阅人的学生
             if (teacher == null) {
@@ -1663,8 +1689,22 @@ public class StudentController {
         // 查找该教师作为组长的小组
         com.example.defensemanagement.entity.DefenseGroupTeacher groupTeacher = defenseGroupTeacherMapper
                 .findByTeacherId(currentTeacher.getId());
-        if (groupTeacher == null || groupTeacher.getIsLeader() == null || groupTeacher.getIsLeader() != 1) {
-            result.put("error", "您不是任何小组的组长");
+        
+        // 检查是否是组长：既要检查defense_group_teacher表，也要检查用户角色
+        boolean isLeaderInGroup = groupTeacher != null && groupTeacher.getIsLeader() != null && groupTeacher.getIsLeader() == 1;
+        
+        if (!isLeaderInGroup) {
+            // 检查用户角色是否为答辩组长
+            User currentUser = (User) session.getAttribute("currentUser");
+            boolean isDefenseLeaderRole = currentUser != null && currentUser.getRole() != null && 
+                    "DEFENSE_LEADER".equals(currentUser.getRole().getName());
+            
+            if (isDefenseLeaderRole) {
+                // 角色是答辩组长但未分配到小组
+                result.put("error", "您已被设置为答辩组长，但尚未被分配到任何答辩小组，请联系管理员");
+            } else {
+                result.put("error", "您不是任何小组的组长");
+            }
             return result;
         }
 

@@ -8,133 +8,378 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
     <style>
         :root {
-            --primary-color: #4f46e5;
-            --secondary-color: #6366f1;
-            --background-color: #f8f9fe;
+            --primary-color: #4a6fa5;
+            --primary-hover: #3d6090;
+            --primary-light: #6b8fc7;
+            --secondary-color: #2c5282;
+            --background-color: #e8eef6;
+            --sidebar-bg: #1a365d;
+            --sidebar-text: #e2ecf7;
+            --sidebar-hover: #2c5282;
             --card-bg-color: #ffffff;
-            --text-color: #495057;
-            --heading-color: #343a40;
-            --border-color: #e9ecef;
-            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --text-color: #334e6e;
+            --heading-color: #1a365d;
+            --border-color: #c3d4e8;
+            --shadow: 0 4px 6px -1px rgba(44, 82, 130, 0.08), 0 2px 4px -1px rgba(44, 82, 130, 0.05);
+            --shadow-lg: 0 10px 15px -3px rgba(44, 82, 130, 0.12), 0 4px 6px -2px rgba(44, 82, 130, 0.06);
+            --radius: 12px;
         }
 
         body {
             background-color: var(--background-color);
-            font-family: 'Poppins', sans-serif;
+            background-image: 
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cpath d='M40 10 L50 20 L30 20 Z' fill='%234a6fa5' fill-opacity='0.03'/%3E%3Ccircle cx='60' cy='55' r='4' fill='none' stroke='%234a6fa5' stroke-opacity='0.04' stroke-width='1'/%3E%3Crect x='10' y='50' width='8' height='10' rx='1' fill='%234a6fa5' fill-opacity='0.025'/%3E%3C/svg%3E"),
+                linear-gradient(180deg, #dce6f5 0%, #e8eef6 40%, #f0f4fa 100%);
+            font-family: 'Noto Sans SC', 'Poppins', sans-serif;
             color: var(--text-color);
             display: flex;
+            margin: 0;
+            overflow-x: hidden;
         }
 
         .sidebar {
             width: 260px;
-            background: var(--card-bg-color);
-            padding: 1.5rem;
+            background: linear-gradient(180deg, #1a365d 0%, #2c5282 100%);
+            padding: 2rem 1rem;
             height: 100vh;
             position: fixed;
             display: flex;
             flex-direction: column;
-            border-right: 1px solid var(--border-color);
-        }
-
-        .user-info {
-            font-size: 0.9rem;
-        }
-
-        .user-info .fw-bold {
-            color: var(--heading-color);
+            color: var(--sidebar-text);
+            box-shadow: 4px 0 15px rgba(26, 54, 93, 0.2);
+            z-index: 1000;
         }
 
         .sidebar .logo {
             font-weight: 700;
             font-size: 1.5rem;
-            color: var(--primary-color);
-            margin-bottom: 2rem;
+            color: #fff;
+            margin-bottom: 2.5rem;
+            padding-left: 1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .sidebar .logo i {
+            margin-right: 0.75rem;
+            color: #8ab4e0;
         }
 
         .sidebar .nav-link {
-            color: var(--text-color);
+            color: #a0bfe0;
             display: flex;
             align-items: center;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 0.5rem;
-            transition: all 0.3s ease;
+            padding: 0.875rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.25rem;
+            transition: all 0.2s ease;
+            text-decoration: none;
         }
 
         .sidebar .nav-link i {
             margin-right: 0.75rem;
-            font-size: 1.2rem;
+            font-size: 1.25rem;
         }
 
-        .sidebar .nav-link.active,
         .sidebar .nav-link:hover {
-            background: var(--primary-color);
-            color: white;
+            background: var(--sidebar-hover);
+            color: #fff;
+        }
+
+        .sidebar .nav-link.active {
+            background: linear-gradient(135deg, #4a6fa5, #5a82b8);
+            color: #fff;
+            box-shadow: 0 4px 8px rgba(74, 111, 165, 0.3);
+        }
+
+        .user-info {
+            font-size: 0.875rem;
+            background: rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .user-info .fw-bold {
+            color: #fff;
+        }
+
+        .user-info .text-muted {
+            color: rgba(255, 255, 255, 0.6) !important;
+        }
+
+        /* 角色标签样式 - 高对比度显示 */
+        .user-info .role-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #1a365d;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            margin-top: 0.35rem;
+            box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+        }
+
+        .user-info .role-badge.super-admin {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+        }
+
+        .user-info .role-badge.dept-admin {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+        }
+
+        .user-info .role-badge.defense-leader {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+        }
+
+        .user-info .role-badge.teacher {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
         }
 
         .main-content {
             margin-left: 260px;
             width: calc(100% - 260px);
-            padding: 2rem;
+            padding: 2.5rem;
+            min-height: 100vh;
         }
 
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
+            position: relative;
         }
 
+        .header::before {
+            content: "";
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 60px;
+            height: 4px;
+            background: var(--primary-color);
+            border-radius: 2px;
+        }
+
+        .module-header h4 i {
+            margin-right: 0.5rem;
+            color: var(--primary-color);
+            background: rgba(74, 111, 165, 0.1);
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        /* 装饰性装饰 */
+        .decorative-blob {
+            position: fixed;
+            width: 300px;
+            height: 300px;
+            background: linear-gradient(135deg, rgba(74, 111, 165, 0.08) 0%, rgba(44, 82, 130, 0.04) 100%);
+            border-radius: 50%;
+            filter: blur(60px);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .blob-1 { top: 10%; right: 5%; }
+        .blob-2 { bottom: 10%; left: 300px; }
+
+        /* ========== 校园主题装饰 ========== */
+        .campus-deco {
+            position: fixed;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .campus-deco.formula {
+            font-family: 'Georgia', serif;
+            font-style: italic;
+            color: #4a6fa5;
+        }
+        .campus-deco.f1 { top: 8%; right: 8%; font-size: 1.1rem; opacity: 0.12; transform: rotate(-6deg); }
+        .campus-deco.f2 { bottom: 15%; right: 4%; font-size: 1rem; opacity: 0.1; transform: rotate(5deg); }
+        .campus-deco.f3 { bottom: 30%; left: 280px; font-size: 0.95rem; opacity: 0.1; transform: rotate(-3deg); }
+        .campus-deco.f4 { top: 55%; right: 6%; font-size: 1rem; opacity: 0.11; transform: rotate(7deg); }
+        .campus-deco.svg-deco { opacity: 0.2; }
+        .campus-deco.deco-cap { top: 6%; right: 3%; }
+        .campus-deco.deco-book { bottom: 8%; right: 2%; }
+        .campus-deco.deco-bulb { bottom: 5%; left: 280px; }
+
         .header h1 {
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 1.875rem;
             color: var(--heading-color);
+            margin: 0;
         }
 
         .summary-cards {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 1.5rem;
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
         }
 
         .summary-card {
             background: var(--card-bg-color);
             padding: 1.5rem;
-            border-radius: 0.75rem;
+            border-radius: var(--radius);
             box-shadow: var(--shadow);
             display: flex;
             align-items: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .summary-card::after {
+            content: "";
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            width: 80px;
+            height: 80px;
+            background: var(--primary-color);
+            opacity: 0.05;
+            border-radius: 50%;
+        }
+        
+        .summary-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
         }
 
         .summary-card .icon {
-            font-size: 2rem;
-            padding: 1rem;
-            border-radius: 50%;
-            margin-right: 1rem;
+            font-size: 1.5rem;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            margin-right: 1.25rem;
             color: white;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
         }
 
         .summary-card .value {
-            font-size: 2rem;
-            font-weight: 600;
+            font-size: 1.5rem;
+            font-weight: 700;
             color: var(--heading-color);
+            line-height: 1;
         }
 
         .summary-card .label {
-            font-size: 0.9rem;
-            color: var(--text-color);
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-top: 0.25rem;
+        }
+
+        /* ========== Dashboard Stats Cards ========== */
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg-color);
+            border-radius: var(--radius);
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-card .stat-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .stat-card .stat-body { flex: 1; }
+
+        .stat-card .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 0.15rem;
+        }
+
+        /* Color variants - 蓝色学术主题 */
+        .stat-card-primary::before { background: #4a6fa5; }
+        .stat-card-primary .stat-icon { background: linear-gradient(135deg, #4a6fa5, #6b8fc7); }
+        .stat-card-primary .stat-value { color: #2c5282; }
+
+        .stat-card-success::before { background: #38a169; }
+        .stat-card-success .stat-icon { background: linear-gradient(135deg, #38a169, #68d391); }
+        .stat-card-success .stat-value { color: #276749; }
+
+        .stat-card-warning::before { background: #d69e2e; }
+        .stat-card-warning .stat-icon { background: linear-gradient(135deg, #d69e2e, #ecc94b); }
+        .stat-card-warning .stat-value { color: #b7791f; }
+
+        .stat-card-info::before { background: #3182ce; }
+        .stat-card-info .stat-icon { background: linear-gradient(135deg, #3182ce, #63b3ed); }
+        .stat-card-info .stat-value { color: #2b6cb0; }
+
+        @media (max-width: 1200px) {
+            .dashboard-stats { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 576px) {
+            .dashboard-stats { grid-template-columns: 1fr; }
         }
 
         .module {
             background: var(--card-bg-color);
             padding: 1.5rem;
-            border-radius: 0.75rem;
+            border-radius: var(--radius);
             box-shadow: var(--shadow);
             margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
         }
 
         .module-header {
@@ -142,49 +387,56 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .module-header h4 {
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 1.125rem;
             color: var(--heading-color);
+            margin: 0;
         }
 
         .group-item {
             display: flex;
             align-items: center;
             padding: 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
+            border-radius: 10px;
+            margin-bottom: 0.75rem;
             border: 1px solid var(--border-color);
-            cursor: grab;
+            background: #fff;
             transition: all 0.2s ease;
         }
 
         .group-item:hover {
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+            background: #f8fafc;
+            transform: translateX(5px);
         }
 
-        .group-item .drag-handle {
-            color: #adb5bd;
-            margin-right: 1rem;
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            padding: 0.5rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 500;
         }
 
-        .group-item .group-info {
-            flex-grow: 1;
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
         }
 
-        .group-item .group-info h6 {
-            font-weight: 600;
-            margin: 0;
+        .form-control, .form-select {
+            border-radius: 8px;
+            padding: 0.625rem 0.875rem;
+            border: 1px solid #d1d5db;
         }
-
-        .group-item .score-input {
-            text-align: center;
-        }
-
-        .input-group-sm .btn {
-            padding: 0.25rem 0.5rem;
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.15);
         }
 
         .main-grid {
@@ -193,72 +445,223 @@
             gap: 2rem;
         }
 
-        #group-list,
-        .right-column {
-            max-height: calc(100vh - 14rem);
-            /* Set max height relative to viewport */
-            overflow-y: auto;
-            padding-right: 0.5rem;
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .btn {
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline-primary {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        .accordion-item {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius) !important;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .accordion-button:not(.collapsed) {
+            background-color: #f8fafc;
+            color: var(--primary-color);
+            box-shadow: none;
+        }
+
+        .list-group-item {
+            border-color: var(--border-color);
+            padding: 1rem;
+        }
+
+        .badge {
+            padding: 0.5em 0.8em;
+            border-radius: 6px;
+        }
+
+        .alert {
+            border: none;
+            border-radius: var(--radius);
         }
 
         /* Custom Scrollbar */
-        #group-list::-webkit-scrollbar,
-        .right-column::-webkit-scrollbar {
-            width: 6px;
+        ::-webkit-scrollbar {
+            width: 8px;
         }
-
-        #group-list::-webkit-scrollbar-track,
-        .right-column::-webkit-scrollbar-track {
+        ::-webkit-scrollbar-track {
             background: transparent;
         }
-
-        #group-list::-webkit-scrollbar-thumb,
-        .right-column::-webkit-scrollbar-thumb {
-            background: #e0e0e0;
-            border-radius: 3px;
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
         }
-
-        #group-list::-webkit-scrollbar-thumb:hover,
-        .right-column::-webkit-scrollbar-thumb:hover {
-            background: #c7c7c7;
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
-
-        .chart-container {
-            position: relative;
-            height: 280px;
+        /* 统一按钮风格 - 蓝色学术主题 */
+        .btn-success {
+            background: linear-gradient(135deg, #38a169, #48bb78);
+            border-color: #38a169;
+            color: #fff;
+        }
+        .btn-success:hover {
+            background: linear-gradient(135deg, #2f855a, #38a169);
+            border-color: #2f855a;
+            color: #fff;
+            transform: translateY(-2px);
+        }
+        .btn-info {
+            background: linear-gradient(135deg, #3182ce, #4299e1);
+            border-color: #3182ce;
+            color: #fff;
+        }
+        .btn-info:hover {
+            background: linear-gradient(135deg, #2b6cb0, #3182ce);
+            border-color: #2b6cb0;
+            color: #fff;
+            transform: translateY(-2px);
+        }
+        .btn-warning {
+            background: linear-gradient(135deg, #d69e2e, #ecc94b);
+            border-color: #d69e2e;
+            color: #fff;
+        }
+        .btn-warning:hover {
+            background: linear-gradient(135deg, #b7791f, #d69e2e);
+            border-color: #b7791f;
+            color: #fff;
+            transform: translateY(-2px);
         }
     </style>
 </head>
 
-<body>
+<body th:with="currentUser=${session.currentUser}, currentTeacher=${session.currentTeacher}, userType=${session.userType}">
+    <div class="decorative-blob blob-1"></div>
+    <div class="decorative-blob blob-2"></div>
 
-    <div class="sidebar">
-        <div class="logo">答辩管理</div>
+    <!-- 校园主题装饰 -->
+    <div class="campus-deco formula f1">E = mc²</div>
+    <div class="campus-deco formula f2">∑ f(x) dx</div>
+    <div class="campus-deco formula f3">∫ ∂y/∂x</div>
+    <div class="campus-deco formula f4">α² + β² = γ²</div>
+    <!-- 右上学士帽 -->
+    <div class="campus-deco svg-deco deco-cap">
+        <svg width="80" height="60" viewBox="0 0 110 80" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="55,5 105,25 55,45 5,25" fill="#4a6fa5"/>
+            <polygon points="55,45 105,25 105,30 55,50 5,30 5,25" fill="#2c5282"/>
+            <line x1="90" y1="30" x2="90" y2="55" stroke="#4a6fa5" stroke-width="2"/>
+            <circle cx="90" cy="57" r="3" fill="#6b8fc7"/>
+            <rect x="52" y="42" width="6" height="16" fill="#2c5282"/>
+        </svg>
+    </div>
+    <!-- 右下书本 -->
+    <div class="campus-deco svg-deco deco-book">
+        <svg width="80" height="65" viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg">
+            <rect x="10" y="50" width="60" height="10" rx="2" fill="#4a6fa5" transform="rotate(-5 40 55)"/>
+            <rect x="8" y="38" width="65" height="10" rx="2" fill="#6b8fc7" transform="rotate(3 40 43)"/>
+            <rect x="12" y="26" width="58" height="10" rx="2" fill="#2c5282" transform="rotate(-2 40 31)"/>
+            <rect x="5" y="14" width="70" height="10" rx="2" fill="#5a82b8" transform="rotate(4 40 19)"/>
+        </svg>
+    </div>
+    <!-- 左下灯泡 -->
+    <div class="campus-deco svg-deco deco-bulb">
+        <svg width="55" height="70" viewBox="0 0 70 90" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="35" cy="30" r="18" fill="none" stroke="#4a6fa5" stroke-width="2"/>
+            <path d="M27,42 Q27,50 30,53 L40,53 Q43,50 43,42" fill="none" stroke="#4a6fa5" stroke-width="1.5"/>
+            <line x1="30" y1="56" x2="40" y2="56" stroke="#4a6fa5" stroke-width="1.5"/>
+            <line x1="31" y1="59" x2="39" y2="59" stroke="#4a6fa5" stroke-width="1.5"/>
+            <line x1="35" y1="18" x2="35" y2="12" stroke="#6b8fc7" stroke-width="1.2"/>
+            <line x1="22" y1="22" x2="17" y2="17" stroke="#6b8fc7" stroke-width="1.2"/>
+            <line x1="48" y1="22" x2="53" y2="17" stroke="#6b8fc7" stroke-width="1.2"/>
+        </svg>
+    </div>
+
+    <div class="sidebar" th:with="currentRole=${session.currentUser != null ? session.currentUser.role.name : (isDefenseLeader ? 'DEFENSE_LEADER' : 'TEACHER')}">
+        <div class="logo"><i class="bi bi-shield-check"></i>答辩管理</div>
         <nav id="sidebar-nav" class="nav flex-column">
-            <a class="nav-link active" href="javascript:void(0);" onclick="showView('dashboard-view', this)"><i
-                    class="bi bi-speedometer2"></i> 答辩总览</a>
+            <a class="nav-link active" href="javascript:void(0);" onclick="showView('dashboard-view', this)">
+                <i class="bi bi-speedometer2"></i> 答辩总览
+            </a>
+            
             <a class="nav-link" id="nav-group-management" href="javascript:void(0);"
-                onclick="showView('group-management-view', this)"><i class="bi bi-people"></i> 小组管理</a>
-            <a class="nav-link" href="javascript:void(0);" onclick="showView('student-management-view', this)"><i
-                    class="bi bi-person-badge"></i> 学生管理</a>
+               th:if="${currentRole == 'DEPT_ADMIN'}"
+               onclick="showView('group-management-view', this)">
+                <i class="bi bi-people"></i> 小组管理
+            </a>
+            
+            <a class="nav-link" id="nav-student-management" href="javascript:void(0);"
+               th:if="${currentRole == 'SUPER_ADMIN' or currentRole == 'DEPT_ADMIN' or currentRole == 'DEFENSE_LEADER'}"
+               onclick="showView('student-management-view', this)">
+                <i class="bi bi-person-badge"></i> 学生管理
+            </a>
+            
             <a class="nav-link" id="nav-review-management" href="javascript:void(0);"
-                onclick="showView('review-management-view', this)"><i class="bi bi-journal-check"></i> 打分管理</a>
+               th:if="${currentRole == 'DEPT_ADMIN' or currentRole == 'DEFENSE_LEADER' or currentRole == 'TEACHER'}"
+               onclick="showView('review-management-view', this)">
+                <i class="bi bi-journal-check"></i> 打分管理
+            </a>
+            
             <a class="nav-link" id="nav-user-management" href="javascript:void(0);"
-                onclick="showView('user-management-view', this)"><i class="bi bi-person-circle"></i> 用户管理</a>
+               th:if="${currentRole == 'SUPER_ADMIN' or currentRole == 'DEPT_ADMIN' or currentRole == 'TEACHER'}"
+               onclick="showView('user-management-view', this)">
+                <i class="bi bi-person-circle"></i> 用户管理
+            </a>
+            
             <a class="nav-link" id="nav-department-management" href="javascript:void(0);"
-                onclick="showView('department-management-view', this)"><i class="bi bi-building"></i> 院系管理</a>
-            <a class="nav-link" id="nav-score-view" href="javascript:void(0);" onclick="showView('score-view', this)"><i
-                    class="bi bi-chat-left-text"></i> 评语管理</a>
+               th:if="${currentRole == 'SUPER_ADMIN' or currentRole == 'TEACHER'}"
+               onclick="showView('department-management-view', this)">
+                <i class="bi bi-building"></i> 院系管理
+            </a>
+            
+            <a class="nav-link" id="nav-score-view" href="javascript:void(0);"
+               th:if="${currentRole == 'DEFENSE_LEADER' or currentRole == 'TEACHER'}"
+               onclick="showView('score-view', this)">
+                <i class="bi bi-chat-left-text"></i> 评语管理
+            </a>
+            
             <a class="nav-link" id="nav-teacher-scoring" href="javascript:void(0);"
-                onclick="showView('teacher-scoring-view', this)"><i class="bi bi-pencil-square"></i> 小组打分</a>
+               th:if="${currentRole == 'DEPT_ADMIN' or currentRole == 'DEFENSE_LEADER'}"
+               onclick="showView('teacher-scoring-view', this)">
+                <i class="bi bi-pencil-square"></i> 小组打分
+            </a>
+            
             <a class="nav-link" id="nav-large-group-defense" href="javascript:void(0);"
-                onclick="showView('large-group-defense-view', this)"><i class="bi bi-award"></i> 大组答辩</a>
-            <a class="nav-link" id="nav-export" href="javascript:void(0);" onclick="showView('export-view', this)"><i
-                    class="bi bi-download"></i> 导出/打包</a>
+               th:if="${currentRole == 'DEPT_ADMIN' or currentRole == 'DEFENSE_LEADER'}"
+               onclick="showView('large-group-defense-view', this)">
+                <i class="bi bi-award"></i> 大组答辩
+            </a>
+            
+            <a class="nav-link" id="nav-export" href="javascript:void(0);"
+               th:if="${currentRole == 'DEPT_ADMIN' or currentRole == 'DEFENSE_LEADER' or currentRole == 'TEACHER'}"
+               onclick="showView('export-view', this)">
+                <i class="bi bi-download"></i> 导出/打包
+            </a>
+            
             <a class="nav-link" id="nav-signature-management" href="javascript:void(0);"
-                onclick="showView('signature-view', this)"><i class="bi bi-pen"></i> 签名管理</a>
+               th:if="${currentRole == 'DEFENSE_LEADER' or currentRole == 'TEACHER'}"
+               onclick="showView('signature-view', this)">
+                <i class="bi bi-pen"></i> 签名管理
+            </a>
+            
             <a class="nav-link" id="nav-settings" href="javascript:void(0);"
-                onclick="showView('settings-view', this)"><i class="bi bi-gear"></i> 系统设置</a>
+               th:if="${currentRole == 'DEPT_ADMIN'}"
+               onclick="showView('settings-view', this)">
+                <i class="bi bi-gear"></i> 系统设置
+            </a>
         </nav>
 
         <!-- 用户信息显示区域 -->
@@ -277,12 +680,16 @@
             <div th:if="${currentAdmin != null && currentTeacher == null}" class="text-center">
                 <small class="text-muted">当前用户</small>
                 <div class="fw-bold" th:text="${currentAdmin.realName}"></div>
-                <small class="text-primary" th:text="${currentAdmin.role.description}"></small>
+                <span class="role-badge" 
+                      th:classappend="${currentAdmin.role.name == 'SUPER_ADMIN' ? 'super-admin' : (currentAdmin.role.name == 'DEPT_ADMIN' ? 'dept-admin' : '')}"
+                      th:text="${currentAdmin.role.description}"></span>
             </div>
             <div th:if="${currentTeacher != null}" class="text-center">
                 <small class="text-muted">当前用户</small>
                 <div class="fw-bold" th:text="${currentTeacher.name}"></div>
-                <small class="text-primary" th:text="${isDefenseLeader ? '答辩组长' : '教师'}"></small>
+                <span class="role-badge" 
+                      th:classappend="${isDefenseLeader ? 'defense-leader' : 'teacher'}"
+                      th:text="${isDefenseLeader ? '答辩组长' : '教师'}"></span>
             </div>
             <div class="mt-2">
                 <a href="/logout" class="btn btn-sm btn-outline-secondary w-100">
@@ -296,48 +703,193 @@
         <!-- Dashboard View -->
         <div id="dashboard-view" class="view-container">
             <header class="header">
-                <h1>答辩总览</h1>
+                <h1><i class="bi bi-speedometer2 me-2" style="font-size:1.3rem;"></i>答辩管理总览</h1>
                 <div class="d-flex align-items-center">
                     <div class="me-3">
-                        <span class="text-muted">欢迎，</span>
+                        <span class="text-muted">欢迎回来，</span>
                         <span class="fw-bold"
                             th:text="${currentUser != null ? currentUser.realName : (currentTeacher != null ? currentTeacher.name : '')}"></span>
+                        <span class="badge ms-2" id="dashboard-role-badge"
+                            style="background:linear-gradient(135deg,#4a6fa5,#6b8fc7);font-size:0.75rem;"></span>
                     </div>
-                    <button class="btn btn-primary" id="addGroupBtn" data-bs-toggle="modal"
-                        data-bs-target="#addGroupModal" style="display: none;"><i class="bi bi-plus-circle"></i>
-                        添加新小组</button>
                 </div>
             </header>
 
-            <div class="summary-cards">
-                <div class="summary-card">
-                    <div class="icon" style="background: #4f46e5;"><i class="bi bi-collection"></i></div>
-                    <div>
-                        <div class="value" id="total-groups">0</div>
-                        <div class="label">小组总数</div>
+            <!-- 统计卡片区 - 根据角色动态显示 -->
+            <!-- SUPER_ADMIN 专属统计卡片 -->
+            <div class="dashboard-stats" id="stats-super-admin" style="display:none;">
+                <div class="stat-card stat-card-primary">
+                    <div class="stat-icon"><i class="bi bi-building"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="sa-total-depts">0</div>
+                        <div class="stat-label">院系数量</div>
+                    </div>
+                </div>
+                <div class="stat-card stat-card-success">
+                    <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="sa-total-users">0</div>
+                        <div class="stat-label">系统用户</div>
+                    </div>
+                </div>
+                <div class="stat-card stat-card-warning">
+                    <div class="stat-icon"><i class="bi bi-mortarboard-fill"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="sa-total-students">0</div>
+                        <div class="stat-label">全校学生</div>
+                    </div>
+                </div>
+                <div class="stat-card stat-card-info">
+                    <div class="stat-icon"><i class="bi bi-person-badge-fill"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="sa-total-teachers">0</div>
+                        <div class="stat-label">全校教师</div>
                     </div>
                 </div>
             </div>
 
-            <div class="main-grid">
+            <!-- DEPT_ADMIN 专属统计卡片 -->
+            <div class="dashboard-stats" id="stats-dept-admin" style="display:none;">
+                <div class="stat-card stat-card-primary">
+                    <div class="stat-icon"><i class="bi bi-collection-fill"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="da-total-groups">0</div>
+                        <div class="stat-label">本院系小组</div>
+                    </div>
+                </div>
+                <div class="stat-card stat-card-success">
+                    <div class="stat-icon"><i class="bi bi-mortarboard-fill"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="da-total-students">0</div>
+                        <div class="stat-label">本院系学生</div>
+                    </div>
+                </div>
+                <div class="stat-card stat-card-warning">
+                    <div class="stat-icon"><i class="bi bi-person-badge-fill"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="da-total-teachers">0</div>
+                        <div class="stat-label">本院系教师</div>
+                    </div>
+                </div>
+                <div class="stat-card stat-card-info">
+                    <div class="stat-icon"><i class="bi bi-calendar-check-fill"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="da-current-year">--</div>
+                        <div class="stat-label">答辩年份</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DEFENSE_LEADER/TEACHER 专属统计卡片 -->
+            <div class="dashboard-stats" id="stats-teacher" style="display:none;">
+                <div class="stat-card stat-card-primary">
+                    <div class="stat-icon"><i class="bi bi-clipboard-check"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="t-pending-students">0</div>
+                        <div class="stat-label">待评学生</div>
+                    </div>
+                </div>
+                <div class="stat-card stat-card-success">
+                    <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="t-scored-students">0</div>
+                        <div class="stat-label">已评学生</div>
+                    </div>
+                </div>
+                <div class="stat-card stat-card-warning">
+                    <div class="stat-icon"><i class="bi bi-percent"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="t-score-progress">0%</div>
+                        <div class="stat-label">评分进度</div>
+                    </div>
+                </div>
+                <div class="stat-card stat-card-info">
+                    <div class="stat-icon"><i class="bi bi-collection"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="t-my-groups">0</div>
+                        <div class="stat-label">参与小组</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 快捷操作区 -->
+            <div class="module mb-3" id="dashboard-quick-actions">
+                <div class="module-header">
+                    <h4><i class="bi bi-lightning-charge-fill"></i> 快捷操作</h4>
+                </div>
+                <div class="d-flex flex-wrap gap-2 p-3" id="quick-action-buttons">
+                    <!-- JS dynamically populates based on role -->
+                </div>
+            </div>
+
+            <!-- 主内容区 - 根据角色动态显示 -->
+            <!-- SUPER_ADMIN 专属内容区 -->
+            <div class="main-grid" id="content-super-admin" style="display:none;">
                 <div class="module">
                     <div class="module-header">
-                        <h4><i class="bi bi-list-ol"></i> 答辩队列</h4>
+                        <h4><i class="bi bi-building"></i> 院系概览</h4>
+                    </div>
+                    <div id="sa-dept-overview">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>院系名称</th>
+                                    <th>代码</th>
+                                    <th>学生数</th>
+                                    <th>教师数</th>
+                                    <th>小组数</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sa-dept-table-body">
+                                <!-- JS动态填充 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="right-column">
+                    <div class="module">
+                        <div class="module-header">
+                            <h4><i class="bi bi-gear-fill"></i> 系统快捷入口</h4>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary" onclick="showView('user-management-view', this)">
+                                <i class="bi bi-people"></i> 用户管理
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="showView('department-management-view', this)">
+                                <i class="bi bi-building"></i> 院系管理
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="showView('settings-view', this)">
+                                <i class="bi bi-gear"></i> 系统设置
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DEPT_ADMIN 专属内容区 -->
+            <div class="main-grid" id="content-dept-admin" style="display:none;">
+                <div class="module">
+                    <div class="module-header">
+                        <h4><i class="bi bi-list-ol"></i> 答辩小组队列</h4>
+                        <button class="btn btn-sm btn-primary" id="addGroupBtn" data-bs-toggle="modal"
+                            data-bs-target="#addGroupModal">
+                            <i class="bi bi-plus-circle"></i> 添加小组
+                        </button>
                     </div>
                     <div id="group-list">
                         <div th:each="group : ${groups}" class="group-item" th:data-id="${group.id}"
-                            th:data-name="${group.name}" th:data-score="${group.score}">
+                            th:data-name="${group.name}" th:data-score="${group.score}" th:data-dept-id="${group.departmentId}">
                             <i class="bi bi-grip-vertical drag-handle"></i>
                             <div class="group-info">
                                 <h6 th:text="${group.name}"></h6>
                                 <small class="text-muted"
                                     th:text="${'学生数: ' + (group.members != null ? group.members.size() : 0)}"></small>
                             </div>
-                            <div class="d-flex align-items-center">
+                            <div class="d-flex align-items-center ms-auto">
                                 <button class="btn btn-sm btn-outline-danger delete-group-btn"
                                     th:data-group-id="${group.id}"
                                     th:data-member-count="${group.members != null ? group.members.size() : 0}"
-                                    style="display: none; margin-right: 5px;" onclick="deleteGroup(this)">
+                                    style="margin-right: 5px;" onclick="deleteGroup(this)">
                                     <i class="bi bi-trash"></i> 删除
                                 </button>
                                 <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
@@ -354,14 +906,62 @@
                         </div>
                         <div class="mb-2">
                             <label class="form-label">选择小组</label>
-                            <select class="form-select" id="dashboard-group-select"
+                            <select class="form-select" id="da-group-select"
                                 onchange="loadGroupStudentsForComment(this.value)">
                                 <option value="">请选择小组</option>
                                 <option th:each="group : ${groups}" th:value="${group.id}" th:text="${group.name}">
                                 </option>
                             </select>
                         </div>
-                        <div id="dashboard-student-comments" class="mt-3">
+                        <div id="da-student-comments" class="mt-3">
+                            <small class="text-muted">请选择小组查看学生评语</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DEFENSE_LEADER/TEACHER 专属内容区 -->
+            <div class="main-grid" id="content-teacher" style="display:none;">
+                <div class="module">
+                    <div class="module-header">
+                        <h4><i class="bi bi-clipboard-data"></i> 待评学生列表</h4>
+                    </div>
+                    <div id="t-pending-list">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>学号</th>
+                                    <th>姓名</th>
+                                    <th>题目</th>
+                                    <th>类型</th>
+                                    <th>小组</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="t-pending-table-body">
+                                <!-- JS动态填充 -->
+                            </tbody>
+                        </table>
+                        <div id="t-pending-empty" class="text-center text-muted py-4">
+                            <i class="bi bi-check-circle" style="font-size:2rem;"></i>
+                            <p class="mt-2">暂无待评学生</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="right-column">
+                    <div class="module">
+                        <div class="module-header">
+                            <h4><i class="bi bi-chat-left-text"></i> 学生评语管理</h4>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">选择小组</label>
+                            <select class="form-select" id="t-group-select"
+                                onchange="loadGroupStudentsForComment(this.value)">
+                                <option value="">请选择小组</option>
+                                <!-- JS动态填充我参与的小组 -->
+                            </select>
+                        </div>
+                        <div id="t-student-comments" class="mt-3">
                             <small class="text-muted">请选择小组查看学生评语</small>
                         </div>
                     </div>
@@ -1026,12 +1626,6 @@
                     <div class="col-md-3">
                         <label class="form-label">当前答辩年份</label>
                         <input class="form-control" id="cfg-year" placeholder="请输入答辩年份（留空则不修改）">
-                        <small class="text-muted">
-                            <strong>设置当前答辩年份的作用：</strong><br>
-                            1. 数据隔离：设置年份后，除超级管理员外的其他用户（教师、答辩组长、院系管理员）在查看学生、成绩、评语等数据时，系统会自动筛选出该年份的数据，实现不同年份数据的隔离管理。<br>
-                            2. 默认筛选：登录后，系统会根据当前设置的年份自动过滤显示相关数据，避免跨年份数据混淆。<br>
-                            3. 超级管理员不受限制：超级管理员可以查看所有年份的数据，不受当前年份设置的限制。
-                        </small>
                     </div>
                     <div class="col-md-2 d-flex align-items-end">
                         <button class="btn btn-outline-secondary w-100" onclick="showCurrentYear()">查看当前值</button>
@@ -1841,6 +2435,10 @@
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <nav id="add-student-pagination" class="me-auto" style="display: none;">
+                        <ul class="pagination pagination-sm mb-0">
+                        </ul>
+                    </nav>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                     <button type="button" class="btn btn-primary" onclick="submitAddStudentsToGroup()">
                         <i class="bi bi-check-circle"></i> 提交
@@ -1895,6 +2493,10 @@
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <nav id="remove-student-pagination" class="me-auto" style="display: none;">
+                        <ul class="pagination pagination-sm mb-0">
+                        </ul>
+                    </nav>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                     <button type="button" class="btn btn-danger" onclick="submitRemoveStudentsFromGroup()">
                         <i class="bi bi-trash"></i> 移除
@@ -1947,6 +2549,10 @@
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <nav id="assign-teacher-pagination" class="me-auto" style="display: none;">
+                        <ul class="pagination pagination-sm mb-0">
+                        </ul>
+                    </nav>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                     <button type="button" class="btn btn-primary" onclick="submitAssignTeachersToGroup()">
                         <i class="bi bi-check-circle"></i> 提交
@@ -2000,6 +2606,10 @@
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <nav id="remove-teacher-pagination" class="me-auto" style="display: none;">
+                        <ul class="pagination pagination-sm mb-0">
+                        </ul>
+                    </nav>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                     <button type="button" class="btn btn-danger" onclick="submitRemoveTeachersFromGroup()">
                         <i class="bi bi-trash"></i> 移除
@@ -2042,6 +2652,10 @@
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <nav id="set-leader-pagination" class="me-auto" style="display: none;">
+                        <ul class="pagination pagination-sm mb-0">
+                        </ul>
+                    </nav>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                     <button type="button" class="btn btn-primary" onclick="submitSetGroupLeader()">
                         <i class="bi bi-check-circle"></i> 确定
@@ -2160,10 +2774,10 @@
                     navScoreView.style.display = '';
                 }
 
-                // 系统设置菜单：只有超级管理员可以看到
+                // 系统设置菜单：超级管理员和院系管理员可以看到
                 const navSettings = document.getElementById('nav-settings');
                 if (navSettings) {
-                    if (userRole !== 'SUPER_ADMIN') {
+                    if (userRole !== 'SUPER_ADMIN' && userRole !== 'DEPT_ADMIN') {
                         navSettings.style.display = 'none';
                     }
                 }
@@ -2182,9 +2796,9 @@
                 // 初始化答辩总览页面的按钮显示（页面加载时默认显示dashboard-view）
                 setupDashboardButtonsByRole();
 
-                // 隐藏院系管理员的导出界面
+                // 导出/打包菜单：除了超级管理员外的所有角色都可以看到
                 const navExport = document.getElementById('nav-export');
-                if (navExport && userRole === 'DEPT_ADMIN') {
+                if (navExport && userRole === 'SUPER_ADMIN') {
                     navExport.style.display = 'none';
                 }
 
@@ -2210,32 +2824,32 @@
                     teacherSignatureHint.style.display = 'block';
                 }
 
-                // 小组打分和大组答辩菜单：教师、答辩组长和超级管理员可以看到
+                // 小组打分菜单：答辩组长和教师可以看到（院系管理员不显示）
                 const navTeacherScoring = document.getElementById('nav-teacher-scoring');
                 const navLargeGroupDefense = document.getElementById('nav-large-group-defense');
                 const isTeacherOrLeader = userType === 'TEACHER' || userRole === 'TEACHER' || userRole === 'DEFENSE_LEADER';
-                const isSuperAdmin = userRole === 'SUPER_ADMIN';
+                const isDeptAdmin = userRole === 'DEPT_ADMIN';
 
                 if (navTeacherScoring) {
-                    if (isTeacherOrLeader || isSuperAdmin) {
+                    if (isTeacherOrLeader) {
                         navTeacherScoring.style.display = '';
                     } else {
                         navTeacherScoring.style.display = 'none';
                     }
                 }
+                // 大组答辩菜单：答辩组长、教师和院系管理员都可以看到
                 if (navLargeGroupDefense) {
-                    if (isTeacherOrLeader || isSuperAdmin) {
+                    if (isTeacherOrLeader || isDeptAdmin) {
                         navLargeGroupDefense.style.display = '';
                     } else {
                         navLargeGroupDefense.style.display = 'none';
                     }
                 }
 
-                // 评阅管理菜单：教师、答辩组长和超级管理员可以看到
+                // 打分管理菜单：答辩组长和教师可以看到（院系管理员不显示）
                 const navReviewManagement = document.getElementById('nav-review-management');
                 if (navReviewManagement) {
-                    const isSuperAdmin = userRole === 'SUPER_ADMIN';
-                    if (isTeacherOrLeader || isSuperAdmin) {
+                    if (isTeacherOrLeader) {
                         navReviewManagement.style.display = '';
                     } else {
                         navReviewManagement.style.display = 'none';
@@ -2554,10 +3168,26 @@
 
         // --- Group Management Functions ---
         let currentGroupIdForAddStudent = null;
+        const PAGE_SIZE = 10; // 每页显示10条
+        
+        // 分页数据缓存
+        let unassignedStudentsCache = [];
+        let groupStudentsCache = [];
+        let unassignedTeachersCache = [];
+        let groupTeachersCache = [];
+        let leaderTeachersCache = [];
+        
+        // 当前页码
+        let addStudentCurrentPage = 1;
+        let removeStudentCurrentPage = 1;
+        let assignTeacherCurrentPage = 1;
+        let removeTeacherCurrentPage = 1;
+        let setLeaderCurrentPage = 1;
 
         // 添加学生到小组
         async function addStudentToGroup(groupId) {
             currentGroupIdForAddStudent = groupId;
+            addStudentCurrentPage = 1;
             const modal = new bootstrap.Modal(document.getElementById('addStudentsToGroupModal'));
             document.getElementById('addStudentsToGroupModalLabel').textContent = '添加学生到小组';
 
@@ -2574,35 +3204,98 @@
             try {
                 const response = await fetch(`/department/student/unassigned?groupId=${groupId}`);
                 if (!response.ok) throw new Error('获取未分配学生列表失败');
-                const students = await response.json();
+                unassignedStudentsCache = await response.json();
 
-                if (!students || students.length === 0) {
+                if (!unassignedStudentsCache || unassignedStudentsCache.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">暂无未分配的学生</td></tr>';
+                    document.getElementById('add-student-pagination').style.display = 'none';
                     return;
                 }
 
-                tbody.innerHTML = '';
-                students.forEach(student => {
-                    const defenseTypeText = student.defenseType === 'PAPER' ? '论文' : '设计';
-                    const defenseTypeBadge = student.defenseType === 'PAPER' ? 'bg-info' : 'bg-warning';
-
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>
-                            <input type="checkbox" class="unassigned-student-checkbox" value="${student.id}">
-                        </td>
-                        <td>${student.studentNo || ''}</td>
-                        <td><strong>${student.name || ''}</strong></td>
-                        <td>${student.departmentName || 'N/A'}</td>
-                        <td><span class="badge ${defenseTypeBadge}">${defenseTypeText}</span></td>
-                        <td>${student.title || ''}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
+                renderUnassignedStudentsPage(addStudentCurrentPage);
             } catch (error) {
                 console.error(error);
                 tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
             }
+        }
+        
+        // 渲染未分配学生分页
+        function renderUnassignedStudentsPage(page) {
+            const tbody = document.getElementById('unassigned-student-list');
+            const totalPages = Math.ceil(unassignedStudentsCache.length / PAGE_SIZE);
+            addStudentCurrentPage = page;
+            
+            const startIdx = (page - 1) * PAGE_SIZE;
+            const endIdx = Math.min(startIdx + PAGE_SIZE, unassignedStudentsCache.length);
+            const pageData = unassignedStudentsCache.slice(startIdx, endIdx);
+            
+            tbody.innerHTML = '';
+            pageData.forEach(student => {
+                const defenseTypeText = student.defenseType === 'PAPER' ? '论文' : '设计';
+                const defenseTypeBadge = student.defenseType === 'PAPER' ? 'bg-info' : 'bg-warning';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <input type="checkbox" class="unassigned-student-checkbox" value="${student.id}">
+                    </td>
+                    <td>${student.studentNo || ''}</td>
+                    <td><strong>${student.name || ''}</strong></td>
+                    <td>${student.departmentName || 'N/A'}</td>
+                    <td><span class="badge ${defenseTypeBadge}">${defenseTypeText}</span></td>
+                    <td>${student.title || ''}</td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            // 渲染分页控件
+            renderPagination('add-student-pagination', totalPages, page, (p) => renderUnassignedStudentsPage(p));
+        }
+        
+        // 通用分页渲染函数
+        function renderPagination(navId, totalPages, currentPage, callback) {
+            const nav = document.getElementById(navId);
+            if (totalPages <= 1) {
+                nav.style.display = 'none';
+                return;
+            }
+            
+            nav.style.display = 'flex';
+            const ul = nav.querySelector('ul');
+            let html = '';
+            
+            // 上一页
+            html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="javascript:void(0)" onclick="if(${currentPage} > 1) window.paginationCallbacks['${navId}'](${currentPage - 1})">«</a>
+            </li>`;
+            
+            // 页码
+            const maxVisible = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+            if (endPage - startPage < maxVisible - 1) {
+                startPage = Math.max(1, endPage - maxVisible + 1);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="javascript:void(0)" onclick="window.paginationCallbacks['${navId}'](${i})">${i}</a>
+                </li>`;
+            }
+            
+            // 下一页
+            html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="javascript:void(0)" onclick="if(${currentPage} < ${totalPages}) window.paginationCallbacks['${navId}'](${currentPage + 1})">»</a>
+            </li>`;
+            
+            // 显示总数
+            html += `<li class="page-item disabled ms-2"><span class="page-link">共 ${totalPages} 页</span></li>`;
+            
+            ul.innerHTML = html;
+            
+            // 保存回调函数
+            if (!window.paginationCallbacks) window.paginationCallbacks = {};
+            window.paginationCallbacks[navId] = callback;
         }
 
         // 全选/取消全选未分配学生
@@ -2669,6 +3362,7 @@
 
         async function removeStudentFromGroup(groupId) {
             currentGroupIdForRemoveStudent = groupId;
+            removeStudentCurrentPage = 1;
             const modal = new bootstrap.Modal(document.getElementById('removeStudentsFromGroupModal'));
             document.getElementById('removeStudentsFromGroupModalLabel').textContent = '从小组移除学生';
 
@@ -2685,35 +3379,51 @@
             try {
                 const response = await fetch(`/department/student/group/${groupId}/students`);
                 if (!response.ok) throw new Error('获取小组学生列表失败');
-                const students = await response.json();
+                groupStudentsCache = await response.json();
 
-                if (!students || students.length === 0) {
+                if (!groupStudentsCache || groupStudentsCache.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">该小组暂无学生</td></tr>';
+                    document.getElementById('remove-student-pagination').style.display = 'none';
                     return;
                 }
 
-                tbody.innerHTML = '';
-                students.forEach(student => {
-                    const defenseTypeText = student.defenseType === 'PAPER' ? '论文' : '设计';
-                    const defenseTypeBadge = student.defenseType === 'PAPER' ? 'bg-info' : 'bg-warning';
-
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>
-                            <input type="checkbox" class="group-student-checkbox" value="${student.id}">
-                        </td>
-                        <td>${student.studentNo || ''}</td>
-                        <td><strong>${student.name || ''}</strong></td>
-                        <td>${student.departmentName || 'N/A'}</td>
-                        <td><span class="badge ${defenseTypeBadge}">${defenseTypeText}</span></td>
-                        <td>${student.title || ''}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
+                renderGroupStudentsPage(removeStudentCurrentPage);
             } catch (error) {
                 console.error(error);
                 tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
             }
+        }
+        
+        // 渲染小组学生分页
+        function renderGroupStudentsPage(page) {
+            const tbody = document.getElementById('group-student-list');
+            const totalPages = Math.ceil(groupStudentsCache.length / PAGE_SIZE);
+            removeStudentCurrentPage = page;
+            
+            const startIdx = (page - 1) * PAGE_SIZE;
+            const endIdx = Math.min(startIdx + PAGE_SIZE, groupStudentsCache.length);
+            const pageData = groupStudentsCache.slice(startIdx, endIdx);
+            
+            tbody.innerHTML = '';
+            pageData.forEach(student => {
+                const defenseTypeText = student.defenseType === 'PAPER' ? '论文' : '设计';
+                const defenseTypeBadge = student.defenseType === 'PAPER' ? 'bg-info' : 'bg-warning';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <input type="checkbox" class="group-student-checkbox" value="${student.id}">
+                    </td>
+                    <td>${student.studentNo || ''}</td>
+                    <td><strong>${student.name || ''}</strong></td>
+                    <td>${student.departmentName || 'N/A'}</td>
+                    <td><span class="badge ${defenseTypeBadge}">${defenseTypeText}</span></td>
+                    <td>${student.title || ''}</td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            renderPagination('remove-student-pagination', totalPages, page, (p) => renderGroupStudentsPage(p));
         }
 
         // 全选/取消全选小组学生
@@ -2779,6 +3489,7 @@
 
         async function assignTeacherToGroup(groupId) {
             currentGroupIdForAssignTeacher = groupId;
+            assignTeacherCurrentPage = 1;
             const modal = new bootstrap.Modal(document.getElementById('assignTeachersToGroupModal'));
             document.getElementById('assignTeachersToGroupModalLabel').textContent = '分配教师到小组';
 
@@ -2798,36 +3509,52 @@
                     const errorText = await response.text();
                     throw new Error('获取未分配教师列表失败: ' + errorText);
                 }
-                const teachers = await response.json();
+                unassignedTeachersCache = await response.json();
 
-                console.log('未分配教师列表:', teachers); // 调试日志
+                console.log('未分配教师列表:', unassignedTeachersCache);
 
-                if (!teachers || teachers.length === 0) {
+                if (!unassignedTeachersCache || unassignedTeachersCache.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">暂无未分配的教师</td></tr>';
+                    document.getElementById('assign-teacher-pagination').style.display = 'none';
                     return;
                 }
 
-                tbody.innerHTML = '';
-                teachers.forEach(teacher => {
-                    if (!teacher || !teacher.id) {
-                        console.warn('无效的教师数据:', teacher);
-                        return;
-                    }
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>
-                            <input type="checkbox" class="unassigned-teacher-checkbox" value="${teacher.id}">
-                        </td>
-                        <td>${teacher.teacherNo || ''}</td>
-                        <td><strong>${teacher.name || ''}</strong></td>
-                        <td>${teacher.departmentName || 'N/A'}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
+                renderUnassignedTeachersPage(assignTeacherCurrentPage);
             } catch (error) {
                 console.error('加载未分配教师失败:', error);
                 tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
             }
+        }
+        
+        // 渲染未分配教师分页
+        function renderUnassignedTeachersPage(page) {
+            const tbody = document.getElementById('unassigned-teacher-list');
+            const totalPages = Math.ceil(unassignedTeachersCache.length / PAGE_SIZE);
+            assignTeacherCurrentPage = page;
+            
+            const startIdx = (page - 1) * PAGE_SIZE;
+            const endIdx = Math.min(startIdx + PAGE_SIZE, unassignedTeachersCache.length);
+            const pageData = unassignedTeachersCache.slice(startIdx, endIdx);
+            
+            tbody.innerHTML = '';
+            pageData.forEach(teacher => {
+                if (!teacher || !teacher.id) {
+                    console.warn('无效的教师数据:', teacher);
+                    return;
+                }
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <input type="checkbox" class="unassigned-teacher-checkbox" value="${teacher.id}">
+                    </td>
+                    <td>${teacher.teacherNo || ''}</td>
+                    <td><strong>${teacher.name || ''}</strong></td>
+                    <td>${teacher.departmentName || 'N/A'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            renderPagination('assign-teacher-pagination', totalPages, page, (p) => renderUnassignedTeachersPage(p));
         }
 
         // 全选/取消全选未分配教师
@@ -2894,6 +3621,7 @@
 
         async function removeTeacherFromGroup(groupId) {
             currentGroupIdForRemoveTeacher = groupId;
+            removeTeacherCurrentPage = 1;
             const modal = new bootstrap.Modal(document.getElementById('removeTeachersFromGroupModal'));
             document.getElementById('removeTeachersFromGroupModalLabel').textContent = '从小组移除教师';
 
@@ -2910,36 +3638,52 @@
             try {
                 const response = await fetch(`/department/group/${groupId}/teachers`);
                 if (!response.ok) throw new Error('获取小组教师列表失败');
-                const groupTeachers = await response.json();
+                groupTeachersCache = await response.json();
 
-                if (!groupTeachers || groupTeachers.length === 0) {
+                if (!groupTeachersCache || groupTeachersCache.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">该小组暂无教师</td></tr>';
+                    document.getElementById('remove-teacher-pagination').style.display = 'none';
                     return;
                 }
 
-                tbody.innerHTML = '';
-                groupTeachers.forEach(gt => {
-                    const teacher = gt.teacher;
-                    if (!teacher) return;
-
-                    const isLeaderBadge = gt.isLeader === 1 ? '<span class="badge bg-warning">组长</span>' : '';
-
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>
-                            <input type="checkbox" class="group-teacher-checkbox" value="${teacher.id}">
-                        </td>
-                        <td>${teacher.teacherNo || ''}</td>
-                        <td><strong>${teacher.name || ''}</strong></td>
-                        <td>${teacher.department ? teacher.department.name : 'N/A'}</td>
-                        <td>${isLeaderBadge}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
+                renderGroupTeachersPage(removeTeacherCurrentPage);
             } catch (error) {
                 console.error(error);
                 tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
             }
+        }
+        
+        // 渲染小组教师分页
+        function renderGroupTeachersPage(page) {
+            const tbody = document.getElementById('group-teacher-list');
+            const totalPages = Math.ceil(groupTeachersCache.length / PAGE_SIZE);
+            removeTeacherCurrentPage = page;
+            
+            const startIdx = (page - 1) * PAGE_SIZE;
+            const endIdx = Math.min(startIdx + PAGE_SIZE, groupTeachersCache.length);
+            const pageData = groupTeachersCache.slice(startIdx, endIdx);
+            
+            tbody.innerHTML = '';
+            pageData.forEach(gt => {
+                const teacher = gt.teacher;
+                if (!teacher) return;
+
+                const isLeaderBadge = gt.isLeader === 1 ? '<span class="badge bg-warning">组长</span>' : '';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <input type="checkbox" class="group-teacher-checkbox" value="${teacher.id}">
+                    </td>
+                    <td>${teacher.teacherNo || ''}</td>
+                    <td><strong>${teacher.name || ''}</strong></td>
+                    <td>${teacher.department ? teacher.department.name : 'N/A'}</td>
+                    <td>${isLeaderBadge}</td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            renderPagination('remove-teacher-pagination', totalPages, page, (p) => renderGroupTeachersPage(p));
         }
 
         // 全选/取消全选小组教师
@@ -3006,6 +3750,7 @@
 
         async function setGroupLeader(groupId) {
             currentGroupIdForSetLeader = groupId;
+            setLeaderCurrentPage = 1;
             const modal = new bootstrap.Modal(document.getElementById('setGroupLeaderModal'));
             document.getElementById('setGroupLeaderModalLabel').textContent = '设定小组组长';
 
@@ -3022,41 +3767,57 @@
             try {
                 const response = await fetch(`/department/group/${groupId}/teachers`);
                 if (!response.ok) throw new Error('获取小组教师列表失败');
-                const groupTeachers = await response.json();
+                leaderTeachersCache = await response.json();
 
-                if (!groupTeachers || groupTeachers.length === 0) {
+                if (!leaderTeachersCache || leaderTeachersCache.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">该小组暂无教师</td></tr>';
+                    document.getElementById('set-leader-pagination').style.display = 'none';
                     return;
                 }
 
-                tbody.innerHTML = '';
-                groupTeachers.forEach(gt => {
-                    const teacher = gt.teacher;
-                    if (!teacher) return;
-
-                    // 判断是否为当前组长
-                    const isCurrentLeader = gt.isLeader === 1;
-                    const leaderBadge = isCurrentLeader ? '<span class="badge bg-warning">当前组长</span>' : '';
-
-                    const row = document.createElement('tr');
-                    if (isCurrentLeader) {
-                        row.classList.add('table-warning'); // 高亮显示当前组长
-                    }
-                    row.innerHTML = `
-                        <td>
-                            <input type="radio" name="group-leader-teacher" class="group-leader-radio" value="${teacher.id}" ${isCurrentLeader ? 'checked' : ''}>
-                        </td>
-                        <td>${teacher.teacherNo || ''}</td>
-                        <td><strong>${teacher.name || ''}</strong></td>
-                        <td>${teacher.department ? teacher.department.name : 'N/A'}</td>
-                        <td>${leaderBadge}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
+                renderLeaderTeachersPage(setLeaderCurrentPage);
             } catch (error) {
                 console.error(error);
                 tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
             }
+        }
+        
+        // 渲染设定组长教师分页
+        function renderLeaderTeachersPage(page) {
+            const tbody = document.getElementById('group-leader-teacher-list');
+            const totalPages = Math.ceil(leaderTeachersCache.length / PAGE_SIZE);
+            setLeaderCurrentPage = page;
+            
+            const startIdx = (page - 1) * PAGE_SIZE;
+            const endIdx = Math.min(startIdx + PAGE_SIZE, leaderTeachersCache.length);
+            const pageData = leaderTeachersCache.slice(startIdx, endIdx);
+            
+            tbody.innerHTML = '';
+            pageData.forEach(gt => {
+                const teacher = gt.teacher;
+                if (!teacher) return;
+
+                // 判断是否为当前组长
+                const isCurrentLeader = gt.isLeader === 1;
+                const leaderBadge = isCurrentLeader ? '<span class="badge bg-warning">当前组长</span>' : '';
+
+                const row = document.createElement('tr');
+                if (isCurrentLeader) {
+                    row.classList.add('table-warning'); // 高亮显示当前组长
+                }
+                row.innerHTML = `
+                    <td>
+                        <input type="radio" name="group-leader-teacher" class="group-leader-radio" value="${teacher.id}" ${isCurrentLeader ? 'checked' : ''}>
+                    </td>
+                    <td>${teacher.teacherNo || ''}</td>
+                    <td><strong>${teacher.name || ''}</strong></td>
+                    <td>${teacher.department ? teacher.department.name : 'N/A'}</td>
+                    <td>${leaderBadge}</td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            renderPagination('set-leader-pagination', totalPages, page, (p) => renderLeaderTeachersPage(p));
         }
 
         // 提交设定组长
@@ -4507,12 +5268,12 @@
 
         // 加载打分管理页面数据（包括指导打分和评阅打分两部分）
         async function loadScoringManagementData() {
-            // 检查是否为超级管理员
+            // 检查是否为超级管理员或院系管理员
             const userInfoDiv = document.querySelector('.user-info');
             const userRole = userInfoDiv ? userInfoDiv.dataset.userRole : '';
 
-            if (userRole === 'SUPER_ADMIN') {
-                // 超级管理员：只显示评阅打分表格，删除标题
+            if (userRole === 'SUPER_ADMIN' || userRole === 'DEPT_ADMIN') {
+                // 超级管理员/院系管理员：只显示评阅打分表格，删除标题
                 await loadReviewedStudents();
                 // 隐藏指导打分部分
                 const advisorScoringModule = document.getElementById('advisor-scoring-module');
@@ -4761,9 +5522,11 @@
             const tbody = document.getElementById('review-student-list');
             tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">加载中...</td></tr>';
 
-            // 检查是否是超级管理员
+            // 检查是否是超级管理员或院系管理员
             const userInfoDiv = document.querySelector('.user-info');
             const isSuperAdmin = userInfoDiv && userInfoDiv.dataset.userRole === 'SUPER_ADMIN';
+            const isDeptAdmin = userInfoDiv && userInfoDiv.dataset.userRole === 'DEPT_ADMIN';
+            const isAdmin = isSuperAdmin || isDeptAdmin;
 
             try {
                 const response = await fetch('/department/student/teacher/reviewed');
@@ -4790,8 +5553,8 @@
                     return;
                 }
 
-                // 超级管理员显示分页
-                if (isSuperAdmin) {
+                // 超级管理员或院系管理员显示分页
+                if (isAdmin) {
                     const paginationNav = document.getElementById('review-pagination-nav');
                     if (paginationNav) paginationNav.style.display = 'flex';
                     renderReviewStudentsPage(page);
@@ -4804,7 +5567,7 @@
                     // 普通教师不分页，直接显示所有
                     const paginationNav = document.getElementById('review-pagination-nav');
                     if (paginationNav) paginationNav.style.display = 'none';
-                    renderReviewStudentsList(reviewStudentsData, isSuperAdmin);
+                    renderReviewStudentsList(reviewStudentsData, isAdmin);
                     
                     // 检查用户角色，如果是教师或答辩组长，确保隐藏分页信息
                     const userInfoDiv = document.querySelector('.user-info');
@@ -7662,34 +8425,97 @@
         }
 
         // --- Dashboard Functions ---
-        // 根据用户角色控制答辩总览页面的按钮显示
+        // 角色名称映射
+        const roleDisplayNames = {
+            'SUPER_ADMIN': '超级管理员',
+            'DEPT_ADMIN': '院系管理员',
+            'DEFENSE_LEADER': '答辩组长',
+            'TEACHER': '教师'
+        };
+
+        // 根据用户角色控制答辩总览页面
         function setupDashboardButtonsByRole() {
             const userInfoDiv = document.querySelector('.user-info');
-            if (!userInfoDiv) {
-                console.warn('setupDashboardButtonsByRole: userInfoDiv not found');
-                return;
-            }
+            if (!userInfoDiv) return;
 
             const userRole = userInfoDiv.dataset.userRole;
-            const isSuperAdmin = userRole === 'SUPER_ADMIN';
 
-            console.log('setupDashboardButtonsByRole - userRole:', userRole, 'isSuperAdmin:', isSuperAdmin);
-
-            // 控制新增小组按钮
-            const addGroupBtn = document.getElementById('addGroupBtn');
-            if (addGroupBtn) {
-                addGroupBtn.style.display = isSuperAdmin ? 'block' : 'none';
-                console.log('addGroupBtn display set to:', addGroupBtn.style.display);
-            } else {
-                console.warn('setupDashboardButtonsByRole: addGroupBtn not found');
+            // 设置角色标签
+            const roleBadge = document.getElementById('dashboard-role-badge');
+            if (roleBadge) {
+                roleBadge.textContent = roleDisplayNames[userRole] || userRole;
             }
 
-            // 控制删除按钮
-            const deleteButtons = document.querySelectorAll('.delete-group-btn');
-            console.log('setupDashboardButtonsByRole - found delete buttons:', deleteButtons.length);
-            deleteButtons.forEach(btn => {
-                btn.style.display = isSuperAdmin ? 'block' : 'none';
+            // 设置快捷操作按钮
+            setupQuickActionButtons(userRole);
+            
+            // 初始化角色化Dashboard
+            initRoleBasedDashboard();
+        }
+
+        // 根据角色生成快捷操作按钮
+        function setupQuickActionButtons(userRole) {
+            const container = document.getElementById('quick-action-buttons');
+            if (!container) return;
+
+            const allActions = {
+                'student-management': { icon: 'bi-mortarboard', label: '学生管理', view: 'student-management-view', color: 'success' },
+                'group-management': { icon: 'bi-people', label: '小组管理', view: 'group-management-view', color: 'primary' },
+                'review-management': { icon: 'bi-clipboard-data', label: '打分管理', view: 'review-management-view', color: 'warning' },
+                'user-management': { icon: 'bi-person-gear', label: '用户管理', view: 'user-management-view', color: 'info' },
+                'department-management': { icon: 'bi-building', label: '院系管理', view: 'department-management-view', color: 'secondary' },
+                'comment-management': { icon: 'bi-chat-square-text', label: '评语管理', view: 'score-view', color: 'dark' },
+                'teacher-scoring': { icon: 'bi-pencil-square', label: '小组打分', view: 'teacher-scoring-view', color: 'danger' },
+                'large-group-defense': { icon: 'bi-diagram-3', label: '大组答辩', view: 'large-group-defense-view', color: 'primary' },
+                'export': { icon: 'bi-download', label: '导出/打包', view: 'export-view', color: 'success' },
+                'settings': { icon: 'bi-gear', label: '系统设置', view: 'settings-view', color: 'secondary' },
+                'signature-management': { icon: 'bi-vector-pen', label: '签名管理', view: 'signature-view', color: 'info' }
+            };
+
+            // 每个角色可用的快捷操作 (对应侧边栏权限，不含答辩总览本身)
+            const roleActions = {
+                'SUPER_ADMIN': ['student-management', 'user-management', 'department-management'],
+                'DEPT_ADMIN': ['group-management', 'student-management', 'review-management', 'user-management', 'teacher-scoring', 'large-group-defense', 'export', 'settings'],
+                'DEFENSE_LEADER': ['student-management', 'review-management', 'comment-management', 'teacher-scoring', 'large-group-defense', 'export', 'signature-management'],
+                'TEACHER': ['review-management', 'user-management', 'department-management', 'comment-management', 'export', 'signature-management']
+            };
+
+            const actions = roleActions[userRole] || [];
+            let html = '';
+            actions.forEach(key => {
+                const action = allActions[key];
+                if (action) {
+                    html += `<button class="btn btn-outline-${action.color} btn-sm" onclick="quickNavTo('${action.view}')">
+                        <i class="bi ${action.icon} me-1"></i>${action.label}
+                    </button>`;
+                }
             });
+
+            if (!html) {
+                html = '<span class="text-muted">暂无快捷操作</span>';
+            }
+            container.innerHTML = html;
+        }
+
+        // 快捷导航：切换视图并高亮侧边栏
+        function quickNavTo(viewId) {
+            // 找到对应的侧边栏链接
+            const navLinks = document.querySelectorAll('#sidebar-nav .nav-link');
+            let targetLink = null;
+            navLinks.forEach(link => {
+                const onclickAttr = link.getAttribute('onclick') || '';
+                if (onclickAttr.includes(viewId)) {
+                    targetLink = link;
+                }
+            });
+            if (targetLink) {
+                showView(viewId, targetLink);
+            } else {
+                // 没找到对应link，直接切换视图
+                document.querySelectorAll('.view-container').forEach(v => v.style.display = 'none');
+                const target = document.getElementById(viewId);
+                if (target) target.style.display = 'block';
+            }
         }
 
         // 删除小组函数
@@ -7728,21 +8554,264 @@
             }
         }
 
-        async function loadCurrentYearForDashboard() {
+        // 根据角色初始化Dashboard显示
+        function initRoleBasedDashboard() {
+            const userInfoDiv = document.querySelector('.user-info');
+            if (!userInfoDiv) return;
+
+            const userRole = userInfoDiv.dataset.userRole;
+            
+            // 隐藏所有统计卡片区和内容区
+            document.getElementById('stats-super-admin').style.display = 'none';
+            document.getElementById('stats-dept-admin').style.display = 'none';
+            document.getElementById('stats-teacher').style.display = 'none';
+            document.getElementById('content-super-admin').style.display = 'none';
+            document.getElementById('content-dept-admin').style.display = 'none';
+            document.getElementById('content-teacher').style.display = 'none';
+
+            // 根据角色显示对应区域
+            if (userRole === 'SUPER_ADMIN') {
+                document.getElementById('stats-super-admin').style.display = 'grid';
+                document.getElementById('content-super-admin').style.display = 'grid';
+                loadSuperAdminDashboard();
+            } else if (userRole === 'DEPT_ADMIN') {
+                document.getElementById('stats-dept-admin').style.display = 'grid';
+                document.getElementById('content-dept-admin').style.display = 'grid';
+                loadDeptAdminDashboard();
+            } else {
+                // DEFENSE_LEADER 或 TEACHER
+                document.getElementById('stats-teacher').style.display = 'grid';
+                document.getElementById('content-teacher').style.display = 'grid';
+                loadTeacherDashboard();
+            }
+        }
+
+        // 加载超级管理员Dashboard数据
+        async function loadSuperAdminDashboard() {
             try {
-                const yearResp = await fetch('/admin/config/year/current');
-                if (yearResp.ok) {
-                    const currentYear = await yearResp.json();
-                    window.currentDashboardYear = currentYear;
+                const [deptResp, userResp, studentResp, teacherResp] = await Promise.allSettled([
+                    fetch('/admin/departments/list'),
+                    fetch('/admin/users/list'),
+                    fetch('/department/student/list'),
+                    fetch('/department/group/teachers')
+                ]);
+
+                // 院系数
+                if (deptResp.status === 'fulfilled' && deptResp.value.ok) {
+                    const depts = await deptResp.value.json();
+                    document.getElementById('sa-total-depts').textContent = depts.length;
+                    // 填充院系表格
+                    populateDeptTable(depts);
+                }
+
+                // 用户数
+                if (userResp.status === 'fulfilled' && userResp.value.ok) {
+                    const users = await userResp.value.json();
+                    document.getElementById('sa-total-users').textContent = users.length;
+                }
+
+                // 学生数
+                if (studentResp.status === 'fulfilled' && studentResp.value.ok) {
+                    const students = await studentResp.value.json();
+                    document.getElementById('sa-total-students').textContent = students.length;
+                }
+
+                // 教师数
+                if (teacherResp.status === 'fulfilled' && teacherResp.value.ok) {
+                    const teachers = await teacherResp.value.json();
+                    document.getElementById('sa-total-teachers').textContent = teachers.length;
                 }
             } catch (e) {
-                console.error('Failed to load current year:', e);
+                console.error('加载超级管理员Dashboard失败:', e);
+            }
+        }
+
+        // 填充院系概览表格
+        async function populateDeptTable(depts) {
+            const tbody = document.getElementById('sa-dept-table-body');
+            if (!tbody) return;
+
+            try {
+                // 获取所有学生和教师来统计
+                const [studentResp, teacherResp, groupResp] = await Promise.allSettled([
+                    fetch('/department/student/list'),
+                    fetch('/department/group/teachers'),
+                    fetch('/department/student/groups')
+                ]);
+
+                let students = [], teachers = [], groups = [];
+                if (studentResp.status === 'fulfilled' && studentResp.value.ok) {
+                    students = await studentResp.value.json();
+                }
+                if (teacherResp.status === 'fulfilled' && teacherResp.value.ok) {
+                    teachers = await teacherResp.value.json();
+                }
+                if (groupResp.status === 'fulfilled' && groupResp.value.ok) {
+                    groups = await groupResp.value.json();
+                }
+
+                let html = '';
+                depts.forEach(dept => {
+                    const deptStudents = students.filter(s => s.departmentId == dept.id).length;
+                    const deptTeachers = teachers.filter(t => t.departmentId == dept.id).length;
+                    const deptGroups = groups.filter(g => g.departmentId == dept.id).length;
+                    html += `<tr>
+                        <td>${dept.name}</td>
+                        <td><span class="badge bg-secondary">${dept.code}</span></td>
+                        <td>${deptStudents}</td>
+                        <td>${deptTeachers}</td>
+                        <td>${deptGroups}</td>
+                    </tr>`;
+                });
+                tbody.innerHTML = html || '<tr><td colspan="5" class="text-center text-muted">暂无院系数据</td></tr>';
+            } catch (e) {
+                console.error('填充院系表格失败:', e);
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">加载失败</td></tr>';
+            }
+        }
+
+        // 加载院系管理员Dashboard数据
+        async function loadDeptAdminDashboard() {
+            try {
+                const [yearResp, studentResp, teacherResp, groupResp] = await Promise.allSettled([
+                    fetch('/admin/config/year/current'),
+                    fetch('/department/student/list'),
+                    fetch('/department/group/teachers'),
+                    fetch('/department/student/groups')
+                ]);
+
+                // 年份
+                if (yearResp.status === 'fulfilled' && yearResp.value.ok) {
+                    const currentYear = await yearResp.value.json();
+                    document.getElementById('da-current-year').textContent = currentYear || '--';
+                }
+
+                // 学生数
+                if (studentResp.status === 'fulfilled' && studentResp.value.ok) {
+                    const students = await studentResp.value.json();
+                    document.getElementById('da-total-students').textContent = students.length;
+                }
+
+                // 教师数
+                if (teacherResp.status === 'fulfilled' && teacherResp.value.ok) {
+                    const teachers = await teacherResp.value.json();
+                    document.getElementById('da-total-teachers').textContent = teachers.length;
+                }
+
+                // 小组数
+                if (groupResp.status === 'fulfilled' && groupResp.value.ok) {
+                    const groups = await groupResp.value.json();
+                    document.getElementById('da-total-groups').textContent = groups.length;
+                }
+            } catch (e) {
+                console.error('加载院系管理员Dashboard失败:', e);
+            }
+        }
+
+        // 加载教师/答辩组长Dashboard数据
+        async function loadTeacherDashboard() {
+            try {
+                const userInfoDiv = document.querySelector('.user-info');
+                const userId = userInfoDiv ? userInfoDiv.dataset.userId : null;
+                
+                const [groupResp, studentResp] = await Promise.allSettled([
+                    fetch('/department/student/groups'),
+                    fetch('/department/student/list')
+                ]);
+
+                let myGroups = [], students = [];
+                if (groupResp.status === 'fulfilled' && groupResp.value.ok) {
+                    myGroups = await groupResp.value.json();
+                    document.getElementById('t-my-groups').textContent = myGroups.length;
+                    
+                    // 填充小组下拉框
+                    const groupSelect = document.getElementById('t-group-select');
+                    if (groupSelect) {
+                        let optionsHtml = '<option value="">请选择小组</option>';
+                        myGroups.forEach(g => {
+                            optionsHtml += `<option value="${g.id}">${g.name}</option>`;
+                        });
+                        groupSelect.innerHTML = optionsHtml;
+                    }
+                }
+
+                if (studentResp.status === 'fulfilled' && studentResp.value.ok) {
+                    students = await studentResp.value.json();
+                    
+                    // 计算待评和已评学生数
+                    // 这里简化处理，显示指导的学生数量
+                    const totalStudents = students.length;
+                    document.getElementById('t-pending-students').textContent = totalStudents;
+                    document.getElementById('t-scored-students').textContent = 0;
+                    document.getElementById('t-score-progress').textContent = '0%';
+                    
+                    // 填充待评学生表格
+                    populatePendingStudentTable(students, myGroups);
+                }
+            } catch (e) {
+                console.error('加载教师Dashboard失败:', e);
+            }
+        }
+
+        // 填充待评学生表格
+        function populatePendingStudentTable(students, groups) {
+            const tbody = document.getElementById('t-pending-table-body');
+            const emptyDiv = document.getElementById('t-pending-empty');
+            if (!tbody) return;
+
+            if (students.length === 0) {
+                tbody.innerHTML = '';
+                if (emptyDiv) emptyDiv.style.display = 'block';
+                return;
+            }
+
+            if (emptyDiv) emptyDiv.style.display = 'none';
+
+            const groupMap = {};
+            groups.forEach(g => groupMap[g.id] = g.name);
+
+            let html = '';
+            students.slice(0, 20).forEach(s => {  // 最多显示20条
+                const groupName = s.defenseGroupId ? (groupMap[s.defenseGroupId] || '未知') : '未分组';
+                const defenseType = s.defenseType === 'PAPER' ? '论文' : '设计';
+                html += `<tr>
+                    <td>${s.studentNo}</td>
+                    <td>${s.name}</td>
+                    <td>${s.title || '-'}</td>
+                    <td><span class="badge bg-info">${defenseType}</span></td>
+                    <td>${groupName}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="quickNavTo('teacher-scoring-view')">
+                            <i class="bi bi-pencil"></i> 评分
+                        </button>
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        async function loadCurrentYearForDashboard() {
+            // 该函数已被角色化Dashboard替代，保留空实现以兼容
+            initRoleBasedDashboard();
+        }
+
+        // 获取当前活动的评语容器ID
+        function getActiveCommentContainerId() {
+            const userInfoDiv = document.querySelector('.user-info');
+            const userRole = userInfoDiv ? userInfoDiv.dataset.userRole : '';
+            if (userRole === 'DEPT_ADMIN') {
+                return 'da-student-comments';
+            } else {
+                return 't-student-comments';
             }
         }
 
         async function loadGroupStudentsForComment(groupId) {
+            const containerId = getActiveCommentContainerId();
+            const container = document.getElementById(containerId);
+            
             if (!groupId) {
-                document.getElementById('dashboard-student-comments').innerHTML = '<small class="text-muted">请选择小组查看学生评语</small>';
+                if (container) container.innerHTML = '<small class="text-muted">请选择小组查看学生评语</small>';
                 return;
             }
 
@@ -7753,7 +8822,7 @@
                     // 如果返回错误，可能是年份未设置或其他原因
                     const errorText = await allStudentsResp.text();
                     if (allStudentsResp.status === 400 && errorText.includes('年份')) {
-                        document.getElementById('dashboard-student-comments').innerHTML =
+                        if (container) container.innerHTML =
                             '<div class="alert alert-warning">请先设置当前答辩年份</div>';
                     } else {
                         throw new Error('获取学生列表失败: ' + errorText);
@@ -7766,7 +8835,7 @@
                 const groupStudents = allStudents.filter(s => s.defenseGroupId == groupId);
 
                 if (groupStudents.length === 0) {
-                    document.getElementById('dashboard-student-comments').innerHTML =
+                    if (container) container.innerHTML =
                         '<div class="alert alert-info">该小组暂无学生</div>';
                     return;
                 }
@@ -7826,13 +8895,17 @@
                 renderGroupStudentCommentsWithMap(groupStudents, commentMap, groupId, year);
             } catch (error) {
                 console.error('Load group comments error:', error);
-                document.getElementById('dashboard-student-comments').innerHTML =
+                const containerId = getActiveCommentContainerId();
+                const container = document.getElementById(containerId);
+                if (container) container.innerHTML =
                     '<div class="alert alert-danger">加载失败: ' + error.message + '</div>';
             }
         }
 
         async function renderGroupStudentCommentsWithStudents(students, groupId, year) {
-            const container = document.getElementById('dashboard-student-comments');
+            const containerId = getActiveCommentContainerId();
+            const container = document.getElementById(containerId);
+            if (!container) return;
             container.innerHTML = '';
 
             if (!students || students.length === 0) {
@@ -7862,7 +8935,9 @@
         }
 
         function renderGroupStudentCommentsWithMap(students, commentMap, groupId, year) {
-            const container = document.getElementById('dashboard-student-comments');
+            const containerId = getActiveCommentContainerId();
+            const container = document.getElementById(containerId);
+            if (!container) return;
             container.innerHTML = '';
 
             if (!students || students.length === 0) {
@@ -8015,13 +9090,14 @@
                     });
                     
                     const result = await response.text();
-                    if (response.ok) {
+                    if (result.startsWith('success')) {
                         showAlert('success', `成功创建${count}个小组！`);
                         bootstrap.Modal.getInstance(document.getElementById('addGroupModal')).hide();
                         // 重新加载小组列表
                         location.reload();
                     } else {
-                        showAlert('error', '批量创建失败：' + result);
+                        const errorMsg = result.startsWith('error:') ? result.substring(6) : result;
+                        showAlert('error', '批量创建失败：' + errorMsg);
                     }
                 } catch (error) {
                     console.error('批量创建小组失败:', error);
@@ -8048,13 +9124,14 @@
                         body: JSON.stringify(requestBody)
                     });
                     
-                    if (response.ok) {
+                    const result = await response.text();
+                    if (result === 'success' || result.startsWith('success')) {
                         showAlert('success', '添加小组成功！');
                         bootstrap.Modal.getInstance(document.getElementById('addGroupModal')).hide();
                         location.reload();
                     } else {
-                        const errorText = await response.text();
-                        showAlert('error', '添加小组失败：' + errorText);
+                        const errorMsg = result.startsWith('error:') ? result.substring(6) : result;
+                        showAlert('error', '添加小组失败：' + errorMsg);
                     }
                 } catch (error) {
                     console.error('添加小组失败:', error);
@@ -8626,12 +9703,14 @@
                 document.getElementById('lg-teacher-info').textContent = data.teacherName ? `教师：${data.teacherName}` : '';
                 document.getElementById('lg-year-info').textContent = data.year ? `${data.year}年` : '';
 
-                // 检查是否是超级管理员
+                // 检查是否是超级管理员或院系管理员
                 const userInfoDiv = document.querySelector('.user-info');
                 const isSuperAdmin = userInfoDiv && userInfoDiv.dataset.userRole === 'SUPER_ADMIN';
+                const isDeptAdmin = userInfoDiv && userInfoDiv.dataset.userRole === 'DEPT_ADMIN';
+                const isAdminView = isSuperAdmin || isDeptAdmin; // 管理员只能查看，不能打分
 
-                // 如果是超级管理员，更新表头删除"操作"列
-                if (isSuperAdmin) {
+                // 如果是管理员，更新表头删除"操作"列
+                if (isAdminView) {
                     const tableHead = document.querySelector('#large-group-defense-view table thead tr');
                     if (tableHead) {
                         tableHead.innerHTML = `
@@ -8650,7 +9729,7 @@
 
                 const candidates = data.candidates || [];
                 if (candidates.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="${isSuperAdmin ? '9' : '10'}" class="text-center text-muted">暂无大组答辩候选人（需要先完成小组打分）</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="${isAdminView ? '9' : '10'}" class="text-center text-muted">暂无大组答辩候选人（需要先完成小组打分）</td></tr>`;
                     return;
                 }
 
@@ -8666,7 +9745,7 @@
                     const hasScored = c.myLargeGroupScore != null;
 
                     const row = document.createElement('tr');
-                    // 超级管理员：大组平均分列显示修改按钮
+                    // 管理员：大组平均分列显示修改按钮（仅超级管理员）
                     const lgAvgScoreCell = isSuperAdmin
                         ? `<td>
                             <div class="d-flex align-items-center">
@@ -8680,7 +9759,7 @@
                         </td>`
                         : `<td>${lgAvgScore}</td>`;
 
-                    const actionCell = isSuperAdmin ? '' : `<td>
+                    const actionCell = isAdminView ? '' : `<td>
                             <button class="btn btn-sm ${hasScored ? 'btn-outline-warning' : 'btn-outline-primary'}" 
                                 onclick="openLargeGroupScoringModal(${c.studentId}, '${c.studentNo}', '${c.studentName}', '${c.groupName || ''}', ${c.groupAvgScore || 'null'}, ${c.myLargeGroupScore || 'null'})"
                             >

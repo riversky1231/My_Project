@@ -52,13 +52,30 @@ public class GroupTeacherController {
 
     @GetMapping("/teachers")
     public List<Teacher> listDepartmentTeachers(HttpSession session) {
-        User u = requireDeptAdmin(session);
-        if (u == null) return java.util.Collections.emptyList();
-        // super admin can view all, dept admin only own dept
-        if (u.getRole() != null && "SUPER_ADMIN".equals(u.getRole().getName())) {
+        // 允许所有已登录用户获取教师列表
+        User currentUser = (User) session.getAttribute("currentUser");
+        Teacher currentTeacher = (Teacher) session.getAttribute("currentTeacher");
+        
+        if (currentUser == null && currentTeacher == null) {
+            return java.util.Collections.emptyList();
+        }
+        
+        // 超级管理员可以查看所有教师
+        if (currentUser != null && currentUser.getRole() != null && "SUPER_ADMIN".equals(currentUser.getRole().getName())) {
             return teacherService.findByDepartmentId(null);
         }
-        return teacherService.findByDepartmentId(u.getDepartmentId());
+        
+        // 院系管理员查看本院系教师
+        if (currentUser != null && currentUser.getRole() != null && "DEPT_ADMIN".equals(currentUser.getRole().getName())) {
+            return teacherService.findByDepartmentId(currentUser.getDepartmentId());
+        }
+        
+        // 教师查看本院系教师
+        if (currentTeacher != null) {
+            return teacherService.findByDepartmentId(currentTeacher.getDepartmentId());
+        }
+        
+        return java.util.Collections.emptyList();
     }
 
     @GetMapping("/{groupId}/teachers")

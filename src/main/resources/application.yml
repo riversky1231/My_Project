@@ -1,6 +1,9 @@
 spring:
   thymeleaf:
     cache: true
+  web:
+    resources:
+      static-locations: classpath:/static/,classpath:/resources/,classpath:/
   datasource:
     url: jdbc:mysql://localhost:3306/defense_management?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
     username: root
