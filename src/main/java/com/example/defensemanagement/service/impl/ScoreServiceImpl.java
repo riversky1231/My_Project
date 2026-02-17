@@ -536,14 +536,34 @@ public class ScoreServiceImpl implements ScoreService {
             return candidates;
         }
         
-        // 获取所有教师数量（用于判断是否所有教师都已打分）
-        List<DefenseGroupTeacher> allTeachers = defenseGroupTeacherMapper.findAll();
-        int totalTeachers = 0;
-        if (allTeachers != null) {
-            totalTeachers = (int) allTeachers.stream()
-                    .map(DefenseGroupTeacher::getTeacherId)
-                    .distinct()
-                    .count();
+        // 获取所有教师（用于按院系统计）
+        List<DefenseGroupTeacher> allGroupTeachers = defenseGroupTeacherMapper.findAll();
+        
+        // 按院系统计教师数量（根据小组所属院系）
+        Map<Long, Integer> deptTeacherCountMap = new HashMap<>();
+        if (allGroupTeachers != null) {
+            // 先获取每个小组的院系ID
+            Map<Long, Long> groupDeptMap = new HashMap<>();
+            for (DefenseGroup g : groups) {
+                if (g.getDepartmentId() != null) {
+                    groupDeptMap.put(g.getId(), g.getDepartmentId());
+                }
+            }
+            
+            // 统计每个院系的教师数量（通过小组所属院系）
+            Map<Long, java.util.Set<Long>> deptTeachersSet = new HashMap<>();
+            for (DefenseGroupTeacher gt : allGroupTeachers) {
+                Long groupId = gt.getGroupId();
+                Long deptId = groupDeptMap.get(groupId);
+                if (deptId != null && gt.getTeacherId() != null) {
+                    deptTeachersSet.computeIfAbsent(deptId, k -> new java.util.HashSet<>()).add(gt.getTeacherId());
+                }
+            }
+            
+            // 转换为数量
+            for (Map.Entry<Long, java.util.Set<Long>> entry : deptTeachersSet.entrySet()) {
+                deptTeacherCountMap.put(entry.getKey(), entry.getValue().size());
+            }
         }
         
         for (DefenseGroup group : groups) {
@@ -610,7 +630,10 @@ public class ScoreServiceImpl implements ScoreService {
                 // 获取大组答辩打分情况
                 List<LargeGroupScore> largeScores = largeGroupScoreMapper.findByStudentIdAndYear(topStudent.getId(), year);
                 candidate.put("largeGroupScoredCount", largeScores != null ? largeScores.size() : 0);
-                candidate.put("totalTeachersCount", totalTeachers);
+                
+                // 获取该小组所属院系的教师数量（用于显示打分进度）
+                int deptTeacherCount = deptTeacherCountMap.getOrDefault(group.getDepartmentId(), 0);
+                candidate.put("totalTeachersCount", deptTeacherCount);
                 
                 // 计算大组答辩平均分
                 Double largeGroupAvgScore = null;

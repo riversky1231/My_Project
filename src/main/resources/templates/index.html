@@ -3255,8 +3255,16 @@
         // 通用分页渲染函数
         function renderPagination(navId, totalPages, currentPage, callback) {
             const nav = document.getElementById(navId);
+            
             if (totalPages <= 1) {
-                nav.style.display = 'none';
+                // 即使只有一页，也要显示分页信息
+                nav.style.display = 'flex';
+                const ul = nav.querySelector('ul');
+                ul.innerHTML = '<li class="page-item active"><a class="page-link" href="javascript:void(0)">1</a></li><li class="page-item disabled ms-2"><span class="page-link">共 1 页</span></li>';
+                
+                // 保存回调函数
+                if (!window.paginationCallbacks) window.paginationCallbacks = {};
+                window.paginationCallbacks[navId] = callback;
                 return;
             }
             
@@ -4546,12 +4554,18 @@
             // 班级列已删除，此函数不再需要，保留以保持兼容性
         }
 
-        // 隐藏管理员专用按钮（添加学生等）
+        // 隐藏管理员专用按钮（添加学生、Excel导入、下载模板、上传模板等）
         function hideAdminStudentButtons() {
             const addButton = document.querySelector('#student-management-view header .btn-primary');
             if (addButton) addButton.style.display = 'none';
             const excelButton = document.querySelector('#student-management-view header .btn-success');
             if (excelButton) excelButton.style.display = 'none';
+            // 隐藏下载模板按钮
+            const downloadBtn = document.querySelector('#student-management-view header .btn-info');
+            if (downloadBtn) downloadBtn.style.display = 'none';
+            // 隐藏上传模板按钮
+            const uploadBtn = document.querySelector('#student-management-view header .btn-warning');
+            if (uploadBtn) uploadBtn.style.display = 'none';
         }
 
         // 显示管理员专用按钮
@@ -4560,6 +4574,12 @@
             if (addButton) addButton.style.display = '';
             const excelButton = document.querySelector('#student-management-view header .btn-success');
             if (excelButton) excelButton.style.display = '';
+            // 显示下载模板按钮
+            const downloadBtn = document.querySelector('#student-management-view header .btn-info');
+            if (downloadBtn) downloadBtn.style.display = '';
+            // 显示上传模板按钮
+            const uploadBtn = document.querySelector('#student-management-view header .btn-warning');
+            if (uploadBtn) uploadBtn.style.display = '';
         }
 
         // 管理员加载学生列表（支持分页）
@@ -8714,12 +8734,16 @@
                 const userInfoDiv = document.querySelector('.user-info');
                 const userId = userInfoDiv ? userInfoDiv.dataset.userId : null;
                 
-                const [groupResp, studentResp] = await Promise.allSettled([
+                const [groupResp, advisedResp, reviewedResp] = await Promise.allSettled([
                     fetch('/department/student/groups'),
-                    fetch('/department/student/list')
+                    fetch('/department/student/teacher/advised'),   // 指导的学生
+                    fetch('/department/student/teacher/reviewed')   // 评阅的学生
                 ]);
 
-                let myGroups = [], students = [];
+                let myGroups = [];
+                let advisedStudents = [];
+                let reviewedStudents = [];
+                
                 if (groupResp.status === 'fulfilled' && groupResp.value.ok) {
                     myGroups = await groupResp.value.json();
                     document.getElementById('t-my-groups').textContent = myGroups.length;
@@ -8735,19 +8759,59 @@
                     }
                 }
 
-                if (studentResp.status === 'fulfilled' && studentResp.value.ok) {
-                    students = await studentResp.value.json();
-                    
-                    // 计算待评和已评学生数
-                    // 这里简化处理，显示指导的学生数量
-                    const totalStudents = students.length;
-                    document.getElementById('t-pending-students').textContent = totalStudents;
-                    document.getElementById('t-scored-students').textContent = 0;
-                    document.getElementById('t-score-progress').textContent = '0%';
-                    
-                    // 填充待评学生表格
-                    populatePendingStudentTable(students, myGroups);
+                // 获取指导的学生数据
+                if (advisedResp.status === 'fulfilled' && advisedResp.value.ok) {
+                    const data = await advisedResp.value.json();
+                    advisedStudents = data.students || [];
                 }
+                
+                // 获取评阅的学生数据
+                if (reviewedResp.status === 'fulfilled' && reviewedResp.value.ok) {
+                    const data = await reviewedResp.value.json();
+                    reviewedStudents = data.students || [];
+                }
+                
+                // 计算待评和已评学生数
+                // 指导学生：检查advisorScore是否有值
+                // 评阅学生：检查reviewerScore是否有值
+                let pendingCount = 0;
+                let scoredCount = 0;
+                
+                // 统计指导学生的打分情况
+                advisedStudents.forEach(s => {
+                    if (s.advisorScore != null) {
+                        scoredCount++;
+                    } else {
+                        pendingCount++;
+                    }
+                });
+                
+                // 统计评阅学生的打分情况
+                reviewedStudents.forEach(s => {
+                    if (s.reviewerScore != null) {
+                        scoredCount++;
+                    } else {
+                        pendingCount++;
+                    }
+                });
+                
+                const totalStudents = pendingCount + scoredCount;
+                const progress = totalStudents > 0 ? Math.round((scoredCount / totalStudents) * 100) : 0;
+                
+                document.getElementById('t-pending-students').textContent = pendingCount;
+                document.getElementById('t-scored-students').textContent = scoredCount;
+                document.getElementById('t-score-progress').textContent = progress + '%';
+                
+                // 合并待评学生列表（只显示未评分的）
+                let allPendingStudents = [];
+                advisedStudents.filter(s => s.advisorScore == null).forEach(s => {
+                    allPendingStudents.push({...s, scoreType: 'advisor'});
+                });
+                reviewedStudents.filter(s => s.reviewerScore == null).forEach(s => {
+                    allPendingStudents.push({...s, scoreType: 'reviewer'});
+                });
+                
+                populatePendingStudentTable(allPendingStudents, myGroups);
             } catch (e) {
                 console.error('加载教师Dashboard失败:', e);
             }

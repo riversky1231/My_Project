@@ -9,6 +9,9 @@ import com.example.defensemanagement.service.ConfigService;
 import com.example.defensemanagement.mapper.TeacherScoreRecordMapper;
 import com.example.defensemanagement.mapper.TeacherMapper;
 import com.example.defensemanagement.mapper.StudentMapper;
+import com.example.defensemanagement.mapper.DefenseGroupMapper;
+import com.example.defensemanagement.entity.Student;
+import com.example.defensemanagement.entity.DefenseGroup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
@@ -37,6 +40,9 @@ public class ScoreController {
 
     @Autowired
     private StudentMapper studentMapper;
+
+    @Autowired
+    private DefenseGroupMapper defenseGroupMapper;
 
     @Autowired
     private ConfigService configService;
@@ -359,13 +365,35 @@ public class ScoreController {
             result.put("teacherName", "院系管理员");
             result.put("isDeptAdmin", true);
         } else {
-            // 普通教师：返回自己能看到和打分的候选人
+            // 普通教师：返回本院系的候选人（院系隔离）
             if (teacher == null) {
                 Map<String, Object> error = new HashMap<>();
                 error.put("error", "请先登录教师账号");
                 return error;
             }
-            result.put("candidates", scoreService.getLargeGroupCandidates(year, teacher.getId()));
+            
+            // 获取教师的院系ID
+            Long teacherDeptId = teacher.getDepartmentId();
+            
+            // 获取所有候选人
+            List<Map<String, Object>> allCandidates = scoreService.getLargeGroupCandidates(year, teacher.getId());
+            
+            // 按院系过滤（教师只能看到本院系的候选人）
+            List<Map<String, Object>> deptCandidates;
+            if (teacherDeptId != null) {
+                deptCandidates = allCandidates.stream()
+                        .filter(c -> {
+                            Object groupDeptId = c.get("departmentId");
+                            if (groupDeptId == null) return false;
+                            Long gDeptId = groupDeptId instanceof Number ? ((Number) groupDeptId).longValue() : null;
+                            return teacherDeptId.equals(gDeptId);
+                        })
+                        .collect(java.util.stream.Collectors.toList());
+            } else {
+                deptCandidates = allCandidates;
+            }
+            
+            result.put("candidates", deptCandidates);
             result.put("teacherId", teacher.getId());
             result.put("teacherName", teacher.getName());
         }
@@ -385,6 +413,20 @@ public class ScoreController {
         Teacher teacher = getTeacherFromSession(session);
         if (teacher == null) {
             return "error:请先登录教师账号";
+        }
+        
+        // 院系隔离校验：检查学生所属小组的院系是否与教师院系一致
+        Long teacherDeptId = teacher.getDepartmentId();
+        if (teacherDeptId != null) {
+            Student student = studentMapper.findById(studentId);
+            if (student != null && student.getDefenseGroupId() != null) {
+                DefenseGroup group = defenseGroupMapper.findById(student.getDefenseGroupId());
+                if (group != null && group.getDepartmentId() != null) {
+                    if (!teacherDeptId.equals(group.getDepartmentId())) {
+                        return "error:您只能给本院系的学生打分";
+                    }
+                }
+            }
         }
         
         Integer year = getCurrentDefenseYear();
