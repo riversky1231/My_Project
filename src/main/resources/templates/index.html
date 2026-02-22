@@ -745,6 +745,24 @@
                 <i class="bi bi-journal-check"></i> 打分管理
             </a>
 
+            <a class="nav-link" id="nav-teacher-volunteer" href="javascript:void(0);"
+                th:if="${currentRole == 'DEFENSE_LEADER' or currentRole == 'TEACHER'}"
+                onclick="showView('teacher-volunteer-view', this)">
+                <i class="bi bi-person-check"></i> 志愿录取
+            </a>
+
+            <a class="nav-link" id="nav-teacher-profile" href="javascript:void(0);"
+                th:if="${currentRole == 'DEFENSE_LEADER' or currentRole == 'TEACHER'}"
+                onclick="showView('teacher-profile-view', this)">
+                <i class="bi bi-journal-text"></i> 研究方向与招生要求
+            </a>
+
+            <a class="nav-link" id="nav-dept-volunteer-assign" href="javascript:void(0);"
+                th:if="${currentRole == 'DEPT_ADMIN'}"
+                onclick="showView('dept-volunteer-assign-view', this)">
+                <i class="bi bi-diagram-3"></i> 志愿分配
+            </a>
+
             <a class="nav-link" id="nav-user-management" href="javascript:void(0);"
                 th:if="${currentRole == 'SUPER_ADMIN' or currentRole == 'DEPT_ADMIN' or currentRole == 'TEACHER'}"
                 onclick="showView('user-management-view', this)">
@@ -1860,6 +1878,36 @@
 
             <div class="module mb-3">
                 <div class="module-header">
+                    <h4><i class="bi bi-people"></i> 志愿互选配置</h4>
+                </div>
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <label class="form-label">教师最多带学生数</label>
+                        <input class="form-control" id="cfg-volunteer-max" placeholder="如 6（留空不修改）">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">截止时间</label>
+                        <input class="form-control" id="cfg-volunteer-deadline" type="datetime-local">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">当前轮次</label>
+                        <select class="form-select" id="cfg-volunteer-round">
+                            <option value="">未设置</option>
+                            <option value="1">第一志愿</option>
+                            <option value="2">第二志愿</option>
+                            <option value="3">第三志愿</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end gap-2">
+                        <button class="btn btn-outline-secondary w-100" onclick="showVolunteerConfig()">查看当前值</button>
+                        <button class="btn btn-outline-primary w-100" onclick="saveVolunteerConfig()">保存配置</button>
+                    </div>
+                </div>
+                <small class="text-muted">提示：截止时间格式建议使用“YYYY-MM-DD HH:mm”，未设置则不限制。</small>
+            </div>
+
+            <div class="module mb-3">
+                <div class="module-header">
                     <h4><i class="bi bi-cpu"></i> 大模型配置</h4>
                 </div>
                 <div class="row g-2">
@@ -2791,6 +2839,132 @@
             </div>
         </div>
 
+        <!-- 教师研究方向与招生要求填写 -->
+        <div id="teacher-profile-view" class="view-container" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1><i class="bi bi-journal-text"></i> 研究方向与招生要求</h1>
+                <button class="btn btn-outline-secondary btn-sm" onclick="loadTeacherProfile()">
+                    <i class="bi bi-arrow-clockwise"></i> 刷新
+                </button>
+            </div>
+            <div class="module">
+                <div class="module-header">
+                    <h4><i class="bi bi-person-lines-fill"></i> 我的信息</h4>
+                </div>
+                <div class="row g-3 p-3">
+                    <div class="col-md-4"><strong>教师编号：</strong><span id="tp-teacher-no">--</span></div>
+                    <div class="col-md-4"><strong>姓名：</strong><span id="tp-teacher-name">--</span></div>
+                </div>
+            </div>
+            <div class="module">
+                <div class="module-header">
+                    <h4><i class="bi bi-pencil-square"></i> 填写内容</h4>
+                </div>
+                <div class="p-3">
+                    <div class="mb-3">
+                        <label class="form-label">研究方向</label>
+                        <textarea class="form-control" id="tp-research-direction" rows="4"
+                            placeholder="请填写研究方向..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">招生要求</label>
+                        <textarea class="form-control" id="tp-enrollment-requirements" rows="5"
+                            placeholder="请填写招生要求标准..."></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveTeacherProfile()">
+                        <i class="bi bi-save"></i> 保存
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 教师志愿录取视图 -->
+        <div id="teacher-volunteer-view" class="view-container" style="display: none;">
+            <header class="header">
+                <h1><i class="bi bi-person-check"></i> 志愿录取</h1>
+                <div class="d-flex align-items-center gap-2">
+                    <select class="form-select" id="teacher-volunteer-round" style="width: 160px;"
+                        onchange="loadTeacherVolunteerList()">
+                        <option value="1">第一志愿</option>
+                        <option value="2">第二志愿</option>
+                        <option value="3">第三志愿</option>
+                    </select>
+                    <button class="btn btn-outline-primary" onclick="loadTeacherVolunteerList()">
+                        <i class="bi bi-arrow-clockwise"></i> 刷新
+                    </button>
+                </div>
+            </header>
+            <div class="module">
+                <div class="alert alert-info" id="teacher-volunteer-status">
+                    当前录取人数：<span id="teacher-volunteer-count">0</span> /
+                    <span id="teacher-volunteer-max">0</span>，
+                    当前轮次：<span id="teacher-volunteer-current-round">未设置</span>，
+                    截止时间：<span id="teacher-volunteer-deadline">未设置</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>学号</th>
+                                <th>姓名</th>
+                                <th>班级</th>
+                                <th>类型</th>
+                                <th>题目</th>
+                                <th>材料</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teacher-volunteer-list">
+                            <tr><td colspan="8" class="text-center text-muted">加载中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 院系管理员志愿分配视图 -->
+        <div id="dept-volunteer-assign-view" class="view-container" style="display: none;">
+            <header class="header">
+                <h1><i class="bi bi-diagram-3"></i> 志愿分配</h1>
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-outline-primary" onclick="loadDeptVolunteerStudents()">
+                        <i class="bi bi-arrow-clockwise"></i> 刷新
+                    </button>
+                    <button class="btn btn-primary" onclick="runDeptVolunteerAllocate()">
+                        <i class="bi bi-check2-circle"></i> 执行分配
+                    </button>
+                </div>
+            </header>
+            <div class="module">
+                <div class="alert alert-info" id="dept-volunteer-status">
+                    当前答辩年份：<span id="dept-volunteer-year">--</span>，
+                    导师上限：<span id="dept-volunteer-max">--</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>学号</th>
+                                <th>姓名</th>
+                                <th>班级</th>
+                                <th>第一志愿</th>
+                                <th>第二志愿</th>
+                                <th>第三志愿</th>
+                                <th>当前导师</th>
+                                <th>分配方式</th>
+                                <th>指定导师</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dept-volunteer-list">
+                            <tr><td colspan="10" class="text-center text-muted">加载中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <!-- 学生志愿选择导师弹窗 -->
         <div class="modal fade" id="studentTeacherSelectModal" tabindex="-1" aria-labelledby="studentTeacherSelectModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
@@ -3145,20 +3319,26 @@
                     }
                 }
 
-                // 学生登录：仅保留总览入口，隐藏管理类菜单
+                // 学生登录：保留学生功能菜单，仅隐藏管理类菜单（如果存在）
                 if (userRole === "STUDENT") {
-                    const navLinks = document.querySelectorAll("#sidebar-nav .nav-link");
-                    navLinks.forEach(link => {
-                        const onclickAttr = link.getAttribute("onclick") || "";
-                        if (!onclickAttr.includes("dashboard-view")) {
-                            link.style.display = "none";
-                        }
+                    const idsToHide = [
+                        'nav-group-management',
+                        'nav-user-management',
+                        'nav-department-management',
+                        'nav-review-management',
+                        'nav-teacher-volunteer',
+                        'nav-dept-volunteer-assign',
+                        'nav-score-view',
+                        'nav-teacher-scoring',
+                        'nav-large-group-defense',
+                        'nav-export',
+                        'nav-settings',
+                        'nav-signature-management'
+                    ];
+                    idsToHide.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.style.display = "none";
                     });
-                    if (navScoreView) navScoreView.style.display = "none";
-                    if (navSettings) navSettings.style.display = "none";
-                    if (navGroupManagement) navGroupManagement.style.display = "none";
-                    if (navUserManagement) navUserManagement.style.display = "none";
-                    if (navDepartmentManagement) navDepartmentManagement.style.display = "none";
                 }
                 // 初始化导出选项和模块显示
                 if (userRole !== "STUDENT") {
@@ -3363,6 +3543,15 @@
             }
             if (viewId === 'student-result-view') {
                 loadStudentResult();
+            }
+            if (viewId === 'teacher-profile-view') {
+                loadTeacherProfile();
+            }
+            if (viewId === 'teacher-volunteer-view') {
+                loadTeacherVolunteerConfig().then(loadTeacherVolunteerList);
+            }
+            if (viewId === 'dept-volunteer-assign-view') {
+                loadDeptVolunteerTeachers().then(loadDeptVolunteerStudents);
             }
             if (viewId === 'student-management-view') {
                 loadStudents();
@@ -7798,6 +7987,9 @@
 
             // 加载年份列表
             loadAllYears();
+
+            // 加载志愿互选配置
+            await loadVolunteerConfig();
         }
 
         async function loadApiKeyFromDatabase() {
@@ -7895,6 +8087,48 @@
                 console.error('Failed to load date config:', e);
                 showAlert('error', '获取当前日期失败');
             }
+        }
+
+        async function loadVolunteerConfig() {
+            try {
+                const resp = await fetch('/admin/config/volunteer/get');
+                if (!resp.ok) return;
+                const data = await resp.json();
+                const maxInput = document.getElementById('cfg-volunteer-max');
+                const deadlineInput = document.getElementById('cfg-volunteer-deadline');
+                const roundSelect = document.getElementById('cfg-volunteer-round');
+                if (maxInput && data.maxStudents) {
+                    maxInput.value = data.maxStudents;
+                }
+                if (deadlineInput && data.deadline) {
+                    deadlineInput.value = String(data.deadline).replace(' ', 'T');
+                }
+                if (roundSelect && data.currentRound) {
+                    roundSelect.value = String(data.currentRound);
+                }
+            } catch (e) {
+                console.error('加载志愿配置失败:', e);
+            }
+        }
+
+        async function showVolunteerConfig() {
+            await loadVolunteerConfig();
+            showAlert('info', '已显示当前志愿配置，修改后点击保存');
+        }
+
+        async function saveVolunteerConfig() {
+            const maxStudents = document.getElementById('cfg-volunteer-max')?.value.trim();
+            const deadlineRaw = document.getElementById('cfg-volunteer-deadline')?.value;
+            const currentRound = document.getElementById('cfg-volunteer-round')?.value;
+            const payload = {};
+            if (maxStudents) payload.maxStudents = maxStudents;
+            if (deadlineRaw) payload.deadline = deadlineRaw.replace('T', ' ');
+            if (currentRound) payload.currentRound = currentRound;
+            if (Object.keys(payload).length === 0) {
+                showAlert('warning', '请填写至少一项配置');
+                return;
+            }
+            await postJson('/admin/config/volunteer/save', payload);
         }
 
         async function setDefenseYear() {
@@ -8997,6 +9231,7 @@
 
         // 学生端全局缓存
         let studentTeacherListCache = [];
+        let deptVolunteerTeachers = [];
         let studentTeacherSelectSlot = 1;
 
         function formatDefenseTypeText(defenseType) {
@@ -9324,6 +9559,299 @@
             } catch (e) {
                 console.error('加载结果失败:', e);
                 showAlert('error', '加载结果失败');
+            }
+        }
+
+        // 教师研究方向与招生要求
+        async function loadTeacherProfile() {
+            try {
+                const resp = await fetch('/teacher/profile');
+                if (!resp.ok) throw new Error('请求失败');
+                const data = await resp.json();
+                if (data.error) {
+                    showAlert('error', data.error);
+                    return;
+                }
+                document.getElementById('tp-teacher-no').textContent = data.teacherNo || '--';
+                document.getElementById('tp-teacher-name').textContent = data.teacherName || '--';
+                document.getElementById('tp-research-direction').value = data.researchDirection || '';
+                document.getElementById('tp-enrollment-requirements').value = data.enrollmentRequirements || '';
+            } catch (e) {
+                console.error('加载教师信息失败:', e);
+                showAlert('error', '加载教师信息失败');
+            }
+        }
+
+        async function saveTeacherProfile() {
+            const researchDirection = document.getElementById('tp-research-direction')?.value || '';
+            const enrollmentRequirements = document.getElementById('tp-enrollment-requirements')?.value || '';
+            try {
+                const resp = await fetch('/teacher/profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ researchDirection, enrollmentRequirements })
+                });
+                const text = await resp.text();
+                if (resp.ok && text === 'success') {
+                    showAlert('success', '保存成功');
+                } else {
+                    const msg = text.startsWith('error:') ? text.substring(6) : text;
+                    showAlert('error', '保存失败：' + msg);
+                }
+            } catch (e) {
+                console.error('保存教师信息失败:', e);
+                showAlert('error', '保存失败，请重试');
+            }
+        }
+
+        // 教师志愿录取
+        async function loadTeacherVolunteerConfig() {
+            try {
+                const resp = await fetch('/teacher/volunteer/config');
+                if (!resp.ok) throw new Error('请求失败');
+                const data = await resp.json();
+                if (data.error) {
+                    showAlert('error', data.error);
+                    return null;
+                }
+                document.getElementById('teacher-volunteer-count').textContent = data.assignedCount ?? 0;
+                document.getElementById('teacher-volunteer-max').textContent = data.maxStudents ?? '--';
+                document.getElementById('teacher-volunteer-current-round').textContent = data.currentRound ?? '未设置';
+                document.getElementById('teacher-volunteer-deadline').textContent = data.deadline || '未设置';
+                if (data.currentRound) {
+                    const roundSelect = document.getElementById('teacher-volunteer-round');
+                    if (roundSelect) roundSelect.value = String(data.currentRound);
+                }
+                return data;
+            } catch (e) {
+                console.error('加载志愿配置失败:', e);
+                return null;
+            }
+        }
+
+        async function loadTeacherVolunteerList() {
+            const roundSelect = document.getElementById('teacher-volunteer-round');
+            const round = roundSelect ? Number(roundSelect.value || 1) : 1;
+            const tbody = document.getElementById('teacher-volunteer-list');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">加载中...</td></tr>';
+            try {
+                const resp = await fetch(`/teacher/volunteer/list?round=${round}`);
+                if (!resp.ok) throw new Error('请求失败');
+                const data = await resp.json();
+                if (data.error) {
+                    showAlert('error', data.error);
+                    if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">加载失败</td></tr>';
+                    return;
+                }
+                document.getElementById('teacher-volunteer-count').textContent = data.assignedCount ?? 0;
+                document.getElementById('teacher-volunteer-max').textContent = data.maxStudents ?? '--';
+                document.getElementById('teacher-volunteer-current-round').textContent = data.currentRound ?? '未设置';
+                document.getElementById('teacher-volunteer-deadline').textContent = data.deadline || '未设置';
+
+                const items = data.items || [];
+                if (!tbody) return;
+                if (items.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">暂无志愿数据</td></tr>';
+                    return;
+                }
+                let html = '';
+                items.forEach(item => {
+                    const statusText = item.assignedToMe
+                        ? '已录取'
+                        : (item.assignedToSomeone ? `已被 ${item.advisorName || '其他导师'} 录取` : '待录取');
+                    const fileBtn = item.filePath
+                        ? `<a class="btn btn-sm btn-outline-secondary" href="/teacher/volunteer/file?studentId=${item.studentId}&round=${round}" target="_blank">下载</a>`
+                        : '<span class="text-muted">无</span>';
+                    const actionBtn = item.canAccept
+                        ? `<button class="btn btn-sm btn-primary" onclick="acceptVolunteer(${item.studentId})">录取</button>`
+                        : '<span class="text-muted">-</span>';
+                    html += `<tr>
+                        <td>${item.studentNo || '--'}</td>
+                        <td>${item.studentName || '--'}</td>
+                        <td>${item.classInfo || '--'}</td>
+                        <td>${formatDefenseTypeText(item.defenseType)}</td>
+                        <td>${item.title || '--'}</td>
+                        <td>${fileBtn}</td>
+                        <td>${statusText}</td>
+                        <td>${actionBtn}</td>
+                    </tr>`;
+                });
+                tbody.innerHTML = html;
+            } catch (e) {
+                console.error('加载志愿列表失败:', e);
+                if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">加载失败</td></tr>';
+            }
+        }
+
+        async function acceptVolunteer(studentId) {
+            const roundSelect = document.getElementById('teacher-volunteer-round');
+            const round = roundSelect ? Number(roundSelect.value || 1) : 1;
+            try {
+                const resp = await fetch('/teacher/volunteer/accept', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `studentId=${studentId}&round=${round}`
+                });
+                const text = await resp.text();
+                if (resp.ok && text === 'success') {
+                    showAlert('success', '录取成功');
+                    await loadTeacherVolunteerList();
+                } else {
+                    const msg = text.startsWith('error:') ? text.substring(6) : text;
+                    showAlert('error', '录取失败：' + msg);
+                }
+            } catch (e) {
+                console.error('录取失败:', e);
+                showAlert('error', '录取失败，请重试');
+            }
+        }
+
+        // 院系管理员志愿分配
+        async function loadDeptVolunteerTeachers() {
+            try {
+                const resp = await fetch('/department/volunteer/teachers');
+                if (!resp.ok) throw new Error('请求失败');
+                const data = await resp.json();
+                if (data && data.error) {
+                    showAlert('error', data.error);
+                    deptVolunteerTeachers = [];
+                    return [];
+                }
+                deptVolunteerTeachers = Array.isArray(data) ? data : [];
+                return deptVolunteerTeachers;
+            } catch (e) {
+                console.error('加载导师列表失败:', e);
+                deptVolunteerTeachers = [];
+                return [];
+            }
+        }
+
+        async function loadDeptVolunteerStudents() {
+            const tbody = document.getElementById('dept-volunteer-list');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">加载中...</td></tr>';
+            try {
+                const resp = await fetch('/department/volunteer/students?unassignedOnly=true');
+                if (!resp.ok) throw new Error('请求失败');
+                const data = await resp.json();
+                if (data.error) {
+                    showAlert('error', data.error);
+                    if (tbody) tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">加载失败</td></tr>';
+                    return;
+                }
+                document.getElementById('dept-volunteer-year').textContent = data.year ?? '--';
+                document.getElementById('dept-volunteer-max').textContent = data.maxStudents ?? '--';
+                const students = data.students || [];
+                renderDeptVolunteerRows(students);
+            } catch (e) {
+                console.error('加载志愿分配数据失败:', e);
+                if (tbody) tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">加载失败</td></tr>';
+            }
+        }
+
+        function renderDeptVolunteerRows(students) {
+            const tbody = document.getElementById('dept-volunteer-list');
+            if (!tbody) return;
+            if (!students || students.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">暂无待分配学生</td></tr>';
+                return;
+            }
+            let html = '';
+            students.forEach(item => {
+                const studentId = item.student_id || item.studentId;
+                const assignType = Number(item.admin_assign_type ?? item.adminAssignType ?? 0);
+                const assignedTeacherId = item.admin_assigned_teacher_id ?? item.adminAssignedTeacherId ?? '';
+                const choice1 = item.choice1_teacher_name || '--';
+                const choice2 = item.choice2_teacher_name || '--';
+                const choice3 = item.choice3_teacher_name || '--';
+                const advisorName = item.advisor_name || item.advisorName || '--';
+
+                let teacherOptions = '<option value="">请选择</option>';
+                deptVolunteerTeachers.forEach(t => {
+                    const selected = String(t.id) === String(assignedTeacherId) ? 'selected' : '';
+                    teacherOptions += `<option value="${t.id}" ${selected}>${t.name} (${t.teacherNo || ''})</option>`;
+                });
+
+                html += `<tr>
+                    <td>${item.student_no || item.studentNo || '--'}</td>
+                    <td>${item.student_name || item.studentName || '--'}</td>
+                    <td>${item.class_info || item.classInfo || '--'}</td>
+                    <td>${choice1}</td>
+                    <td>${choice2}</td>
+                    <td>${choice3}</td>
+                    <td>${advisorName}</td>
+                    <td>
+                        <select class="form-select form-select-sm" id="dept-assign-type-${studentId}"
+                            onchange="onDeptVolunteerAssignTypeChange(${studentId}, this.value)">
+                            <option value="0" ${assignType === 0 ? 'selected' : ''}>随机分配</option>
+                            <option value="1" ${assignType === 1 ? 'selected' : ''}>指定分配</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="form-select form-select-sm" id="dept-assign-teacher-${studentId}" ${assignType === 1 ? '' : 'disabled'}>
+                            ${teacherOptions}
+                        </select>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="saveDeptVolunteerAssignment(${studentId})">保存</button>
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function onDeptVolunteerAssignTypeChange(studentId, value) {
+            const select = document.getElementById(`dept-assign-teacher-${studentId}`);
+            if (!select) return;
+            select.disabled = String(value) !== '1';
+        }
+
+        async function saveDeptVolunteerAssignment(studentId) {
+            const typeSelect = document.getElementById(`dept-assign-type-${studentId}`);
+            const teacherSelect = document.getElementById(`dept-assign-teacher-${studentId}`);
+            if (!typeSelect) return;
+            const adminAssignType = Number(typeSelect.value || 0);
+            const adminAssignedTeacherId = teacherSelect && !teacherSelect.disabled ? teacherSelect.value : '';
+            if (adminAssignType === 1 && !adminAssignedTeacherId) {
+                showAlert('error', '请选择指定导师');
+                return;
+            }
+            try {
+                const resp = await fetch('/department/volunteer/assign', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        studentId,
+                        adminAssignType,
+                        adminAssignedTeacherId: adminAssignedTeacherId ? Number(adminAssignedTeacherId) : null
+                    })
+                });
+                const data = await resp.json();
+                if (data.error) {
+                    showAlert('error', data.error);
+                    return;
+                }
+                showAlert('success', '保存成功');
+            } catch (e) {
+                console.error('保存失败:', e);
+                showAlert('error', '保存失败');
+            }
+        }
+
+        async function runDeptVolunteerAllocate() {
+            try {
+                const resp = await fetch('/department/volunteer/allocate', { method: 'POST' });
+                const data = await resp.json();
+                if (data.error) {
+                    showAlert('error', data.error);
+                    return;
+                }
+                const failures = data.failures || [];
+                const msg = `分配完成：指定${data.specifiedAssigned || 0}，随机${data.randomAssigned || 0}，失败${failures.length}`;
+                showAlert('success', msg);
+                await loadDeptVolunteerStudents();
+            } catch (e) {
+                console.error('执行分配失败:', e);
+                showAlert('error', '执行分配失败');
             }
         }
 

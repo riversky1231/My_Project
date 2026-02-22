@@ -153,6 +153,22 @@
         WHERE s.student_no = #{studentNo} AND s.defense_year = #{year}
     </select>
 
+    <select id="findLatestByStudentNo" resultMap="StudentResultMap">
+        SELECT s.*,
+               a.id as advisor_id, a.teacher_no as advisor_teacher_no, a.name as advisor_name, a.title as advisor_title,
+               r.id as reviewer_id, r.teacher_no as reviewer_teacher_no, r.name as reviewer_name, r.title as reviewer_title,
+               g.id as group_id, g.name as group_name,
+               d.id as department_id, d.name as department_name, d.code as department_code
+        FROM t_student s
+        LEFT JOIN teacher a ON s.advisor_teacher_id = a.id
+        LEFT JOIN teacher r ON s.reviewer_teacher_id = r.id
+        LEFT JOIN defense_group g ON s.defense_group_id = g.id
+        LEFT JOIN department d ON s.department_id = d.id
+        WHERE s.student_no = #{studentNo}
+        ORDER BY s.defense_year DESC
+        LIMIT 1
+    </select>
+
     <insert id="insert" parameterType="com.example.defensemanagement.entity.Student" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO t_student (student_no, name, class_info, department_id, defense_year, defense_type, title, summary, phone, email, defense_date)
         VALUES (#{studentNo}, #{name}, #{classInfo}, #{departmentId}, #{defenseYear}, #{defenseType}, #{title}, #{summary}, #{phone}, #{email}, #{defenseDate})
@@ -227,8 +243,8 @@
         <where>
             <if test="keyword != null and keyword != ''">
                 AND (s.student_no LIKE CONCAT('%', #{keyword}, '%')
-                     OR s.name LIKE CONCAT('%', #{keyword}, '%')
-                     OR s.title LIKE CONCAT('%', #{keyword}, '%'))
+                 OR s.name LIKE CONCAT('%', #{keyword}, '%')
+                 OR s.title LIKE CONCAT('%', #{keyword}, '%'))
             </if>
             <if test="departmentId != null">
                 AND s.department_id = #{departmentId}
@@ -237,6 +253,13 @@
                 AND s.defense_year = #{year}
             </if>
         </where>
+    </select>
+
+    <select id="countByAdvisorAndYear" resultType="int">
+        SELECT COUNT(*)
+        FROM t_student
+        WHERE advisor_teacher_id = #{advisorTeacherId}
+          AND defense_year = #{year}
     </select>
 
 </mapper>

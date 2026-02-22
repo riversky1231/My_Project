@@ -28,6 +28,9 @@ public class ConfigServiceImpl implements ConfigService {
     public static final String KEY_GRADE_DATE_YEAR = "GRADE_DATE_YEAR";
     public static final String KEY_GRADE_DATE_MONTH = "GRADE_DATE_MONTH";
     public static final String KEY_GRADE_DATE_DAY = "GRADE_DATE_DAY";
+    public static final String KEY_TEACHER_MAX_STUDENTS = "TEACHER_MAX_STUDENTS";
+    public static final String KEY_VOLUNTEER_DEADLINE = "VOLUNTEER_DEADLINE";
+    public static final String KEY_VOLUNTEER_CURRENT_ROUND = "VOLUNTEER_CURRENT_ROUND";
 
     @Autowired
     private EvaluationItemMapper evaluationItemMapper;
@@ -92,12 +95,19 @@ public class ConfigServiceImpl implements ConfigService {
     public Integer getCurrentDefenseYear() {
         String yearStr = getConfigValue(KEY_CURRENT_YEAR);
         if (yearStr == null) {
-            // 如果没有配置，返回当前年份
+            java.util.List<Integer> years = studentMapper.findAllYears();
+            if (years != null && !years.isEmpty()) {
+                return years.get(0);
+            }
             return java.time.LocalDate.now().getYear();
         }
         try {
             return Integer.parseInt(yearStr);
         } catch (NumberFormatException e) {
+            java.util.List<Integer> years = studentMapper.findAllYears();
+            if (years != null && !years.isEmpty()) {
+                return years.get(0);
+            }
             return java.time.LocalDate.now().getYear();
         }
     }

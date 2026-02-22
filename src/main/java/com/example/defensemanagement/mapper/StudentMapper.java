@@ -28,6 +28,8 @@ public interface StudentMapper {
     // 根据学号和年份查找
     Student findByStudentNoAndYear(@Param("studentNo") String studentNo, @Param("year") Integer year);
 
+    Student findLatestByStudentNo(@Param("studentNo") String studentNo);
+
     // 根据院系和年份查找 【补充】院系管理员需要此方法
     List<Student> findByDepartmentAndYear(@Param("departmentId") Long departmentId, @Param("year") Integer year);
 
@@ -57,4 +59,7 @@ public interface StudentMapper {
     int countStudents(@Param("keyword") String keyword,
                       @Param("departmentId") Long departmentId,
                       @Param("year") Integer year);
+
+    int countByAdvisorAndYear(@Param("advisorTeacherId") Long advisorTeacherId,
+                              @Param("year") Integer year);
 }

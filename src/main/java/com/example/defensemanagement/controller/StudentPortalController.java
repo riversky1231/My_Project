@@ -12,6 +12,7 @@ import com.example.defensemanagement.mapper.StudentPreferenceMapper;
 import com.example.defensemanagement.mapper.TeacherMapper;
 import com.example.defensemanagement.mapper.TeacherProfileMapper;
 import com.example.defensemanagement.service.ConfigService;
+import com.example.defensemanagement.service.impl.ConfigServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 @Controller
 @RequestMapping("/student")
@@ -56,7 +60,11 @@ public class StudentPortalController {
         if (year == null) {
             year = java.time.Year.now().getValue();
         }
-        return studentMapper.findByStudentNoAndYear(currentUser.getUsername(), year);
+        Student student = studentMapper.findByStudentNoAndYear(currentUser.getUsername(), year);
+        if (student == null) {
+            student = studentMapper.findLatestByStudentNo(currentUser.getUsername());
+        }
+        return student;
     }
 
     @GetMapping("/me")
@@ -139,6 +147,9 @@ public class StudentPortalController {
         }
 
         try {
+            if (isVolunteerDeadlinePassed()) {
+                return "error:志愿填报已截止";
+            }
             String baseDir = "uploads/volunteer/" + year + "/" + student.getStudentNo();
             Path basePath = Paths.get(baseDir);
             Files.createDirectories(basePath);
@@ -153,6 +164,7 @@ public class StudentPortalController {
                 pref.setStudentId(student.getId());
                 pref.setYear(year);
                 pref.setStatus(0);
+                pref.setAdminAssignType(0);
                 pref.setChoice1TeacherId(choice1);
                 pref.setChoice2TeacherId(choice2);
                 pref.setChoice3TeacherId(choice3);
@@ -213,4 +225,18 @@ public class StudentPortalController {
         Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
         return target.toString().replace("\\", "/");
     }
+
+    private boolean isVolunteerDeadlinePassed() {
+        String deadline = configService.getConfigValue(ConfigServiceImpl.KEY_VOLUNTEER_DEADLINE);
+        if (deadline == null || deadline.trim().isEmpty()) {
+            return false;
+        }
+        try {
+            LocalDateTime end = LocalDateTime.parse(deadline.trim(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+            return LocalDateTime.now().isAfter(end);
+        } catch (DateTimeParseException e) {
+            return false;
+        }
+    }
 }
+

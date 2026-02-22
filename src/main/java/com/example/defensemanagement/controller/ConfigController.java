@@ -4,6 +4,7 @@ import com.example.defensemanagement.entity.EvaluationItem;
 import com.example.defensemanagement.entity.User;
 import com.example.defensemanagement.service.AuthService;
 import com.example.defensemanagement.service.ConfigService;
+import com.example.defensemanagement.service.impl.ConfigServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -155,6 +156,62 @@ public class ConfigController {
             return "success";
         } catch (Exception e) {
             return "error:设置日期失败, " + e.getMessage();
+        }
+    }
+
+    /**
+     * 获取志愿互选配置
+     * GET /admin/config/volunteer/get
+     */
+    @GetMapping("/volunteer/get")
+    @ResponseBody
+    public Map<String, Object> getVolunteerConfig(HttpSession session) {
+        String permissionError = checkAdmin(session);
+        if (permissionError != null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "权限不足");
+        }
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("maxStudents", configService.getConfigValue(ConfigServiceImpl.KEY_TEACHER_MAX_STUDENTS));
+        result.put("deadline", configService.getConfigValue(ConfigServiceImpl.KEY_VOLUNTEER_DEADLINE));
+        result.put("currentRound", configService.getConfigValue(ConfigServiceImpl.KEY_VOLUNTEER_CURRENT_ROUND));
+        return result;
+    }
+
+    /**
+     * 保存志愿互选配置
+     * POST /admin/config/volunteer/save
+     * request body: { "maxStudents": "6", "deadline": "2025-06-10 18:00", "currentRound": "1" }
+     */
+    @PostMapping("/volunteer/save")
+    @ResponseBody
+    public String saveVolunteerConfig(@RequestBody Map<String, Object> request, HttpSession session) {
+        String permissionError = checkAdmin(session);
+        if (permissionError != null) {
+            return permissionError;
+        }
+        try {
+            Object maxStudents = request.get("maxStudents");
+            Object deadline = request.get("deadline");
+            Object currentRound = request.get("currentRound");
+
+            if (maxStudents != null && !String.valueOf(maxStudents).trim().isEmpty()) {
+                configService.saveConfig(ConfigServiceImpl.KEY_TEACHER_MAX_STUDENTS,
+                        String.valueOf(maxStudents).trim(),
+                        "教师最多可带学生数量");
+            }
+            if (deadline != null && !String.valueOf(deadline).trim().isEmpty()) {
+                configService.saveConfig(ConfigServiceImpl.KEY_VOLUNTEER_DEADLINE,
+                        String.valueOf(deadline).trim(),
+                        "志愿互选截止时间");
+            }
+            if (currentRound != null && !String.valueOf(currentRound).trim().isEmpty()) {
+                configService.saveConfig(ConfigServiceImpl.KEY_VOLUNTEER_CURRENT_ROUND,
+                        String.valueOf(currentRound).trim(),
+                        "志愿互选当前轮次");
+            }
+            return "success";
+        } catch (Exception e) {
+            return "error:保存志愿配置失败, " + e.getMessage();
         }
     }
 

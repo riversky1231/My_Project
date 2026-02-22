@@ -104,6 +104,35 @@ public class AuthInterceptor implements HandlerInterceptor {
             return false;
         }
 
+        if (path.startsWith("/teacher/volunteer")) {
+            if (currentTeacher != null) {
+                return true;
+            }
+            if (currentUser != null && currentUser.getRole() != null) {
+                String roleName = currentUser.getRole().getName();
+                if ("TEACHER".equals(roleName) || "DEFENSE_LEADER".equals(roleName)
+                        || "SUPER_ADMIN".equals(roleName) || "DEPT_ADMIN".equals(roleName)) {
+                    return true;
+                }
+            }
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
+            return false;
+        }
+
+        if (path.startsWith("/teacher/profile")) {
+            if (currentTeacher != null) {
+                return true;
+            }
+            if (currentUser != null && currentUser.getRole() != null) {
+                String roleName = currentUser.getRole().getName();
+                if ("TEACHER".equals(roleName) || "DEFENSE_LEADER".equals(roleName)) {
+                    return true;
+                }
+            }
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
+            return false;
+        }
+
         if (path.startsWith("/department/")) {
             // 学生管理：超级管理员、院系管理员可以管理，教师可以查看自己指导的学生
             if (path.startsWith("/department/student")) {
@@ -180,6 +209,17 @@ public class AuthInterceptor implements HandlerInterceptor {
                     response.sendError(HttpServletResponse.SC_FORBIDDEN, "权限不足");
                     return false;
                 }
+            } else if (path.startsWith("/department/volunteer")) {
+                if (currentUser == null || currentUser.getRole() == null) {
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
+                    return false;
+                }
+                String roleName = currentUser.getRole().getName();
+                if (!"DEPT_ADMIN".equals(roleName) && !"SUPER_ADMIN".equals(roleName)) {
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
+                    return false;
+                }
+
             } else {
                 // 其他 /department/ 路径（如果有）需要相应权限，暂时允许通过，由 Controller 内部检查
                 // 如果后续有新的 /department/ 路径，需要在这里添加相应的权限检查

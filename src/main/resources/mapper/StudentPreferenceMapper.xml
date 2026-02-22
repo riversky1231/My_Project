@@ -14,6 +14,8 @@
         <result property="file2Path" column="file2_path"/>
         <result property="file3Path" column="file3_path"/>
         <result property="status" column="status"/>
+        <result property="adminAssignType" column="admin_assign_type"/>
+        <result property="adminAssignedTeacherId" column="admin_assigned_teacher_id"/>
         <result property="createdTime" column="created_time"/>
         <result property="updatedTime" column="updated_time"/>
     </resultMap>
@@ -27,12 +29,12 @@
             student_id, year,
             choice1_teacher_id, choice2_teacher_id, choice3_teacher_id,
             file1_path, file2_path, file3_path,
-            status
+            status, admin_assign_type, admin_assigned_teacher_id
         ) VALUES (
             #{studentId}, #{year},
             #{choice1TeacherId}, #{choice2TeacherId}, #{choice3TeacherId},
             #{file1Path}, #{file2Path}, #{file3Path},
-            #{status}
+            #{status}, #{adminAssignType}, #{adminAssignedTeacherId}
         )
     </insert>
 
@@ -45,8 +47,107 @@
             file2_path = #{file2Path},
             file3_path = #{file3Path},
             status = #{status},
+            <if test="adminAssignType != null">
+                admin_assign_type = #{adminAssignType},
+            </if>
+            <if test="adminAssignedTeacherId != null">
+                admin_assigned_teacher_id = #{adminAssignedTeacherId},
+            </if>
             updated_time = CURRENT_TIMESTAMP
         WHERE student_id = #{studentId} AND year = #{year}
     </update>
+
+    <update id="updateAdminAssignment">
+        UPDATE student_preference
+        SET admin_assign_type = #{adminAssignType},
+            admin_assigned_teacher_id = #{adminAssignedTeacherId},
+            updated_time = CURRENT_TIMESTAMP
+        WHERE student_id = #{studentId} AND year = #{year}
+    </update>
+
+    <select id="findByTeacherAndYearAndRound" resultType="map">
+        SELECT
+            sp.id AS pref_id,
+            sp.student_id,
+            sp.year,
+            sp.choice1_teacher_id,
+            sp.choice2_teacher_id,
+            sp.choice3_teacher_id,
+            sp.file1_path,
+            sp.file2_path,
+            sp.file3_path,
+            sp.status,
+            sp.admin_assign_type,
+            sp.admin_assigned_teacher_id,
+            sp.created_time,
+            sp.updated_time,
+            s.student_no,
+            s.name AS student_name,
+            s.class_info,
+            s.department_id,
+            s.defense_type,
+            s.title,
+            s.summary,
+            s.defense_year,
+            s.advisor_teacher_id,
+            t.name AS advisor_name
+        FROM student_preference sp
+        JOIN t_student s ON sp.student_id = s.id
+        LEFT JOIN teacher t ON s.advisor_teacher_id = t.id
+        WHERE sp.year = #{year}
+        <choose>
+            <when test="round == 1">
+                AND sp.choice1_teacher_id = #{teacherId}
+            </when>
+            <when test="round == 2">
+                AND sp.choice2_teacher_id = #{teacherId}
+            </when>
+            <otherwise>
+                AND sp.choice3_teacher_id = #{teacherId}
+            </otherwise>
+        </choose>
+        ORDER BY sp.updated_time DESC
+    </select>
+
+    <select id="findByDepartmentAndYear" resultType="map">
+        SELECT
+            s.id AS student_id,
+            s.student_no,
+            s.name AS student_name,
+            s.class_info,
+            s.department_id,
+            s.defense_year,
+            s.defense_type,
+            s.advisor_teacher_id,
+            adv.name AS advisor_name,
+            sp.id AS pref_id,
+            sp.choice1_teacher_id,
+            sp.choice2_teacher_id,
+            sp.choice3_teacher_id,
+            sp.file1_path,
+            sp.file2_path,
+            sp.file3_path,
+            sp.status,
+            sp.admin_assign_type,
+            sp.admin_assigned_teacher_id,
+            t1.name AS choice1_teacher_name,
+            t2.name AS choice2_teacher_name,
+            t3.name AS choice3_teacher_name,
+            ta.name AS admin_assigned_teacher_name
+        FROM t_student s
+        LEFT JOIN student_preference sp
+            ON sp.student_id = s.id AND sp.year = s.defense_year
+        LEFT JOIN teacher t1 ON sp.choice1_teacher_id = t1.id
+        LEFT JOIN teacher t2 ON sp.choice2_teacher_id = t2.id
+        LEFT JOIN teacher t3 ON sp.choice3_teacher_id = t3.id
+        LEFT JOIN teacher ta ON sp.admin_assigned_teacher_id = ta.id
+        LEFT JOIN teacher adv ON s.advisor_teacher_id = adv.id
+        WHERE s.department_id = #{departmentId}
+          AND s.defense_year = #{year}
+        <if test="unassignedOnly != null and unassignedOnly">
+            AND s.advisor_teacher_id IS NULL
+        </if>
+        ORDER BY s.id DESC
+    </select>
 
 </mapper>

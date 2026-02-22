@@ -14,6 +14,8 @@ public class StudentPreference {
     private String file2Path;
     private String file3Path;
     private Integer status;
+    private Integer adminAssignType;
+    private Long adminAssignedTeacherId;
     private java.sql.Timestamp createdTime;
     private java.sql.Timestamp updatedTime;
 
