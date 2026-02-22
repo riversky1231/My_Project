@@ -95,6 +95,15 @@ public class AuthInterceptor implements HandlerInterceptor {
             }
         }
 
+        if (path.startsWith("/student/")) {
+            if (currentUser != null && currentUser.getRole() != null &&
+                    "STUDENT".equals(currentUser.getRole().getName())) {
+                return true;
+            }
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "权限不足");
+            return false;
+        }
+
         if (path.startsWith("/department/")) {
             // 学生管理：超级管理员、院系管理员可以管理，教师可以查看自己指导的学生
             if (path.startsWith("/department/student")) {

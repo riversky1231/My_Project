@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+﻿<?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.defensemanagement.mapper.StudentMapper">
@@ -16,6 +16,9 @@
         <result property="summary" column="summary"/>
         <result property="defenseGroupId" column="defense_group_id"/>
         <result property="defenseYear" column="defense_year"/>
+        <result property="phone" column="phone"/>
+        <result property="email" column="email"/>
+        <result property="defenseDate" column="defense_date"/>
         <association property="advisor" javaType="com.example.defensemanagement.entity.Teacher">
             <id property="id" column="advisor_id"/>
             <result property="teacherNo" column="advisor_teacher_no"/>
@@ -151,8 +154,8 @@
     </select>
 
     <insert id="insert" parameterType="com.example.defensemanagement.entity.Student" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO t_student (student_no, name, class_info, department_id, defense_year, defense_type, title, summary)
-        VALUES (#{studentNo}, #{name}, #{classInfo}, #{departmentId}, #{defenseYear}, #{defenseType}, #{title}, #{summary})
+        INSERT INTO t_student (student_no, name, class_info, department_id, defense_year, defense_type, title, summary, phone, email, defense_date)
+        VALUES (#{studentNo}, #{name}, #{classInfo}, #{departmentId}, #{defenseYear}, #{defenseType}, #{title}, #{summary}, #{phone}, #{email}, #{defenseDate})
     </insert>
 
     <update id="update" parameterType="com.example.defensemanagement.entity.Student">
@@ -169,6 +172,9 @@
             <if test="summary != null">summary = #{summary},</if>
             <if test="defenseGroupId != null">defense_group_id = #{defenseGroupId},</if>
             <if test="defenseYear != null">defense_year = #{defenseYear},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="defenseDate != null">defense_date = #{defenseDate},</if>
         </set>
         WHERE id = #{id}
     </update>

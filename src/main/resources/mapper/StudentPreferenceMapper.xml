@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.defensemanagement.mapper.StudentPreferenceMapper">
+
+    <resultMap id="StudentPreferenceResultMap" type="com.example.defensemanagement.entity.StudentPreference">
+        <id property="id" column="id"/>
+        <result property="studentId" column="student_id"/>
+        <result property="year" column="year"/>
+        <result property="choice1TeacherId" column="choice1_teacher_id"/>
+        <result property="choice2TeacherId" column="choice2_teacher_id"/>
+        <result property="choice3TeacherId" column="choice3_teacher_id"/>
+        <result property="file1Path" column="file1_path"/>
+        <result property="file2Path" column="file2_path"/>
+        <result property="file3Path" column="file3_path"/>
+        <result property="status" column="status"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updatedTime" column="updated_time"/>
+    </resultMap>
+
+    <select id="findByStudentIdAndYear" resultMap="StudentPreferenceResultMap">
+        SELECT * FROM student_preference WHERE student_id = #{studentId} AND year = #{year}
+    </select>
+
+    <insert id="insert" parameterType="com.example.defensemanagement.entity.StudentPreference" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO student_preference (
+            student_id, year,
+            choice1_teacher_id, choice2_teacher_id, choice3_teacher_id,
+            file1_path, file2_path, file3_path,
+            status
+        ) VALUES (
+            #{studentId}, #{year},
+            #{choice1TeacherId}, #{choice2TeacherId}, #{choice3TeacherId},
+            #{file1Path}, #{file2Path}, #{file3Path},
+            #{status}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.example.defensemanagement.entity.StudentPreference">
+        UPDATE student_preference
+        SET choice1_teacher_id = #{choice1TeacherId},
+            choice2_teacher_id = #{choice2TeacherId},
+            choice3_teacher_id = #{choice3TeacherId},
+            file1_path = #{file1Path},
+            file2_path = #{file2Path},
+            file3_path = #{file3Path},
+            status = #{status},
+            updated_time = CURRENT_TIMESTAMP
+        WHERE student_id = #{studentId} AND year = #{year}
+    </update>
+
+</mapper>

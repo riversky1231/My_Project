@@ -3,15 +3,20 @@ package com.example.defensemanagement.service.impl;
 import com.example.defensemanagement.entity.Student;
 import com.example.defensemanagement.entity.DefenseGroup;
 import com.example.defensemanagement.entity.Teacher;
+import com.example.defensemanagement.entity.Role;
+import com.example.defensemanagement.entity.User;
 import com.example.defensemanagement.mapper.StudentMapper;
 import com.example.defensemanagement.mapper.DefenseGroupMapper;
 import com.example.defensemanagement.mapper.TeacherMapper;
 import com.example.defensemanagement.mapper.TeacherScoreRecordMapper;
 import com.example.defensemanagement.mapper.StudentFinalScoreMapper;
+import com.example.defensemanagement.mapper.RoleMapper;
+import com.example.defensemanagement.mapper.UserMapper;
 import com.example.defensemanagement.service.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.List;
 import java.time.LocalDate;
@@ -33,6 +38,14 @@ public class StudentServiceImpl implements StudentService {
 
     @Autowired
     private StudentFinalScoreMapper studentFinalScoreMapper;
+
+    @Autowired
+    private UserMapper userMapper;
+
+    @Autowired
+    private RoleMapper roleMapper;
+
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Override
     public Student findById(Long studentId) {
@@ -159,14 +172,24 @@ public class StudentServiceImpl implements StudentService {
     @Transactional
     public boolean saveStudent(Student student) {
         if (student.getId() == null) {
-            // 检查学号是否重复
+            // 妫€鏌ュ鍙锋槸鍚﹂噸澶?
             if (student.getStudentNo() != null && studentMapper.findByStudentNoAndYear(student.getStudentNo(), student.getDefenseYear()) != null) {
-                throw new RuntimeException("学号在当前年份已存在");
+                throw new RuntimeException("瀛﹀彿鍦ㄥ綋鍓嶅勾浠藉凡瀛樺湪");
             }
-            return studentMapper.insert(student) > 0;
+            boolean inserted = studentMapper.insert(student) > 0;
+            if (inserted) {
+                syncStudentUser(student, null);
+            }
+            return inserted;
         } else {
-            // 更新逻辑
-            return studentMapper.update(student) > 0;
+            // 鏇存柊閫昏緫
+            Student existing = studentMapper.findById(student.getId());
+            String oldStudentNo = existing != null ? existing.getStudentNo() : null;
+            boolean updated = studentMapper.update(student) > 0;
+            if (updated) {
+                syncStudentUser(student, oldStudentNo);
+            }
+            return updated;
         }
     }
 
@@ -174,12 +197,69 @@ public class StudentServiceImpl implements StudentService {
     @Transactional
     public boolean deleteStudent(Long studentId) {
         if (studentId == null) return false;
-        return studentMapper.deleteById(studentId) > 0;
+        Student student = studentMapper.findById(studentId);
+        boolean deleted = studentMapper.deleteById(studentId) > 0;
+        if (deleted && student != null && student.getStudentNo() != null) {
+            User user = userMapper.findByUsername(student.getStudentNo());
+            if (user != null) {
+                Role role = user.getRoleId() != null ? roleMapper.findById(user.getRoleId()) : null;
+                if (role != null && "STUDENT".equals(role.getName())) {
+                    userMapper.deleteById(user.getId());
+                }
+            }
+        }
+        return deleted;
     }
 
-    @Override
-    @Transactional
-    public boolean unassignDefenseGroup(Long studentId) {
+    private void syncStudentUser(Student student, String oldStudentNo) {
+        if (student == null || student.getStudentNo() == null) {
+            return;
+        }
+        Role studentRole = roleMapper.findByName("STUDENT");
+        if (studentRole == null) {
+            throw new RuntimeException("STUDENT role not found");
+        }
+
+        String newStudentNo = student.getStudentNo();
+        User user = null;
+        if (oldStudentNo != null && !oldStudentNo.equals(newStudentNo)) {
+            user = userMapper.findByUsername(oldStudentNo);
+        }
+        if (user == null) {
+            user = userMapper.findByUsername(newStudentNo);
+        }
+
+        if (user == null) {
+            User newUser = new User();
+            newUser.setUsername(newStudentNo);
+            newUser.setPassword(passwordEncoder.encode("123456"));
+            newUser.setRealName(student.getName());
+            newUser.setEmail(student.getEmail());
+            newUser.setPhone(student.getPhone());
+            newUser.setStatus(1);
+            newUser.setRoleId(studentRole.getId());
+            newUser.setDepartmentId(student.getDepartmentId());
+            userMapper.insert(newUser);
+            return;
+        }
+
+        if (user.getRoleId() != null) {
+            Role role = roleMapper.findById(user.getRoleId());
+            if (role != null && !"STUDENT".equals(role.getName())) {
+                throw new RuntimeException("Username already used by non-student account: " + user.getUsername());
+            }
+        }
+
+        user.setUsername(newStudentNo);
+        if (student.getName() != null) user.setRealName(student.getName());
+        if (student.getEmail() != null) user.setEmail(student.getEmail());
+        if (student.getPhone() != null) user.setPhone(student.getPhone());
+        if (student.getDepartmentId() != null) user.setDepartmentId(student.getDepartmentId());
+        user.setRoleId(studentRole.getId());
+        if (user.getStatus() == null) user.setStatus(1);
+        userMapper.update(user);
+    }
+public boolean unassignDefenseGroup(Long studentId) {
         if (studentId == null) return false;
         // explicitly set defense_group_id to NULL (XML update won't set null values)
         return studentMapper.updateDefenseGroupId(studentId, null) > 0;
@@ -196,3 +276,4 @@ public class StudentServiceImpl implements StudentService {
         return studentMapper.countStudents(keyword, departmentId, year);
     }
 }
+

@@ -718,13 +718,14 @@ public class AdminController {
                             role = roleMapper.findByName("DEPT_ADMIN");
                         } else if (roleName.equalsIgnoreCase("TEACHER") || roleName.contains("教师")) {
                             role = roleMapper.findByName("TEACHER");
+                        } else if (roleName.equalsIgnoreCase("STUDENT") || roleName.contains("学生")) {
+                            role = roleMapper.findByName("STUDENT");
                         } else if (roleName.equalsIgnoreCase("DEFENSE_LEADER") || roleName.contains("答辩组长")) {
                             role = roleMapper.findByName("DEFENSE_LEADER");
                         } else {
                             // 尝试直接通过名称查找
                             role = roleMapper.findByName(roleName);
                         }
-
                         if (role == null) {
                             failCount++;
                             errorMessages.append("第").append(rowIndex + 1).append("行：角色 ").append(roleName)
@@ -1152,6 +1153,13 @@ public class AdminController {
             exampleRow3.createCell(3).setCellValue("CS");
             exampleRow3.createCell(4).setCellValue("1");
 
+            Row exampleRow4 = sheet.createRow(4);
+            exampleRow4.createCell(0).setCellValue("20210001");
+            exampleRow4.createCell(1).setCellValue("赵六");
+            exampleRow4.createCell(2).setCellValue("STUDENT");
+            exampleRow4.createCell(3).setCellValue("计算机科学与技术学院");
+            exampleRow4.createCell(4).setCellValue("启用");
+
             // 自动调整列宽
             for (int i = 0; i < headers.length; i++) {
                 sheet.autoSizeColumn(i);
@@ -1524,3 +1532,4 @@ public class AdminController {
         }
     }
 }
+

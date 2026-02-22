@@ -16,6 +16,9 @@ public class Student {
     private String summary; // 毕业考核摘要
     private Long defenseGroupId; // 学生所在答辩小组ID
     private Integer defenseYear; // 答辩年份
+    private String phone; // 学生联系电话
+    private String email; // 学生邮箱
+    private java.sql.Date defenseDate; // 答辩日期
 
     // 关联对象 (用于查询显示)
     private Teacher advisor;

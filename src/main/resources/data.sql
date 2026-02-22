@@ -1,4 +1,4 @@
-CREATE DATABASE IF NOT EXISTS defense_management DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+﻿CREATE DATABASE IF NOT EXISTS defense_management DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 USE defense_management;
 
@@ -18,7 +18,7 @@ CREATE TABLE `role` (
     `created_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     PRIMARY KEY (`id`) USING BTREE,
     UNIQUE INDEX `name` (`name` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '角色表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '角色表' ROW_FORMAT = DYNAMIC;
 
 INSERT INTO
     `role`
@@ -56,6 +56,14 @@ VALUES (
         '2025-12-18 12:38:58'
     );
 
+INSERT INTO
+    `role`
+VALUES (
+        5,
+        'STUDENT',
+        '学生',
+        '2025-12-18 12:38:58'
+    );
 -- ----------------------------
 -- Table structure for department
 -- ----------------------------
@@ -153,13 +161,13 @@ CREATE TABLE `user` (
     CONSTRAINT `user_ibfk_2` FOREIGN KEY (`department_id`) REFERENCES `department` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE = InnoDB AUTO_INCREMENT = 100 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '用户表' ROW_FORMAT = DYNAMIC;
 
--- 超级管理员 (密码: admin123)
+-- 超级管理员 (密码: 123456)
 INSERT INTO
     `user`
 VALUES (
         1,
         'admin',
-        '$2a$10$OJU0o3Fw0h03uOyubGypyeX2OlxAb9Zlxfm5CKGRl1ybvrcxnvGky',
+        '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba',
         '超级管理员',
         'admin@example.com',
         '13800000000',
@@ -2422,6 +2430,29 @@ VALUES (
         '2025-12-18 12:38:58',
         '2025-12-18 12:38:58'
     );
+
+INSERT INTO
+    `user` (
+        `username`,
+        `password`,
+        `real_name`,
+        `email`,
+        `phone`,
+        `status`,
+        `role_id`,
+        `department_id`
+    )
+SELECT
+    `student_no`,
+    '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba',
+    `name`,
+    `email`,
+    `phone`,
+    1,
+    5,
+    `department_id`
+FROM
+    `t_student`;
 
 -- ----------------------------
 -- Table structure for comment (小组评语)
@@ -6394,4 +6425,51 @@ VALUES (
         '2025-12-18 12:38:58'
     );
 
+-- ----------------------------
+-- Table structure for teacher_profile (教师研究方向与招生要求)
+-- ----------------------------
+DROP TABLE IF EXISTS `teacher_profile`;
+
+CREATE TABLE `teacher_profile` (
+    `id` bigint NOT NULL AUTO_INCREMENT,
+    `teacher_id` bigint NOT NULL COMMENT '教师ID',
+    `research_direction` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT '研究方向',
+    `enrollment_requirements` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT '招生要求',
+    `updated_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE INDEX `uk_teacher_id` (`teacher_id` ASC) USING BTREE,
+    CONSTRAINT `teacher_profile_ibfk_1` FOREIGN KEY (`teacher_id`) REFERENCES `teacher` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '教师研究方向与招生要求' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for student_preference (学生志愿)
+-- ----------------------------
+DROP TABLE IF EXISTS `student_preference`;
+
+CREATE TABLE `student_preference` (
+    `id` bigint NOT NULL AUTO_INCREMENT,
+    `student_id` bigint NOT NULL COMMENT '学生ID',
+    `year` int NOT NULL COMMENT '答辩年份',
+    `choice1_teacher_id` bigint NULL DEFAULT NULL COMMENT '第一志愿教师ID',
+    `choice2_teacher_id` bigint NULL DEFAULT NULL COMMENT '第二志愿教师ID',
+    `choice3_teacher_id` bigint NULL DEFAULT NULL COMMENT '第三志愿教师ID',
+    `file1_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '第一志愿PDF路径',
+    `file2_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '第二志愿PDF路径',
+    `file3_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '第三志愿PDF路径',
+    `status` tinyint NOT NULL DEFAULT 0 COMMENT '状态：0-已提交，1-已处理',
+    `created_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE INDEX `uk_student_year` (`student_id` ASC, `year` ASC) USING BTREE,
+    INDEX `idx_choice1` (`choice1_teacher_id` ASC) USING BTREE,
+    INDEX `idx_choice2` (`choice2_teacher_id` ASC) USING BTREE,
+    INDEX `idx_choice3` (`choice3_teacher_id` ASC) USING BTREE,
+    CONSTRAINT `student_preference_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `t_student` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+    CONSTRAINT `student_preference_ibfk_2` FOREIGN KEY (`choice1_teacher_id`) REFERENCES `teacher` (`id`) ON DELETE SET NULL ON UPDATE RESTRICT,
+    CONSTRAINT `student_preference_ibfk_3` FOREIGN KEY (`choice2_teacher_id`) REFERENCES `teacher` (`id`) ON DELETE SET NULL ON UPDATE RESTRICT,
+    CONSTRAINT `student_preference_ibfk_4` FOREIGN KEY (`choice3_teacher_id`) REFERENCES `teacher` (`id`) ON DELETE SET NULL ON UPDATE RESTRICT
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '学生志愿' ROW_FORMAT = DYNAMIC;
+
 SET FOREIGN_KEY_CHECKS = 1;
+
+

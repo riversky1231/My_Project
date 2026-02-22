@@ -231,7 +231,7 @@ public class UserServiceImpl implements UserService {
             case "DEPT_ADMIN":
                 // 院系管理员只能创建 TEACHER 角色，不能创建 DEFENSE_LEADER（答辩组长在小组管理中指定）
                 manageableRoles = allRoles.stream()
-                        .filter(role -> role.getName().equals("TEACHER"))
+                        .filter(role -> role.getName().equals("TEACHER") || role.getName().equals("STUDENT"))
                         .collect(Collectors.toList());
                 break;
             case "TEACHER":

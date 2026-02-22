@@ -52,7 +52,7 @@ public class AuthController {
             User user = authService.login(username, password);
             if (user != null && user.getRole() != null && role.equals(user.getRole().getName())) {
                 session.setAttribute("currentUser", user);
-                session.setAttribute("userType", "USER");
+                session.setAttribute("userType", "STUDENT".equals(role) ? "STUDENT" : "USER");
                 return "redirect:/?login=success";
             }
         }
@@ -81,7 +81,7 @@ public class AuthController {
         String userType = (String) session.getAttribute("userType");
         System.out.println("userType: " + userType);
 
-        if ("USER".equals(userType)) {
+        if ("USER".equals(userType) || "STUDENT".equals(userType)) {
             User currentUser = (User) session.getAttribute("currentUser");
             System.out.println("currentUser: " + (currentUser != null ? currentUser.getUsername() : "null"));
             if (currentUser != null) {

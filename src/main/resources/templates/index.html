@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 
 <head>
@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Poppins:wght@300;400;500;600;700&display=swap"
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
     <style>
         :root {
@@ -31,7 +32,7 @@
 
         body {
             background-color: var(--background-color);
-            background-image: 
+            background-image:
                 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cpath d='M40 10 L50 20 L30 20 Z' fill='%234a6fa5' fill-opacity='0.03'/%3E%3Ccircle cx='60' cy='55' r='4' fill='none' stroke='%234a6fa5' stroke-opacity='0.04' stroke-width='1'/%3E%3Crect x='10' y='50' width='8' height='10' rx='1' fill='%234a6fa5' fill-opacity='0.025'/%3E%3C/svg%3E"),
                 linear-gradient(180deg, #dce6f5 0%, #e8eef6 40%, #f0f4fa 100%);
             font-family: 'Noto Sans SC', 'Poppins', sans-serif;
@@ -63,7 +64,7 @@
             display: flex;
             align-items: center;
         }
-        
+
         .sidebar .logo i {
             margin-right: 0.75rem;
             color: #8ab4e0;
@@ -98,7 +99,7 @@
 
         .user-info {
             font-size: 0.875rem;
-            background: rgba(255,255,255,0.08);
+            background: rgba(255, 255, 255, 0.08);
             border-radius: 12px;
             padding: 1rem;
         }
@@ -148,6 +149,12 @@
             box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
         }
 
+        .user-info .role-badge.student {
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(8, 145, 178, 0.3);
+        }
+
         .main-content {
             margin-left: 260px;
             width: calc(100% - 260px);
@@ -194,8 +201,15 @@
             pointer-events: none;
         }
 
-        .blob-1 { top: 10%; right: 5%; }
-        .blob-2 { bottom: 10%; left: 300px; }
+        .blob-1 {
+            top: 10%;
+            right: 5%;
+        }
+
+        .blob-2 {
+            bottom: 10%;
+            left: 300px;
+        }
 
         /* ========== 校园主题装饰 ========== */
         .campus-deco {
@@ -203,19 +217,63 @@
             pointer-events: none;
             z-index: 0;
         }
+
         .campus-deco.formula {
             font-family: 'Georgia', serif;
             font-style: italic;
             color: #4a6fa5;
         }
-        .campus-deco.f1 { top: 8%; right: 8%; font-size: 1.1rem; opacity: 0.12; transform: rotate(-6deg); }
-        .campus-deco.f2 { bottom: 15%; right: 4%; font-size: 1rem; opacity: 0.1; transform: rotate(5deg); }
-        .campus-deco.f3 { bottom: 30%; left: 280px; font-size: 0.95rem; opacity: 0.1; transform: rotate(-3deg); }
-        .campus-deco.f4 { top: 55%; right: 6%; font-size: 1rem; opacity: 0.11; transform: rotate(7deg); }
-        .campus-deco.svg-deco { opacity: 0.2; }
-        .campus-deco.deco-cap { top: 6%; right: 3%; }
-        .campus-deco.deco-book { bottom: 8%; right: 2%; }
-        .campus-deco.deco-bulb { bottom: 5%; left: 280px; }
+
+        .campus-deco.f1 {
+            top: 8%;
+            right: 8%;
+            font-size: 1.1rem;
+            opacity: 0.12;
+            transform: rotate(-6deg);
+        }
+
+        .campus-deco.f2 {
+            bottom: 15%;
+            right: 4%;
+            font-size: 1rem;
+            opacity: 0.1;
+            transform: rotate(5deg);
+        }
+
+        .campus-deco.f3 {
+            bottom: 30%;
+            left: 280px;
+            font-size: 0.95rem;
+            opacity: 0.1;
+            transform: rotate(-3deg);
+        }
+
+        .campus-deco.f4 {
+            top: 55%;
+            right: 6%;
+            font-size: 1rem;
+            opacity: 0.11;
+            transform: rotate(7deg);
+        }
+
+        .campus-deco.svg-deco {
+            opacity: 0.2;
+        }
+
+        .campus-deco.deco-cap {
+            top: 6%;
+            right: 3%;
+        }
+
+        .campus-deco.deco-book {
+            bottom: 8%;
+            right: 2%;
+        }
+
+        .campus-deco.deco-bulb {
+            bottom: 5%;
+            left: 280px;
+        }
 
         .header h1 {
             font-weight: 700;
@@ -255,7 +313,7 @@
             opacity: 0.05;
             border-radius: 50%;
         }
-        
+
         .summary-card:hover {
             transform: translateY(-5px);
             box-shadow: var(--shadow-lg);
@@ -335,7 +393,9 @@
             flex-shrink: 0;
         }
 
-        .stat-card .stat-body { flex: 1; }
+        .stat-card .stat-body {
+            flex: 1;
+        }
 
         .stat-card .stat-value {
             font-size: 1.75rem;
@@ -350,27 +410,64 @@
         }
 
         /* Color variants - 蓝色学术主题 */
-        .stat-card-primary::before { background: #4a6fa5; }
-        .stat-card-primary .stat-icon { background: linear-gradient(135deg, #4a6fa5, #6b8fc7); }
-        .stat-card-primary .stat-value { color: #2c5282; }
+        .stat-card-primary::before {
+            background: #4a6fa5;
+        }
 
-        .stat-card-success::before { background: #38a169; }
-        .stat-card-success .stat-icon { background: linear-gradient(135deg, #38a169, #68d391); }
-        .stat-card-success .stat-value { color: #276749; }
+        .stat-card-primary .stat-icon {
+            background: linear-gradient(135deg, #4a6fa5, #6b8fc7);
+        }
 
-        .stat-card-warning::before { background: #d69e2e; }
-        .stat-card-warning .stat-icon { background: linear-gradient(135deg, #d69e2e, #ecc94b); }
-        .stat-card-warning .stat-value { color: #b7791f; }
+        .stat-card-primary .stat-value {
+            color: #2c5282;
+        }
 
-        .stat-card-info::before { background: #3182ce; }
-        .stat-card-info .stat-icon { background: linear-gradient(135deg, #3182ce, #63b3ed); }
-        .stat-card-info .stat-value { color: #2b6cb0; }
+        .stat-card-success::before {
+            background: #38a169;
+        }
+
+        .stat-card-success .stat-icon {
+            background: linear-gradient(135deg, #38a169, #68d391);
+        }
+
+        .stat-card-success .stat-value {
+            color: #276749;
+        }
+
+        .stat-card-warning::before {
+            background: #d69e2e;
+        }
+
+        .stat-card-warning .stat-icon {
+            background: linear-gradient(135deg, #d69e2e, #ecc94b);
+        }
+
+        .stat-card-warning .stat-value {
+            color: #b7791f;
+        }
+
+        .stat-card-info::before {
+            background: #3182ce;
+        }
+
+        .stat-card-info .stat-icon {
+            background: linear-gradient(135deg, #3182ce, #63b3ed);
+        }
+
+        .stat-card-info .stat-value {
+            color: #2b6cb0;
+        }
 
         @media (max-width: 1200px) {
-            .dashboard-stats { grid-template-columns: repeat(2, 1fr); }
+            .dashboard-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
+
         @media (max-width: 576px) {
-            .dashboard-stats { grid-template-columns: 1fr; }
+            .dashboard-stats {
+                grid-template-columns: 1fr;
+            }
         }
 
         .module {
@@ -428,13 +525,15 @@
             border-color: var(--primary-hover);
         }
 
-        .form-control, .form-select {
+        .form-control,
+        .form-select {
             border-radius: 8px;
             padding: 0.625rem 0.875rem;
             border: 1px solid #d1d5db;
         }
-        
-        .form-control:focus, .form-select:focus {
+
+        .form-control:focus,
+        .form-select:focus {
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.15);
         }
@@ -502,44 +601,53 @@
         ::-webkit-scrollbar {
             width: 8px;
         }
+
         ::-webkit-scrollbar-track {
             background: transparent;
         }
+
         ::-webkit-scrollbar-thumb {
             background: #cbd5e1;
             border-radius: 4px;
         }
+
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
+
         /* 统一按钮风格 - 蓝色学术主题 */
         .btn-success {
             background: linear-gradient(135deg, #38a169, #48bb78);
             border-color: #38a169;
             color: #fff;
         }
+
         .btn-success:hover {
             background: linear-gradient(135deg, #2f855a, #38a169);
             border-color: #2f855a;
             color: #fff;
             transform: translateY(-2px);
         }
+
         .btn-info {
             background: linear-gradient(135deg, #3182ce, #4299e1);
             border-color: #3182ce;
             color: #fff;
         }
+
         .btn-info:hover {
             background: linear-gradient(135deg, #2b6cb0, #3182ce);
             border-color: #2b6cb0;
             color: #fff;
             transform: translateY(-2px);
         }
+
         .btn-warning {
             background: linear-gradient(135deg, #d69e2e, #ecc94b);
             border-color: #d69e2e;
             color: #fff;
         }
+
         .btn-warning:hover {
             background: linear-gradient(135deg, #b7791f, #d69e2e);
             border-color: #b7791f;
@@ -549,7 +657,8 @@
     </style>
 </head>
 
-<body th:with="currentUser=${session.currentUser}, currentTeacher=${session.currentTeacher}, userType=${session.userType}">
+<body
+    th:with="currentUser=${session.currentUser}, currentTeacher=${session.currentTeacher}, userType=${session.userType}">
     <div class="decorative-blob blob-1"></div>
     <div class="decorative-blob blob-2"></div>
 
@@ -561,105 +670,125 @@
     <!-- 右上学士帽 -->
     <div class="campus-deco svg-deco deco-cap">
         <svg width="80" height="60" viewBox="0 0 110 80" xmlns="http://www.w3.org/2000/svg">
-            <polygon points="55,5 105,25 55,45 5,25" fill="#4a6fa5"/>
-            <polygon points="55,45 105,25 105,30 55,50 5,30 5,25" fill="#2c5282"/>
-            <line x1="90" y1="30" x2="90" y2="55" stroke="#4a6fa5" stroke-width="2"/>
-            <circle cx="90" cy="57" r="3" fill="#6b8fc7"/>
-            <rect x="52" y="42" width="6" height="16" fill="#2c5282"/>
+            <polygon points="55,5 105,25 55,45 5,25" fill="#4a6fa5" />
+            <polygon points="55,45 105,25 105,30 55,50 5,30 5,25" fill="#2c5282" />
+            <line x1="90" y1="30" x2="90" y2="55" stroke="#4a6fa5" stroke-width="2" />
+            <circle cx="90" cy="57" r="3" fill="#6b8fc7" />
+            <rect x="52" y="42" width="6" height="16" fill="#2c5282" />
         </svg>
     </div>
     <!-- 右下书本 -->
     <div class="campus-deco svg-deco deco-book">
         <svg width="80" height="65" viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg">
-            <rect x="10" y="50" width="60" height="10" rx="2" fill="#4a6fa5" transform="rotate(-5 40 55)"/>
-            <rect x="8" y="38" width="65" height="10" rx="2" fill="#6b8fc7" transform="rotate(3 40 43)"/>
-            <rect x="12" y="26" width="58" height="10" rx="2" fill="#2c5282" transform="rotate(-2 40 31)"/>
-            <rect x="5" y="14" width="70" height="10" rx="2" fill="#5a82b8" transform="rotate(4 40 19)"/>
+            <rect x="10" y="50" width="60" height="10" rx="2" fill="#4a6fa5" transform="rotate(-5 40 55)" />
+            <rect x="8" y="38" width="65" height="10" rx="2" fill="#6b8fc7" transform="rotate(3 40 43)" />
+            <rect x="12" y="26" width="58" height="10" rx="2" fill="#2c5282" transform="rotate(-2 40 31)" />
+            <rect x="5" y="14" width="70" height="10" rx="2" fill="#5a82b8" transform="rotate(4 40 19)" />
         </svg>
     </div>
     <!-- 左下灯泡 -->
     <div class="campus-deco svg-deco deco-bulb">
         <svg width="55" height="70" viewBox="0 0 70 90" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="35" cy="30" r="18" fill="none" stroke="#4a6fa5" stroke-width="2"/>
-            <path d="M27,42 Q27,50 30,53 L40,53 Q43,50 43,42" fill="none" stroke="#4a6fa5" stroke-width="1.5"/>
-            <line x1="30" y1="56" x2="40" y2="56" stroke="#4a6fa5" stroke-width="1.5"/>
-            <line x1="31" y1="59" x2="39" y2="59" stroke="#4a6fa5" stroke-width="1.5"/>
-            <line x1="35" y1="18" x2="35" y2="12" stroke="#6b8fc7" stroke-width="1.2"/>
-            <line x1="22" y1="22" x2="17" y2="17" stroke="#6b8fc7" stroke-width="1.2"/>
-            <line x1="48" y1="22" x2="53" y2="17" stroke="#6b8fc7" stroke-width="1.2"/>
+            <circle cx="35" cy="30" r="18" fill="none" stroke="#4a6fa5" stroke-width="2" />
+            <path d="M27,42 Q27,50 30,53 L40,53 Q43,50 43,42" fill="none" stroke="#4a6fa5" stroke-width="1.5" />
+            <line x1="30" y1="56" x2="40" y2="56" stroke="#4a6fa5" stroke-width="1.5" />
+            <line x1="31" y1="59" x2="39" y2="59" stroke="#4a6fa5" stroke-width="1.5" />
+            <line x1="35" y1="18" x2="35" y2="12" stroke="#6b8fc7" stroke-width="1.2" />
+            <line x1="22" y1="22" x2="17" y2="17" stroke="#6b8fc7" stroke-width="1.2" />
+            <line x1="48" y1="22" x2="53" y2="17" stroke="#6b8fc7" stroke-width="1.2" />
         </svg>
     </div>
 
-    <div class="sidebar" th:with="currentRole=${session.currentUser != null ? session.currentUser.role.name : (isDefenseLeader ? 'DEFENSE_LEADER' : 'TEACHER')}">
+    <div class="sidebar"
+        th:with="currentRole=${session.currentUser != null ? session.currentUser.role.name : (isDefenseLeader ? 'DEFENSE_LEADER' : 'TEACHER')}">
         <div class="logo"><i class="bi bi-shield-check"></i>答辩管理</div>
         <nav id="sidebar-nav" class="nav flex-column">
             <a class="nav-link active" href="javascript:void(0);" onclick="showView('dashboard-view', this)">
                 <i class="bi bi-speedometer2"></i> 答辩总览
             </a>
-            
+
+            <a class="nav-link" id="nav-student-profile" href="javascript:void(0);"
+                th:if="${currentRole == 'STUDENT'}"
+                onclick="showView('student-profile-view', this)">
+                <i class="bi bi-person-badge"></i> 学生信息
+            </a>
+            <a class="nav-link" id="nav-student-teachers" href="javascript:void(0);"
+                th:if="${currentRole == 'STUDENT'}"
+                onclick="showView('student-teacher-info-view', this)">
+                <i class="bi bi-journal-text"></i> 教师信息
+            </a>
+            <a class="nav-link" id="nav-student-preference" href="javascript:void(0);"
+                th:if="${currentRole == 'STUDENT'}"
+                onclick="showView('student-preference-view', this)">
+                <i class="bi bi-ui-checks-grid"></i> 志愿填报
+            </a>
+            <a class="nav-link" id="nav-student-result" href="javascript:void(0);"
+                th:if="${currentRole == 'STUDENT'}"
+                onclick="showView('student-result-view', this)">
+                <i class="bi bi-clipboard-check"></i> 结果查询
+            </a>
+
             <a class="nav-link" id="nav-group-management" href="javascript:void(0);"
-               th:if="${currentRole == 'DEPT_ADMIN'}"
-               onclick="showView('group-management-view', this)">
+                th:if="${currentRole == 'DEPT_ADMIN'}" onclick="showView('group-management-view', this)">
                 <i class="bi bi-people"></i> 小组管理
             </a>
-            
+
             <a class="nav-link" id="nav-student-management" href="javascript:void(0);"
-               th:if="${currentRole == 'SUPER_ADMIN' or currentRole == 'DEPT_ADMIN' or currentRole == 'DEFENSE_LEADER'}"
-               onclick="showView('student-management-view', this)">
+                th:if="${currentRole == 'SUPER_ADMIN' or currentRole == 'DEPT_ADMIN' or currentRole == 'DEFENSE_LEADER'}"
+                onclick="showView('student-management-view', this)">
                 <i class="bi bi-person-badge"></i> 学生管理
             </a>
-            
+
             <a class="nav-link" id="nav-review-management" href="javascript:void(0);"
-               th:if="${currentRole == 'DEPT_ADMIN' or currentRole == 'DEFENSE_LEADER' or currentRole == 'TEACHER'}"
-               onclick="showView('review-management-view', this)">
+                th:if="${currentRole == 'DEPT_ADMIN' or currentRole == 'DEFENSE_LEADER' or currentRole == 'TEACHER'}"
+                onclick="showView('review-management-view', this)">
                 <i class="bi bi-journal-check"></i> 打分管理
             </a>
-            
+
             <a class="nav-link" id="nav-user-management" href="javascript:void(0);"
-               th:if="${currentRole == 'SUPER_ADMIN' or currentRole == 'DEPT_ADMIN' or currentRole == 'TEACHER'}"
-               onclick="showView('user-management-view', this)">
+                th:if="${currentRole == 'SUPER_ADMIN' or currentRole == 'DEPT_ADMIN' or currentRole == 'TEACHER'}"
+                onclick="showView('user-management-view', this)">
                 <i class="bi bi-person-circle"></i> 用户管理
             </a>
-            
+
             <a class="nav-link" id="nav-department-management" href="javascript:void(0);"
-               th:if="${currentRole == 'SUPER_ADMIN' or currentRole == 'TEACHER'}"
-               onclick="showView('department-management-view', this)">
+                th:if="${currentRole == 'SUPER_ADMIN' or currentRole == 'TEACHER'}"
+                onclick="showView('department-management-view', this)">
                 <i class="bi bi-building"></i> 院系管理
             </a>
-            
+
             <a class="nav-link" id="nav-score-view" href="javascript:void(0);"
-               th:if="${currentRole == 'DEFENSE_LEADER' or currentRole == 'TEACHER'}"
-               onclick="showView('score-view', this)">
+                th:if="${currentRole == 'DEFENSE_LEADER' or currentRole == 'TEACHER'}"
+                onclick="showView('score-view', this)">
                 <i class="bi bi-chat-left-text"></i> 评语管理
             </a>
-            
+
             <a class="nav-link" id="nav-teacher-scoring" href="javascript:void(0);"
-               th:if="${currentRole == 'DEPT_ADMIN' or currentRole == 'DEFENSE_LEADER'}"
-               onclick="showView('teacher-scoring-view', this)">
+                th:if="${currentRole == 'DEPT_ADMIN' or currentRole == 'DEFENSE_LEADER'}"
+                onclick="showView('teacher-scoring-view', this)">
                 <i class="bi bi-pencil-square"></i> 小组打分
             </a>
-            
+
             <a class="nav-link" id="nav-large-group-defense" href="javascript:void(0);"
-               th:if="${currentRole == 'DEPT_ADMIN' or currentRole == 'DEFENSE_LEADER'}"
-               onclick="showView('large-group-defense-view', this)">
+                th:if="${currentRole == 'DEPT_ADMIN' or currentRole == 'DEFENSE_LEADER'}"
+                onclick="showView('large-group-defense-view', this)">
                 <i class="bi bi-award"></i> 大组答辩
             </a>
-            
+
             <a class="nav-link" id="nav-export" href="javascript:void(0);"
-               th:if="${currentRole == 'DEPT_ADMIN' or currentRole == 'DEFENSE_LEADER' or currentRole == 'TEACHER'}"
-               onclick="showView('export-view', this)">
+                th:if="${currentRole == 'DEPT_ADMIN' or currentRole == 'DEFENSE_LEADER' or currentRole == 'TEACHER'}"
+                onclick="showView('export-view', this)">
                 <i class="bi bi-download"></i> 导出/打包
             </a>
-            
+
             <a class="nav-link" id="nav-signature-management" href="javascript:void(0);"
-               th:if="${currentRole == 'DEFENSE_LEADER' or currentRole == 'TEACHER'}"
-               onclick="showView('signature-view', this)">
+                th:if="${currentRole == 'DEFENSE_LEADER' or currentRole == 'TEACHER'}"
+                onclick="showView('signature-view', this)">
                 <i class="bi bi-pen"></i> 签名管理
             </a>
-            
-            <a class="nav-link" id="nav-settings" href="javascript:void(0);"
-               th:if="${currentRole == 'DEPT_ADMIN'}"
-               onclick="showView('settings-view', this)">
+
+            <a class="nav-link" id="nav-settings" href="javascript:void(0);" th:if="${currentRole == 'DEPT_ADMIN'}"
+                onclick="showView('settings-view', this)">
                 <i class="bi bi-gear"></i> 系统设置
             </a>
         </nav>
@@ -680,16 +809,15 @@
             <div th:if="${currentAdmin != null && currentTeacher == null}" class="text-center">
                 <small class="text-muted">当前用户</small>
                 <div class="fw-bold" th:text="${currentAdmin.realName}"></div>
-                <span class="role-badge" 
-                      th:classappend="${currentAdmin.role.name == 'SUPER_ADMIN' ? 'super-admin' : (currentAdmin.role.name == 'DEPT_ADMIN' ? 'dept-admin' : '')}"
-                      th:text="${currentAdmin.role.description}"></span>
+                <span class="role-badge"
+                    th:classappend="${currentAdmin.role.name == 'SUPER_ADMIN' ? 'super-admin' : (currentAdmin.role.name == 'DEPT_ADMIN' ? 'dept-admin' : (currentAdmin.role.name == 'STUDENT' ? 'student' : ''))}"
+                    th:text="${currentAdmin.role.description}"></span>
             </div>
             <div th:if="${currentTeacher != null}" class="text-center">
                 <small class="text-muted">当前用户</small>
                 <div class="fw-bold" th:text="${currentTeacher.name}"></div>
-                <span class="role-badge" 
-                      th:classappend="${isDefenseLeader ? 'defense-leader' : 'teacher'}"
-                      th:text="${isDefenseLeader ? '答辩组长' : '教师'}"></span>
+                <span class="role-badge" th:classappend="${isDefenseLeader ? 'defense-leader' : 'teacher'}"
+                    th:text="${isDefenseLeader ? '答辩组长' : '教师'}"></span>
             </div>
             <div class="mt-2">
                 <a href="/logout" class="btn btn-sm btn-outline-secondary w-100">
@@ -812,6 +940,38 @@
                 </div>
             </div>
 
+            <!-- STUDENT 专属统计卡片 -->
+            <div class="dashboard-stats" id="stats-student" style="display:none;">
+                <div class="stat-card stat-card-primary">
+                    <div class="stat-icon"><i class="bi bi-ui-checks-grid"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="st-preference-status">未提交</div>
+                        <div class="stat-label">志愿填报</div>
+                    </div>
+                </div>
+                <div class="stat-card stat-card-success">
+                    <div class="stat-icon"><i class="bi bi-person-check-fill"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="st-advisor-name">--</div>
+                        <div class="stat-label">录取导师</div>
+                    </div>
+                </div>
+                <div class="stat-card stat-card-warning">
+                    <div class="stat-icon"><i class="bi bi-clipboard-check"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="st-final-score">--</div>
+                        <div class="stat-label">答辩成绩</div>
+                    </div>
+                </div>
+                <div class="stat-card stat-card-info">
+                    <div class="stat-icon"><i class="bi bi-calendar-check-fill"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="st-defense-year">--</div>
+                        <div class="stat-label">答辩年份</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- 快捷操作区 -->
             <div class="module mb-3" id="dashboard-quick-actions">
                 <div class="module-header">
@@ -823,6 +983,44 @@
             </div>
 
             <!-- 主内容区 - 根据角色动态显示 -->
+            <!-- STUDENT 专属内容区 -->
+            <div class="main-grid" id="content-student" style="display:none;">
+                <div class="module">
+                    <div class="module-header">
+                        <h4><i class="bi bi-person-lines-fill"></i> 学生信息</h4>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6"><strong>学号：</strong><span id="st-info-no">--</span></div>
+                        <div class="col-md-6"><strong>姓名：</strong><span id="st-info-name">--</span></div>
+                        <div class="col-md-6"><strong>班级：</strong><span id="st-info-class">--</span></div>
+                        <div class="col-md-6"><strong>院系：</strong><span id="st-info-dept">--</span></div>
+                        <div class="col-md-6"><strong>答辩类型：</strong><span id="st-info-type">--</span></div>
+                        <div class="col-md-6"><strong>答辩日期：</strong><span id="st-info-date">--</span></div>
+                        <div class="col-md-12"><strong>题目：</strong><span id="st-info-title">--</span></div>
+                        <div class="col-md-12"><strong>摘要：</strong><span id="st-info-summary">--</span></div>
+                    </div>
+                </div>
+                <div class="module">
+                    <div class="module-header">
+                        <h4><i class="bi bi-flag"></i> 当前状态</h4>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>志愿填报</span>
+                            <span id="st-status-preference" class="badge bg-secondary">未提交</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>录取导师</span>
+                            <span id="st-status-advisor" class="badge bg-secondary">--</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>答辩成绩</span>
+                            <span id="st-status-score" class="badge bg-secondary">--</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
             <!-- SUPER_ADMIN 专属内容区 -->
             <div class="main-grid" id="content-super-admin" style="display:none;">
                 <div class="module">
@@ -855,7 +1053,8 @@
                             <button class="btn btn-outline-primary" onclick="showView('user-management-view', this)">
                                 <i class="bi bi-people"></i> 用户管理
                             </button>
-                            <button class="btn btn-outline-primary" onclick="showView('department-management-view', this)">
+                            <button class="btn btn-outline-primary"
+                                onclick="showView('department-management-view', this)">
                                 <i class="bi bi-building"></i> 院系管理
                             </button>
                             <button class="btn btn-outline-primary" onclick="showView('settings-view', this)">
@@ -878,7 +1077,8 @@
                     </div>
                     <div id="group-list">
                         <div th:each="group : ${groups}" class="group-item" th:data-id="${group.id}"
-                            th:data-name="${group.name}" th:data-score="${group.score}" th:data-dept-id="${group.departmentId}">
+                            th:data-name="${group.name}" th:data-score="${group.score}"
+                            th:data-dept-id="${group.departmentId}">
                             <i class="bi bi-grip-vertical drag-handle"></i>
                             <div class="group-info">
                                 <h6 th:text="${group.name}"></h6>
@@ -1096,8 +1296,7 @@
             <!-- 教师签名上传提示（仅教师可见） -->
             <div id="teacher-signature-hint" class="alert alert-info mb-3" style="display: none;">
                 <i class="bi bi-info-circle"></i>
-                <strong>提示：</strong>请前往 <a href="javascript:void(0);"
-                    onclick="showView('settings-view', this)">系统设置</a>
+                <strong>提示：</strong>请前往 <a href="javascript:void(0);" onclick="showView('settings-view', this)">系统设置</a>
                 页面上传您的签名图片，签名将用于导出成绩表。
             </div>
             <div class="module">
@@ -1190,7 +1389,8 @@
                 </div>
                 <!-- 学号搜索功能（仅超级管理员可见） -->
                 <div class="input-group mb-3" id="review-student-search-container" style="display: none;">
-                    <input type="text" id="review-student-search" class="form-control" placeholder="输入学号搜索..." onkeypress="if(event.key==='Enter') searchReviewStudents()">
+                    <input type="text" id="review-student-search" class="form-control" placeholder="输入学号搜索..."
+                        onkeypress="if(event.key==='Enter') searchReviewStudents()">
                     <button class="btn btn-outline-secondary" type="button" onclick="searchReviewStudents()">
                         <i class="bi bi-search"></i> 搜索
                     </button>
@@ -1222,9 +1422,11 @@
                     </table>
                 </div>
                 <!-- Pagination for Review Students (Super Admin) -->
-                <nav class="d-flex justify-content-between align-items-center mt-3" id="review-pagination-nav" style="display: none;">
+                <nav class="d-flex justify-content-between align-items-center mt-3" id="review-pagination-nav"
+                    style="display: none;">
                     <div class="d-flex align-items-center">
-                        <small class="text-muted me-3" id="review-pagination-info" style="display: none;">显示 0-0 条，共 0 条</small>
+                        <small class="text-muted me-3" id="review-pagination-info" style="display: none;">显示 0-0 条，共 0
+                            条</small>
                     </div>
                     <ul class="pagination pagination-sm mb-0" id="review-pagination">
                         <!-- 分页按钮将由 JavaScript 生成 -->
@@ -1951,10 +2153,12 @@
                         </button>
                         <!-- 小组筛选功能（仅超级管理员可见） -->
                         <div class="input-group" id="ts-group-filter-container" style="display: none; width: auto;">
-                            <select class="form-select" id="ts-group-filter" onkeypress="if(event.key==='Enter') filterTeacherGroupStudents()">
+                            <select class="form-select" id="ts-group-filter"
+                                onkeypress="if(event.key==='Enter') filterTeacherGroupStudents()">
                                 <option value="">全部小组</option>
                             </select>
-                            <button class="btn btn-outline-secondary" type="button" onclick="filterTeacherGroupStudents()">
+                            <button class="btn btn-outline-secondary" type="button"
+                                onclick="filterTeacherGroupStudents()">
                                 <i class="bi bi-filter"></i> 筛选
                             </button>
                         </div>
@@ -1985,9 +2189,11 @@
                     </table>
                 </div>
                 <!-- Pagination for Teacher Scoring (Super Admin) -->
-                <nav class="d-flex justify-content-between align-items-center mt-3" id="ts-pagination-nav" style="display: none;">
+                <nav class="d-flex justify-content-between align-items-center mt-3" id="ts-pagination-nav"
+                    style="display: none;">
                     <div class="d-flex align-items-center">
-                        <small class="text-muted me-3" id="ts-pagination-info" style="display: none;">显示 0-0 条，共 0 条</small>
+                        <small class="text-muted me-3" id="ts-pagination-info" style="display: none;">显示 0-0 条，共 0
+                            条</small>
                     </div>
                     <ul class="pagination pagination-sm mb-0" id="ts-pagination">
                         <!-- 分页按钮将由 JavaScript 生成 -->
@@ -2226,7 +2432,8 @@
                     <form id="addGroupForm">
                         <div class="mb-3">
                             <div class="form-check mb-3">
-                                <input class="form-check-input" type="checkbox" id="batchCreateMode" onchange="toggleBatchCreateMode()">
+                                <input class="form-check-input" type="checkbox" id="batchCreateMode"
+                                    onchange="toggleBatchCreateMode()">
                                 <label class="form-check-label" for="batchCreateMode">
                                     批量创建多个小组
                                 </label>
@@ -2241,7 +2448,8 @@
                         <div id="batchGroupMode" style="display: none;">
                             <div class="mb-3">
                                 <label for="batchGroupCount" class="form-label">要创建的小组个数</label>
-                                <input type="number" class="form-control" id="batchGroupCount" min="1" max="50" value="1" placeholder="请输入要创建的小组个数">
+                                <input type="number" class="form-control" id="batchGroupCount" min="1" max="50"
+                                    value="1" placeholder="请输入要创建的小组个数">
                                 <small class="form-text text-muted">小组名称将自动生成为"第n+1小组"、"第n+2小组"等格式</small>
                             </div>
                         </div>
@@ -2335,6 +2543,22 @@
                         <div class="col-md-6">
                             <label for="studentName" class="form-label">姓名 <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="studentName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="classInfo" class="form-label">班级</label>
+                            <input type="text" class="form-control" id="classInfo">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="studentPhone" class="form-label">联系电话</label>
+                            <input type="text" class="form-control" id="studentPhone">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="studentEmail" class="form-label">邮箱</label>
+                            <input type="email" class="form-control" id="studentEmail">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="defenseDate" class="form-label">答辩日期</label>
+                            <input type="date" class="form-control" id="defenseDate">
                         </div>
                         <div class="col-md-6">
                             <label for="studentDepartment" class="form-label">所属院系</label>
@@ -2469,6 +2693,156 @@
                             </div>
                         </div>
                     </div>
+        <!-- 学生信息视图 -->
+        <div id="student-profile-view" class="view-container" style="display: none;">
+            <div class="module">
+                <div class="module-header">
+                    <h4><i class="bi bi-person-lines-fill"></i> 学生信息</h4>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6"><strong>学号：</strong><span id="sp-no">--</span></div>
+                    <div class="col-md-6"><strong>姓名：</strong><span id="sp-name">--</span></div>
+                    <div class="col-md-6"><strong>班级：</strong><span id="sp-class">--</span></div>
+                    <div class="col-md-6"><strong>院系：</strong><span id="sp-dept">--</span></div>
+                    <div class="col-md-6"><strong>答辩类型：</strong><span id="sp-type">--</span></div>
+                    <div class="col-md-6"><strong>答辩日期：</strong><span id="sp-date">--</span></div>
+                    <div class="col-md-12"><strong>题目：</strong><span id="sp-title">--</span></div>
+                    <div class="col-md-12"><strong>摘要：</strong><span id="sp-summary">--</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 教师信息视图 -->
+        <div id="student-teacher-info-view" class="view-container" style="display: none;">
+            <div class="module">
+                <div class="module-header">
+                    <h4><i class="bi bi-journal-text"></i> 教师信息</h4>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>教师编号</th>
+                                <th>姓名</th>
+                                <th>职称</th>
+                                <th>研究方向</th>
+                                <th>招生要求</th>
+                            </tr>
+                        </thead>
+                        <tbody id="student-teacher-list">
+                            <tr><td colspan="5" class="text-center text-muted">加载中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 志愿填报视图 -->
+        <div id="student-preference-view" class="view-container" style="display: none;">
+            <div class="module">
+                <div class="module-header">
+                    <h4><i class="bi bi-ui-checks-grid"></i> 志愿填报</h4>
+                </div>
+                <form id="student-preference-form" class="row g-3" enctype="multipart/form-data">
+                    <input type="hidden" id="pref-choice-target" value="">
+                    <div class="col-12">
+                        <div class="alert alert-light">
+                            请依次选择第一、第二、第三志愿导师，并上传符合导师要求的 PDF 材料。
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-primary">第一志愿</span>
+                            <input type="text" class="form-control" id="pref-choice1-name" placeholder="请选择导师" readonly>
+                            <input type="hidden" id="pref-choice1-id" name="choice1">
+                            <button type="button" class="btn btn-outline-primary" onclick="openTeacherSelectModal(1)">选择</button>
+                        </div>
+                        <div class="mt-2">
+                            <input type="file" class="form-control" id="pref-file1" name="file1" accept="application/pdf">
+                            <small class="text-muted" id="pref-file1-name"></small>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-secondary">第二志愿</span>
+                            <input type="text" class="form-control" id="pref-choice2-name" placeholder="请选择导师" readonly>
+                            <input type="hidden" id="pref-choice2-id" name="choice2">
+                            <button type="button" class="btn btn-outline-primary" onclick="openTeacherSelectModal(2)">选择</button>
+                        </div>
+                        <div class="mt-2">
+                            <input type="file" class="form-control" id="pref-file2" name="file2" accept="application/pdf">
+                            <small class="text-muted" id="pref-file2-name"></small>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-dark">第三志愿</span>
+                            <input type="text" class="form-control" id="pref-choice3-name" placeholder="请选择导师" readonly>
+                            <input type="hidden" id="pref-choice3-id" name="choice3">
+                            <button type="button" class="btn btn-outline-primary" onclick="openTeacherSelectModal(3)">选择</button>
+                        </div>
+                        <div class="mt-2">
+                            <input type="file" class="form-control" id="pref-file3" name="file3" accept="application/pdf">
+                            <small class="text-muted" id="pref-file3-name"></small>
+                        </div>
+                    </div>
+                    <div class="col-12 d-flex gap-2">
+                        <button type="button" class="btn btn-primary" onclick="submitStudentPreference()">提交志愿</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="loadStudentPreference()">刷新</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 结果查询视图 -->
+        <div id="student-result-view" class="view-container" style="display: none;">
+            <div class="module">
+                <div class="module-header">
+                    <h4><i class="bi bi-clipboard-check"></i> 结果查询</h4>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6"><strong>录取导师：</strong><span id="sr-advisor">--</span></div>
+                    <div class="col-md-6"><strong>答辩成绩：</strong><span id="sr-score">--</span></div>
+                    <div class="col-md-6"><strong>总评成绩：</strong><span id="sr-total">--</span></div>
+                    <div class="col-md-6"><strong>调节系数：</strong><span id="sr-factor">--</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 学生志愿选择导师弹窗 -->
+        <div class="modal fade" id="studentTeacherSelectModal" tabindex="-1" aria-labelledby="studentTeacherSelectModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="studentTeacherSelectModalLabel">选择导师</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 60px;">选择</th>
+                                        <th>教师编号</th>
+                                        <th>姓名</th>
+                                        <th>职称</th>
+                                        <th>研究方向</th>
+                                        <th>招生要求</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="student-teacher-select-list">
+                                    <tr><td colspan="6" class="text-center text-muted">加载中...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" onclick="confirmTeacherSelect()">确定</button>
+                    </div>
+                </div>
+            </div>
+        </div>
                     <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                         <table class="table table-hover align-middle">
                             <thead class="table-light sticky-top">
@@ -2789,9 +3163,26 @@
                     }
                 }
 
+                // 学生登录：仅保留总览入口，隐藏管理类菜单
+                if (userRole === "STUDENT") {
+                    const navLinks = document.querySelectorAll("#sidebar-nav .nav-link");
+                    navLinks.forEach(link => {
+                        const onclickAttr = link.getAttribute("onclick") || "";
+                        if (!onclickAttr.includes("dashboard-view")) {
+                            link.style.display = "none";
+                        }
+                    });
+                    if (navScoreView) navScoreView.style.display = "none";
+                    if (navSettings) navSettings.style.display = "none";
+                    if (navGroupManagement) navGroupManagement.style.display = "none";
+                    if (navUserManagement) navUserManagement.style.display = "none";
+                    if (navDepartmentManagement) navDepartmentManagement.style.display = "none";
+                }
                 // 初始化导出选项和模块显示
-                setupExportOptionsByRole();
-                setupExportModulesByRole();
+                if (userRole !== "STUDENT") {
+                    setupExportOptionsByRole();
+                    setupExportModulesByRole();
+                }
 
                 // 初始化答辩总览页面的按钮显示（页面加载时默认显示dashboard-view）
                 setupDashboardButtonsByRole();
@@ -2897,6 +3288,22 @@
             // Optimized Initial Load
             const initialData = getGroupData();
             updateSummaryCards(initialData);
+
+            // 学生志愿附件名称显示
+            ['1', '2', '3'].forEach(slot => {
+                const input = document.getElementById(`pref-file${slot}`);
+                if (input) {
+                    input.addEventListener('change', function () {
+                        const label = document.getElementById(`pref-file${slot}-name`);
+                        if (!label) return;
+                        if (input.files && input.files.length > 0) {
+                            label.textContent = input.files[0].name;
+                        } else {
+                            label.textContent = '';
+                        }
+                    });
+                }
+            });
         });
 
         function showLoginSuccessAlert() {
@@ -2963,9 +3370,21 @@
             // if (viewId === 'group-management-view') {
             //     gtInit();
             // }
+            if (viewId === 'student-profile-view') {
+                loadStudentProfile();
+            }
+            if (viewId === 'student-teacher-info-view') {
+                loadStudentTeachers();
+            }
+            if (viewId === 'student-preference-view') {
+                loadStudentPreference();
+            }
+            if (viewId === 'student-result-view') {
+                loadStudentResult();
+            }
             if (viewId === 'student-management-view') {
                 loadStudents();
-                
+
                 // 检查用户角色，如果是答辩组长，隐藏分页信息
                 const userInfoDiv = document.querySelector('.user-info');
                 const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
@@ -2974,19 +3393,19 @@
                     if (studentPaginationInfo) {
                         studentPaginationInfo.style.display = 'none';
                     }
-                    
+
                     // 同时隐藏分页导航
                     const studentPaginationNav = document.querySelector('#student-management-view nav');
                     if (studentPaginationNav) {
                         studentPaginationNav.style.display = 'none';
                     }
-                    
+
                     // 隐藏批量删除按钮
                     const batchDeleteBtn = document.getElementById('batch-delete-student-btn');
                     if (batchDeleteBtn) {
                         batchDeleteBtn.style.display = 'none';
                     }
-                    
+
                     // 隐藏全选复选框
                     const selectAllCheckbox = document.getElementById('student-select-all');
                     if (selectAllCheckbox) {
@@ -3038,7 +3457,7 @@
             if (viewId === 'teacher-scoring-view') {
                 // 教师小组打分页面加载
                 loadTeacherGroupStudents();
-                
+
                 // 检查用户角色，如果是教师或答辩组长，隐藏分页信息
                 const userInfoDiv = document.querySelector('.user-info');
                 const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
@@ -3056,7 +3475,7 @@
             if (viewId === 'review-management-view') {
                 // 打分管理页面加载
                 loadScoringManagementData();
-                
+
                 // 检查用户角色，如果是教师或答辩组长，隐藏分页信息
                 const userInfoDiv = document.querySelector('.user-info');
                 const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
@@ -3169,14 +3588,14 @@
         // --- Group Management Functions ---
         let currentGroupIdForAddStudent = null;
         const PAGE_SIZE = 10; // 每页显示10条
-        
+
         // 分页数据缓存
         let unassignedStudentsCache = [];
         let groupStudentsCache = [];
         let unassignedTeachersCache = [];
         let groupTeachersCache = [];
         let leaderTeachersCache = [];
-        
+
         // 当前页码
         let addStudentCurrentPage = 1;
         let removeStudentCurrentPage = 1;
@@ -3218,17 +3637,17 @@
                 tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
             }
         }
-        
+
         // 渲染未分配学生分页
         function renderUnassignedStudentsPage(page) {
             const tbody = document.getElementById('unassigned-student-list');
             const totalPages = Math.ceil(unassignedStudentsCache.length / PAGE_SIZE);
             addStudentCurrentPage = page;
-            
+
             const startIdx = (page - 1) * PAGE_SIZE;
             const endIdx = Math.min(startIdx + PAGE_SIZE, unassignedStudentsCache.length);
             const pageData = unassignedStudentsCache.slice(startIdx, endIdx);
-            
+
             tbody.innerHTML = '';
             pageData.forEach(student => {
                 const defenseTypeText = student.defenseType === 'PAPER' ? '论文' : '设计';
@@ -3247,36 +3666,36 @@
                 `;
                 tbody.appendChild(row);
             });
-            
+
             // 渲染分页控件
             renderPagination('add-student-pagination', totalPages, page, (p) => renderUnassignedStudentsPage(p));
         }
-        
+
         // 通用分页渲染函数
         function renderPagination(navId, totalPages, currentPage, callback) {
             const nav = document.getElementById(navId);
-            
+
             if (totalPages <= 1) {
                 // 即使只有一页，也要显示分页信息
                 nav.style.display = 'flex';
                 const ul = nav.querySelector('ul');
                 ul.innerHTML = '<li class="page-item active"><a class="page-link" href="javascript:void(0)">1</a></li><li class="page-item disabled ms-2"><span class="page-link">共 1 页</span></li>';
-                
+
                 // 保存回调函数
                 if (!window.paginationCallbacks) window.paginationCallbacks = {};
                 window.paginationCallbacks[navId] = callback;
                 return;
             }
-            
+
             nav.style.display = 'flex';
             const ul = nav.querySelector('ul');
             let html = '';
-            
+
             // 上一页
             html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
                 <a class="page-link" href="javascript:void(0)" onclick="if(${currentPage} > 1) window.paginationCallbacks['${navId}'](${currentPage - 1})">«</a>
             </li>`;
-            
+
             // 页码
             const maxVisible = 5;
             let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
@@ -3284,23 +3703,23 @@
             if (endPage - startPage < maxVisible - 1) {
                 startPage = Math.max(1, endPage - maxVisible + 1);
             }
-            
+
             for (let i = startPage; i <= endPage; i++) {
                 html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
                     <a class="page-link" href="javascript:void(0)" onclick="window.paginationCallbacks['${navId}'](${i})">${i}</a>
                 </li>`;
             }
-            
+
             // 下一页
             html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
                 <a class="page-link" href="javascript:void(0)" onclick="if(${currentPage} < ${totalPages}) window.paginationCallbacks['${navId}'](${currentPage + 1})">»</a>
             </li>`;
-            
+
             // 显示总数
             html += `<li class="page-item disabled ms-2"><span class="page-link">共 ${totalPages} 页</span></li>`;
-            
+
             ul.innerHTML = html;
-            
+
             // 保存回调函数
             if (!window.paginationCallbacks) window.paginationCallbacks = {};
             window.paginationCallbacks[navId] = callback;
@@ -3401,17 +3820,17 @@
                 tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
             }
         }
-        
+
         // 渲染小组学生分页
         function renderGroupStudentsPage(page) {
             const tbody = document.getElementById('group-student-list');
             const totalPages = Math.ceil(groupStudentsCache.length / PAGE_SIZE);
             removeStudentCurrentPage = page;
-            
+
             const startIdx = (page - 1) * PAGE_SIZE;
             const endIdx = Math.min(startIdx + PAGE_SIZE, groupStudentsCache.length);
             const pageData = groupStudentsCache.slice(startIdx, endIdx);
-            
+
             tbody.innerHTML = '';
             pageData.forEach(student => {
                 const defenseTypeText = student.defenseType === 'PAPER' ? '论文' : '设计';
@@ -3430,7 +3849,7 @@
                 `;
                 tbody.appendChild(row);
             });
-            
+
             renderPagination('remove-student-pagination', totalPages, page, (p) => renderGroupStudentsPage(p));
         }
 
@@ -3533,17 +3952,17 @@
                 tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
             }
         }
-        
+
         // 渲染未分配教师分页
         function renderUnassignedTeachersPage(page) {
             const tbody = document.getElementById('unassigned-teacher-list');
             const totalPages = Math.ceil(unassignedTeachersCache.length / PAGE_SIZE);
             assignTeacherCurrentPage = page;
-            
+
             const startIdx = (page - 1) * PAGE_SIZE;
             const endIdx = Math.min(startIdx + PAGE_SIZE, unassignedTeachersCache.length);
             const pageData = unassignedTeachersCache.slice(startIdx, endIdx);
-            
+
             tbody.innerHTML = '';
             pageData.forEach(teacher => {
                 if (!teacher || !teacher.id) {
@@ -3561,7 +3980,7 @@
                 `;
                 tbody.appendChild(row);
             });
-            
+
             renderPagination('assign-teacher-pagination', totalPages, page, (p) => renderUnassignedTeachersPage(p));
         }
 
@@ -3660,17 +4079,17 @@
                 tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
             }
         }
-        
+
         // 渲染小组教师分页
         function renderGroupTeachersPage(page) {
             const tbody = document.getElementById('group-teacher-list');
             const totalPages = Math.ceil(groupTeachersCache.length / PAGE_SIZE);
             removeTeacherCurrentPage = page;
-            
+
             const startIdx = (page - 1) * PAGE_SIZE;
             const endIdx = Math.min(startIdx + PAGE_SIZE, groupTeachersCache.length);
             const pageData = groupTeachersCache.slice(startIdx, endIdx);
-            
+
             tbody.innerHTML = '';
             pageData.forEach(gt => {
                 const teacher = gt.teacher;
@@ -3690,7 +4109,7 @@
                 `;
                 tbody.appendChild(row);
             });
-            
+
             renderPagination('remove-teacher-pagination', totalPages, page, (p) => renderGroupTeachersPage(p));
         }
 
@@ -3789,17 +4208,17 @@
                 tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
             }
         }
-        
+
         // 渲染设定组长教师分页
         function renderLeaderTeachersPage(page) {
             const tbody = document.getElementById('group-leader-teacher-list');
             const totalPages = Math.ceil(leaderTeachersCache.length / PAGE_SIZE);
             setLeaderCurrentPage = page;
-            
+
             const startIdx = (page - 1) * PAGE_SIZE;
             const endIdx = Math.min(startIdx + PAGE_SIZE, leaderTeachersCache.length);
             const pageData = leaderTeachersCache.slice(startIdx, endIdx);
-            
+
             tbody.innerHTML = '';
             pageData.forEach(gt => {
                 const teacher = gt.teacher;
@@ -3824,7 +4243,7 @@
                 `;
                 tbody.appendChild(row);
             });
-            
+
             renderPagination('set-leader-pagination', totalPages, page, (p) => renderLeaderTeachersPage(p));
         }
 
@@ -4074,7 +4493,7 @@
 
             // Dept admin can edit teachers and leaders in their dept
             if (currentUserRole === 'DEPT_ADMIN') {
-                if ((targetRole === 'TEACHER' || targetRole === 'DEFENSE_LEADER') && String(targetUser.departmentId) === currentUserDept) {
+                if ((targetRole === 'TEACHER' || targetRole === 'DEFENSE_LEADER' || targetRole === 'STUDENT') && String(targetUser.departmentId) === currentUserDept) {
                     return true;
                 }
             }
@@ -4478,25 +4897,25 @@
                 updateStudentTableHeaderForLeader();
                 hideAdminStudentButtons();
                 loadLeaderGroupScores();
-                
+
                 // 答辩组长模式下隐藏分页信息
                 const studentPaginationInfo = document.getElementById('student-pagination-info');
                 if (studentPaginationInfo) {
                     studentPaginationInfo.style.display = 'none';
                 }
-                
+
                 // 同时隐藏分页导航
                 const studentPaginationNav = document.querySelector('#student-management-view nav');
                 if (studentPaginationNav) {
                     studentPaginationNav.style.display = 'none';
                 }
-                
+
                 // 隐藏批量删除按钮
                 const batchDeleteBtn = document.getElementById('batch-delete-student-btn');
                 if (batchDeleteBtn) {
                     batchDeleteBtn.style.display = 'none';
                 }
-                
+
                 // 隐藏全选复选框
                 const selectAllCheckbox = document.getElementById('student-select-all');
                 if (selectAllCheckbox) {
@@ -4617,20 +5036,20 @@
             // 更新信息
             const start = (currentPage - 1) * studentPageSize + 1;
             const end = Math.min(currentPage * studentPageSize, total);
-            
+
             // 检查用户角色
             const userInfoDiv = document.querySelector('.user-info');
             const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
-            
+
             paginationInfo.textContent = `显示 ${start}-${end} 条，共 ${total} 条`;
-            
+
             // 如果是教师或答辩组长，隐藏分页信息
             if (userRole === 'TEACHER' || userRole === 'DEFENSE_LEADER') {
                 paginationInfo.style.display = 'none';
             } else {
                 paginationInfo.style.display = 'inline';
             }
-            
+
             // 生成分页按钮
             pagination.innerHTML = '';
 
@@ -4912,6 +5331,10 @@
                 document.getElementById('studentId').value = student.id || '';
                 document.getElementById('studentNo').value = student.studentNo || '';
                 document.getElementById('studentName').value = student.name || '';
+                document.getElementById('classInfo').value = student.classInfo || '';
+                document.getElementById('studentPhone').value = student.phone || '';
+                document.getElementById('studentEmail').value = student.email || '';
+                document.getElementById('defenseDate').value = student.defenseDate ? String(student.defenseDate).split('T')[0] : '';
                 document.getElementById('studentDepartment').value = student.departmentId || '';
                 document.getElementById('defenseType').value = student.defenseType || '';
                 document.getElementById('title').value = student.title || '';
@@ -5051,6 +5474,10 @@
                 id: studentId || null,
                 studentNo: studentNo,
                 name: studentName,
+                classInfo: document.getElementById('classInfo').value || null,
+                phone: document.getElementById('studentPhone').value || null,
+                email: document.getElementById('studentEmail').value || null,
+                defenseDate: document.getElementById('defenseDate').value || null,
                 defenseType: document.getElementById('defenseType').value || null,
                 title: document.getElementById('title').value || null,
                 summary: document.getElementById('summary').value || null,
@@ -5316,13 +5743,13 @@
                     loadAdvisedStudentsForScoring(),
                     loadReviewedStudents()
                 ]);
-                
+
                 // 隐藏搜索控件
                 const searchContainer = document.getElementById('review-student-search-container');
                 if (searchContainer) {
                     searchContainer.style.display = 'none';
                 }
-                
+
                 // 检查用户角色，如果是教师或答辩组长，确保隐藏分页信息
                 const userInfoDiv = document.querySelector('.user-info');
                 const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
@@ -5364,7 +5791,7 @@
                 }
 
                 renderLeaderGroupScoresTable(students);
-                
+
                 // 检查用户角色，如果是答辩组长，隐藏分页信息
                 const userInfoDiv = document.querySelector('.user-info');
                 const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
@@ -5373,19 +5800,19 @@
                     if (studentPaginationInfo) {
                         studentPaginationInfo.style.display = 'none';
                     }
-                    
+
                     // 同时隐藏分页导航
                     const studentPaginationNav = document.querySelector('#student-management-view nav');
                     if (studentPaginationNav) {
                         studentPaginationNav.style.display = 'none';
                     }
-                    
+
                     // 隐藏批量删除按钮
                     const batchDeleteBtn = document.getElementById('batch-delete-student-btn');
                     if (batchDeleteBtn) {
                         batchDeleteBtn.style.display = 'none';
                     }
-                    
+
                     // 隐藏全选复选框
                     const selectAllCheckbox = document.getElementById('student-select-all');
                     if (selectAllCheckbox) {
@@ -5578,7 +6005,7 @@
                     const paginationNav = document.getElementById('review-pagination-nav');
                     if (paginationNav) paginationNav.style.display = 'flex';
                     renderReviewStudentsPage(page);
-                                
+
                     // 清空搜索框
                     const searchInput = document.getElementById('review-student-search');
                     if (searchInput) searchInput.value = '';
@@ -5588,7 +6015,7 @@
                     const paginationNav = document.getElementById('review-pagination-nav');
                     if (paginationNav) paginationNav.style.display = 'none';
                     renderReviewStudentsList(reviewStudentsData, isAdmin);
-                    
+
                     // 检查用户角色，如果是教师或答辩组长，确保隐藏分页信息
                     const userInfoDiv = document.querySelector('.user-info');
                     const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
@@ -5609,31 +6036,31 @@
         async function searchReviewStudents() {
             const searchInput = document.getElementById('review-student-search').value.trim();
             const tbody = document.getElementById('review-student-list');
-            
+
             // 检查是否是超级管理员
             const userInfoDiv = document.querySelector('.user-info');
             const isSuperAdmin = userInfoDiv && userInfoDiv.dataset.userRole === 'SUPER_ADMIN';
-            
+
             if (!isSuperAdmin) {
                 showAlert('warning', '只有超级管理员可以进行搜索');
                 return;
             }
-            
+
             if (!searchInput) {
                 // 如果搜索框为空，重新加载所有数据
                 isSearchMode = false; // 重置搜索模式
                 loadReviewedStudents();
                 return;
             }
-            
+
             try {
                 tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">搜索中...</td></tr>';
-                
+
                 // 使用原始数据进行搜索
-                const filteredStudents = reviewStudentsData.filter(student => 
+                const filteredStudents = reviewStudentsData.filter(student =>
                     student.studentNo && student.studentNo.includes(searchInput)
                 );
-                
+
                 if (filteredStudents.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">未找到匹配的学生</td></tr>';
                     // 更新分页信息
@@ -5645,18 +6072,18 @@
                     isSearchMode = false;
                     return;
                 }
-                
+
                 // 临时更新全局数据为搜索结果
                 const originalData = reviewStudentsData;
                 reviewStudentsData = filteredStudents;
                 isSearchMode = true;
-                
+
                 // 渲染搜索结果
                 renderReviewStudentsPage(1); // 从第一页开始显示
-                
+
                 // 恢复原始数据
                 reviewStudentsData = originalData;
-                
+
                 // 检查用户角色，如果是教师或答辩组长，确保隐藏分页信息
                 const userInfoDiv = document.querySelector('.user-info');
                 const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
@@ -5666,7 +6093,7 @@
                         reviewPaginationInfo.style.display = 'none';
                     }
                 }
-                
+
             } catch (error) {
                 console.error('搜索评阅学生失败:', error);
                 tbody.innerHTML = `<tr><td colspan="10" class="text-center text-danger">搜索失败: ${error.message}</td></tr>`;
@@ -5749,18 +6176,18 @@
             // 更新信息
             const start = (currentPage - 1) * reviewPageSize + 1;
             const end = Math.min(currentPage * reviewPageSize, total);
-            
+
             // 检查用户角色
             const userInfoDiv = document.querySelector('.user-info');
             const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
-            
+
             // 根据是否为搜索模式显示不同的分页信息
             if (isSearchMode) {
                 paginationInfo.textContent = `显示 ${start}-${end} 条，共 ${total} 条 (搜索结果)`;
             } else {
                 paginationInfo.textContent = `显示 ${start}-${end} 条，共 ${total} 条`;
             }
-            
+
             // 如果是教师或答辩组长，隐藏分页信息
             if (userRole === 'TEACHER' || userRole === 'DEFENSE_LEADER') {
                 paginationInfo.style.display = 'none';
@@ -5935,13 +6362,13 @@
         // 验证分数输入，确保不超过满分
         function validateScoreInput(input, maxScore) {
             let value = parseFloat(input.value);
-            
+
             // 如果输入为空或无效，设置为0
             if (isNaN(value) || value < 0) {
                 input.value = 0;
                 return;
             }
-            
+
             // 如果超过满分，自动修正为满分并提示
             if (value > maxScore) {
                 input.value = maxScore;
@@ -5998,7 +6425,7 @@
                     hasError = true;
                 }
             }
-            
+
             if (hasError) {
                 showAlert('error', '存在超过满分的分数，请检查后重新提交');
                 return;
@@ -6361,7 +6788,7 @@
                     hasError = true;
                 }
             }
-            
+
             if (hasError) {
                 showAlert('error', '存在超过满分的分数，请检查后重新提交');
                 return;
@@ -6583,7 +7010,7 @@
                     hasError = true;
                 }
             }
-            
+
             if (hasError) {
                 showAlert('error', '存在超过满分的分数，请检查后重新提交');
                 return;
@@ -8327,15 +8754,15 @@
             // 清空评语内容区域
             const commentContent = document.getElementById('comment-content');
             commentContent.value = '';
-            
+
             toggleLoading(true);
-            
+
             // 使用EventSource接收流式数据
             const eventSource = new EventSource(
                 `/defense/comment/generateStream?studentId=${currentCommentStudentId}&year=${currentCommentYear}`
             );
 
-            eventSource.onmessage = function(event) {
+            eventSource.onmessage = function (event) {
                 // 接收到数据片段，追加到评语内容
                 const chunk = event.data;
                 commentContent.value += chunk;
@@ -8343,11 +8770,11 @@
                 commentContent.scrollTop = commentContent.scrollHeight;
             };
 
-            eventSource.onerror = function(event) {
+            eventSource.onerror = function (event) {
                 console.error('SSE error:', event);
                 eventSource.close();
                 toggleLoading(false);
-                
+
                 // 如果还没有任何内容，显示错误
                 if (!commentContent.value || commentContent.value.trim() === '') {
                     showAlert('error', '评语生成失败：连接中断');
@@ -8372,7 +8799,7 @@
             }, 1000);
 
             // 监听流正常结束
-            eventSource.addEventListener('complete', function() {
+            eventSource.addEventListener('complete', function () {
                 clearInterval(checkInterval);
                 eventSource.close();
                 toggleLoading(false);
@@ -8450,7 +8877,8 @@
             'SUPER_ADMIN': '超级管理员',
             'DEPT_ADMIN': '院系管理员',
             'DEFENSE_LEADER': '答辩组长',
-            'TEACHER': '教师'
+            'TEACHER': '教师',
+            'STUDENT': '学生'
         };
 
         // 根据用户角色控制答辩总览页面
@@ -8468,7 +8896,7 @@
 
             // 设置快捷操作按钮
             setupQuickActionButtons(userRole);
-            
+
             // 初始化角色化Dashboard
             initRoleBasedDashboard();
         }
@@ -8497,7 +8925,8 @@
                 'SUPER_ADMIN': ['student-management', 'user-management', 'department-management'],
                 'DEPT_ADMIN': ['group-management', 'student-management', 'review-management', 'user-management', 'teacher-scoring', 'large-group-defense', 'export', 'settings'],
                 'DEFENSE_LEADER': ['student-management', 'review-management', 'comment-management', 'teacher-scoring', 'large-group-defense', 'export', 'signature-management'],
-                'TEACHER': ['review-management', 'user-management', 'department-management', 'comment-management', 'export', 'signature-management']
+                'TEACHER': ['review-management', 'user-management', 'department-management', 'comment-management', 'export', 'signature-management'],
+                'STUDENT': []
             };
 
             const actions = roleActions[userRole] || [];
@@ -8580,14 +9009,16 @@
             if (!userInfoDiv) return;
 
             const userRole = userInfoDiv.dataset.userRole;
-            
+
             // 隐藏所有统计卡片区和内容区
             document.getElementById('stats-super-admin').style.display = 'none';
             document.getElementById('stats-dept-admin').style.display = 'none';
             document.getElementById('stats-teacher').style.display = 'none';
+            document.getElementById('stats-student').style.display = 'none';
             document.getElementById('content-super-admin').style.display = 'none';
             document.getElementById('content-dept-admin').style.display = 'none';
             document.getElementById('content-teacher').style.display = 'none';
+            document.getElementById('content-student').style.display = 'none';
 
             // 根据角色显示对应区域
             if (userRole === 'SUPER_ADMIN') {
@@ -8598,6 +9029,10 @@
                 document.getElementById('stats-dept-admin').style.display = 'grid';
                 document.getElementById('content-dept-admin').style.display = 'grid';
                 loadDeptAdminDashboard();
+            } else if (userRole === "STUDENT") {
+                document.getElementById('stats-student').style.display = 'grid';
+                document.getElementById('content-student').style.display = 'grid';
+                loadStudentDashboard();
             } else {
                 // DEFENSE_LEADER 或 TEACHER
                 document.getElementById('stats-teacher').style.display = 'grid';
@@ -8728,12 +9163,344 @@
             }
         }
 
+        // 学生端全局缓存
+        let studentTeacherListCache = [];
+        let studentTeacherSelectSlot = 1;
+
+        function formatDefenseTypeText(defenseType) {
+            if (defenseType === 'PAPER') return '论文';
+            if (defenseType === 'DESIGN') return '设计';
+            return '--';
+        }
+
+        function formatDateText(dateStr) {
+            if (!dateStr) return '--';
+            return String(dateStr).split('T')[0];
+        }
+
+        function formatNumberText(num, digits) {
+            if (num === null || num === undefined || num === '') return '--';
+            const n = Number(num);
+            if (Number.isNaN(n)) return '--';
+            return typeof digits === 'number' ? n.toFixed(digits) : n;
+        }
+
+        async function ensureStudentTeachersLoaded() {
+            if (studentTeacherListCache && studentTeacherListCache.length > 0) {
+                return studentTeacherListCache;
+            }
+            const resp = await fetch('/student/teachers');
+            if (resp.ok) {
+                studentTeacherListCache = await resp.json();
+            } else {
+                studentTeacherListCache = [];
+            }
+            return studentTeacherListCache;
+        }
+
+        function updatePreferenceStatus(isSubmitted) {
+            const text = isSubmitted ? '已提交' : '未提交';
+            const badgeClass = isSubmitted ? 'bg-success' : 'bg-secondary';
+            const statValue = document.getElementById('st-preference-status');
+            const statusBadge = document.getElementById('st-status-preference');
+            if (statValue) statValue.textContent = text;
+            if (statusBadge) {
+                statusBadge.textContent = text;
+                statusBadge.className = `badge ${badgeClass}`;
+            }
+        }
+
+        function updateAdvisorStatus(advisorName) {
+            const name = advisorName || '--';
+            const badgeClass = advisorName ? 'bg-success' : 'bg-secondary';
+            const statValue = document.getElementById('st-advisor-name');
+            const statusBadge = document.getElementById('st-status-advisor');
+            if (statValue) statValue.textContent = name;
+            if (statusBadge) {
+                statusBadge.textContent = name;
+                statusBadge.className = `badge ${badgeClass}`;
+            }
+        }
+
+        function updateScoreStatus(scoreText) {
+            const text = scoreText || '--';
+            const badgeClass = scoreText && scoreText !== '--' ? 'bg-success' : 'bg-secondary';
+            const statValue = document.getElementById('st-final-score');
+            const statusBadge = document.getElementById('st-status-score');
+            if (statValue) statValue.textContent = text;
+            if (statusBadge) {
+                statusBadge.textContent = text;
+                statusBadge.className = `badge ${badgeClass}`;
+            }
+        }
+
+        // 加载学生端Dashboard数据
+        async function loadStudentDashboard() {
+            try {
+                const [profileResp, prefResp, resultResp] = await Promise.allSettled([
+                    fetch('/student/me'),
+                    fetch('/student/preference'),
+                    fetch('/student/result')
+                ]);
+
+                if (profileResp.status === 'fulfilled' && profileResp.value.ok) {
+                    const profileData = await profileResp.value.json();
+                    if (!profileData.error && profileData.student) {
+                        const s = profileData.student;
+                        const deptName = s.department ? s.department.name : '--';
+                        document.getElementById('st-info-no').textContent = s.studentNo || '--';
+                        document.getElementById('st-info-name').textContent = s.name || '--';
+                        document.getElementById('st-info-class').textContent = s.classInfo || '--';
+                        document.getElementById('st-info-dept').textContent = deptName || '--';
+                        document.getElementById('st-info-type').textContent = formatDefenseTypeText(s.defenseType);
+                        document.getElementById('st-info-date').textContent = formatDateText(s.defenseDate);
+                        document.getElementById('st-info-title').textContent = s.title || '--';
+                        document.getElementById('st-info-summary').textContent = s.summary || '--';
+                        document.getElementById('st-defense-year').textContent = profileData.year || s.defenseYear || '--';
+                    }
+                }
+
+                if (prefResp.status === 'fulfilled' && prefResp.value.ok) {
+                    const prefData = await prefResp.value.json();
+                    const pref = prefData.preference;
+                    const submitted = !!(pref && (pref.choice1TeacherId || pref.choice2TeacherId || pref.choice3TeacherId));
+                    updatePreferenceStatus(submitted);
+                }
+
+                if (resultResp.status === 'fulfilled' && resultResp.value.ok) {
+                    const resultData = await resultResp.value.json();
+                    const advisor = resultData.advisor;
+                    const finalScore = resultData.finalScore;
+                    updateAdvisorStatus(advisor ? advisor.name : null);
+                    const defenseScoreText = finalScore && finalScore.finalDefenseScore != null
+                        ? formatNumberText(finalScore.finalDefenseScore, 1)
+                        : '--';
+                    updateScoreStatus(defenseScoreText);
+                }
+            } catch (e) {
+                console.error('加载学生Dashboard失败:', e);
+            }
+        }
+
+        // 学生信息
+        async function loadStudentProfile() {
+            try {
+                const resp = await fetch('/student/me');
+                if (!resp.ok) throw new Error('请求失败');
+                const data = await resp.json();
+                if (data.error || !data.student) {
+                    showAlert('error', data.error || '学生信息不存在');
+                    return;
+                }
+                const s = data.student;
+                document.getElementById('sp-no').textContent = s.studentNo || '--';
+                document.getElementById('sp-name').textContent = s.name || '--';
+                document.getElementById('sp-class').textContent = s.classInfo || '--';
+                document.getElementById('sp-dept').textContent = s.department ? s.department.name : '--';
+                document.getElementById('sp-type').textContent = formatDefenseTypeText(s.defenseType);
+                document.getElementById('sp-date').textContent = formatDateText(s.defenseDate);
+                document.getElementById('sp-title').textContent = s.title || '--';
+                document.getElementById('sp-summary').textContent = s.summary || '--';
+            } catch (e) {
+                console.error('加载学生信息失败:', e);
+                showAlert('error', '加载学生信息失败');
+            }
+        }
+
+        // 教师信息
+        async function loadStudentTeachers() {
+            const tbody = document.getElementById('student-teacher-list');
+            if (!tbody) return;
+            try {
+                const resp = await fetch('/student/teachers');
+                if (!resp.ok) throw new Error('请求失败');
+                const list = await resp.json();
+                studentTeacherListCache = list || [];
+                if (!list || list.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">暂无教师数据</td></tr>';
+                    return;
+                }
+                let html = '';
+                list.forEach(t => {
+                    html += `<tr>
+                        <td>${t.teacherNo || '--'}</td>
+                        <td>${t.name || '--'}</td>
+                        <td>${t.title || '--'}</td>
+                        <td>${t.researchDirection || '--'}</td>
+                        <td>${t.enrollmentRequirements || '--'}</td>
+                    </tr>`;
+                });
+                tbody.innerHTML = html;
+            } catch (e) {
+                console.error('加载教师信息失败:', e);
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">加载失败</td></tr>';
+            }
+        }
+
+        function renderTeacherSelectTable(list, selectedId) {
+            const tbody = document.getElementById('student-teacher-select-list');
+            if (!tbody) return;
+            if (!list || list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">暂无教师数据</td></tr>';
+                return;
+            }
+            let html = '';
+            list.forEach(t => {
+                const checked = selectedId && String(selectedId) === String(t.id) ? 'checked' : '';
+                html += `<tr>
+                    <td><input type="radio" name="student-teacher-select" value="${t.id}" data-name="${t.name || ''}" ${checked}></td>
+                    <td>${t.teacherNo || '--'}</td>
+                    <td>${t.name || '--'}</td>
+                    <td>${t.title || '--'}</td>
+                    <td>${t.researchDirection || '--'}</td>
+                    <td>${t.enrollmentRequirements || '--'}</td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        async function openTeacherSelectModal(slot) {
+            studentTeacherSelectSlot = slot || 1;
+            const currentId = document.getElementById(`pref-choice${studentTeacherSelectSlot}-id`).value;
+            const list = await ensureStudentTeachersLoaded();
+            renderTeacherSelectTable(list, currentId);
+            const modalEl = document.getElementById('studentTeacherSelectModal');
+            if (modalEl) {
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.show();
+            }
+        }
+
+        function confirmTeacherSelect() {
+            const selected = document.querySelector('input[name="student-teacher-select"]:checked');
+            if (!selected) {
+                showAlert('warning', '请选择导师');
+                return;
+            }
+            const teacherId = selected.value;
+            const teacherName = selected.dataset.name || '--';
+            document.getElementById(`pref-choice${studentTeacherSelectSlot}-id`).value = teacherId;
+            document.getElementById(`pref-choice${studentTeacherSelectSlot}-name`).value = teacherName;
+            const modalEl = document.getElementById('studentTeacherSelectModal');
+            if (modalEl) {
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.hide();
+            }
+        }
+
+        function applyPreferenceChoice(slot, teacherId, teacherName) {
+            document.getElementById(`pref-choice${slot}-id`).value = teacherId || '';
+            document.getElementById(`pref-choice${slot}-name`).value = teacherName || '';
+        }
+
+        function updatePreferenceFileLabel(slot, filePath) {
+            const label = document.getElementById(`pref-file${slot}-name`);
+            if (!label) return;
+            if (!filePath) {
+                label.textContent = '';
+                return;
+            }
+            const parts = String(filePath).split('/');
+            label.textContent = parts[parts.length - 1] || filePath;
+        }
+
+        async function loadStudentPreference() {
+            try {
+                await ensureStudentTeachersLoaded();
+                const resp = await fetch('/student/preference');
+                if (!resp.ok) throw new Error('请求失败');
+                const data = await resp.json();
+                if (data.error) {
+                    showAlert('error', data.error);
+                    return;
+                }
+                const pref = data.preference;
+                if (!pref) {
+                    applyPreferenceChoice(1, '', '');
+                    applyPreferenceChoice(2, '', '');
+                    applyPreferenceChoice(3, '', '');
+                    updatePreferenceFileLabel(1, '');
+                    updatePreferenceFileLabel(2, '');
+                    updatePreferenceFileLabel(3, '');
+                    updatePreferenceStatus(false);
+                    return;
+                }
+
+                const list = studentTeacherListCache || [];
+                const findTeacherName = (id) => {
+                    const t = list.find(item => String(item.id) === String(id));
+                    return t ? t.name : '';
+                };
+
+                applyPreferenceChoice(1, pref.choice1TeacherId, findTeacherName(pref.choice1TeacherId));
+                applyPreferenceChoice(2, pref.choice2TeacherId, findTeacherName(pref.choice2TeacherId));
+                applyPreferenceChoice(3, pref.choice3TeacherId, findTeacherName(pref.choice3TeacherId));
+                updatePreferenceFileLabel(1, pref.file1Path);
+                updatePreferenceFileLabel(2, pref.file2Path);
+                updatePreferenceFileLabel(3, pref.file3Path);
+                const submitted = !!(pref.choice1TeacherId || pref.choice2TeacherId || pref.choice3TeacherId);
+                updatePreferenceStatus(submitted);
+            } catch (e) {
+                console.error('加载志愿失败:', e);
+                showAlert('error', '加载志愿失败');
+            }
+        }
+
+        async function submitStudentPreference() {
+            const form = document.getElementById('student-preference-form');
+            if (!form) return;
+            try {
+                const formData = new FormData(form);
+                const resp = await fetch('/student/preference', {
+                    method: 'POST',
+                    body: formData
+                });
+                const text = await resp.text();
+                if (resp.ok && text === 'success') {
+                    showAlert('success', '志愿提交成功');
+                    await loadStudentPreference();
+                    await loadStudentDashboard();
+                } else {
+                    const msg = text.startsWith('error:') ? text.substring(6) : text;
+                    showAlert('error', '提交失败：' + msg);
+                }
+            } catch (e) {
+                console.error('提交志愿失败:', e);
+                showAlert('error', '提交志愿失败，请重试');
+            }
+        }
+
+        async function loadStudentResult() {
+            try {
+                const resp = await fetch('/student/result');
+                if (!resp.ok) throw new Error('请求失败');
+                const data = await resp.json();
+                if (data.error) {
+                    showAlert('error', data.error);
+                    return;
+                }
+                const advisor = data.advisor;
+                const finalScore = data.finalScore || {};
+                document.getElementById('sr-advisor').textContent = advisor ? advisor.name : '--';
+                document.getElementById('sr-score').textContent = formatNumberText(finalScore.finalDefenseScore, 1);
+                document.getElementById('sr-total').textContent = formatNumberText(finalScore.totalGrade, 1);
+                document.getElementById('sr-factor').textContent = formatNumberText(finalScore.adjustmentFactor, 2);
+
+                updateAdvisorStatus(advisor ? advisor.name : null);
+                const defenseScoreText = finalScore.finalDefenseScore != null ? formatNumberText(finalScore.finalDefenseScore, 1) : '--';
+                updateScoreStatus(defenseScoreText);
+            } catch (e) {
+                console.error('加载结果失败:', e);
+                showAlert('error', '加载结果失败');
+            }
+        }
+
         // 加载教师/答辩组长Dashboard数据
         async function loadTeacherDashboard() {
             try {
                 const userInfoDiv = document.querySelector('.user-info');
                 const userId = userInfoDiv ? userInfoDiv.dataset.userId : null;
-                
+
                 const [groupResp, advisedResp, reviewedResp] = await Promise.allSettled([
                     fetch('/department/student/groups'),
                     fetch('/department/student/teacher/advised'),   // 指导的学生
@@ -8743,11 +9510,11 @@
                 let myGroups = [];
                 let advisedStudents = [];
                 let reviewedStudents = [];
-                
+
                 if (groupResp.status === 'fulfilled' && groupResp.value.ok) {
                     myGroups = await groupResp.value.json();
                     document.getElementById('t-my-groups').textContent = myGroups.length;
-                    
+
                     // 填充小组下拉框
                     const groupSelect = document.getElementById('t-group-select');
                     if (groupSelect) {
@@ -8764,19 +9531,19 @@
                     const data = await advisedResp.value.json();
                     advisedStudents = data.students || [];
                 }
-                
+
                 // 获取评阅的学生数据
                 if (reviewedResp.status === 'fulfilled' && reviewedResp.value.ok) {
                     const data = await reviewedResp.value.json();
                     reviewedStudents = data.students || [];
                 }
-                
+
                 // 计算待评和已评学生数
                 // 指导学生：检查advisorScore是否有值
                 // 评阅学生：检查reviewerScore是否有值
                 let pendingCount = 0;
                 let scoredCount = 0;
-                
+
                 // 统计指导学生的打分情况
                 advisedStudents.forEach(s => {
                     if (s.advisorScore != null) {
@@ -8785,7 +9552,7 @@
                         pendingCount++;
                     }
                 });
-                
+
                 // 统计评阅学生的打分情况
                 reviewedStudents.forEach(s => {
                     if (s.reviewerScore != null) {
@@ -8794,23 +9561,23 @@
                         pendingCount++;
                     }
                 });
-                
+
                 const totalStudents = pendingCount + scoredCount;
                 const progress = totalStudents > 0 ? Math.round((scoredCount / totalStudents) * 100) : 0;
-                
+
                 document.getElementById('t-pending-students').textContent = pendingCount;
                 document.getElementById('t-scored-students').textContent = scoredCount;
                 document.getElementById('t-score-progress').textContent = progress + '%';
-                
+
                 // 合并待评学生列表（只显示未评分的）
                 let allPendingStudents = [];
                 advisedStudents.filter(s => s.advisorScore == null).forEach(s => {
-                    allPendingStudents.push({...s, scoreType: 'advisor'});
+                    allPendingStudents.push({ ...s, scoreType: 'advisor' });
                 });
                 reviewedStudents.filter(s => s.reviewerScore == null).forEach(s => {
-                    allPendingStudents.push({...s, scoreType: 'reviewer'});
+                    allPendingStudents.push({ ...s, scoreType: 'reviewer' });
                 });
-                
+
                 populatePendingStudentTable(allPendingStudents, myGroups);
             } catch (e) {
                 console.error('加载教师Dashboard失败:', e);
@@ -8873,7 +9640,7 @@
         async function loadGroupStudentsForComment(groupId) {
             const containerId = getActiveCommentContainerId();
             const container = document.getElementById(containerId);
-            
+
             if (!groupId) {
                 if (container) container.innerHTML = '<small class="text-muted">请选择小组查看学生评语</small>';
                 return;
@@ -8893,7 +9660,7 @@
                     }
                     return;
                 }
-                
+
                 const allStudents = await allStudentsResp.json();
                 // 后端已经按年份过滤，这里只需要按小组过滤
                 const groupStudents = allStudents.filter(s => s.defenseGroupId == groupId);
@@ -8921,7 +9688,7 @@
                         }
                     }
                 }
-                
+
                 // 如果学生数据中都没有年份，尝试从系统配置获取
                 if (!year) {
                     try {
@@ -9103,7 +9870,7 @@
             const batchMode = document.getElementById('batchCreateMode').checked;
             const singleMode = document.getElementById('singleGroupMode');
             const batchModeDiv = document.getElementById('batchGroupMode');
-            
+
             if (batchMode) {
                 singleMode.style.display = 'none';
                 batchModeDiv.style.display = 'block';
@@ -9122,10 +9889,10 @@
         }
 
         // 弹窗关闭时重置表单
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const addGroupModal = document.getElementById('addGroupModal');
             if (addGroupModal) {
-                addGroupModal.addEventListener('hidden.bs.modal', function() {
+                addGroupModal.addEventListener('hidden.bs.modal', function () {
                     resetAddGroupForm();
                 });
             }
@@ -9134,7 +9901,7 @@
         // 添加小组（支持单个和批量）
         async function addGroup() {
             const batchMode = document.getElementById('batchCreateMode').checked;
-            
+
             if (batchMode) {
                 // 批量创建模式
                 const count = parseInt(document.getElementById('batchGroupCount').value);
@@ -9142,7 +9909,7 @@
                     showAlert('warning', '请输入有效的小组个数（1-50）');
                     return;
                 }
-                
+
                 toggleLoading(true);
                 try {
                     const response = await fetch('/group/addBatch', {
@@ -9152,7 +9919,7 @@
                             count: count
                         })
                     });
-                    
+
                     const result = await response.text();
                     if (result.startsWith('success')) {
                         showAlert('success', `成功创建${count}个小组！`);
@@ -9172,7 +9939,7 @@
             } else {
                 // 单个创建模式
                 const groupName = document.getElementById('groupName').value.trim();
-                
+
                 // 如果名称为空，使用自动生成
                 const requestBody = {
                     name: groupName || null, // null表示自动生成
@@ -9187,7 +9954,7 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(requestBody)
                     });
-                    
+
                     const result = await response.text();
                     if (result === 'success' || result.startsWith('success')) {
                         showAlert('success', '添加小组成功！');
@@ -9358,18 +10125,18 @@
                 if (tsIsSuperAdmin) {
                     const paginationNav = document.getElementById('ts-pagination-nav');
                     if (paginationNav) paginationNav.style.display = 'flex';
-                    
+
                     // 显示小组筛选控件
                     const groupFilterContainer = document.getElementById('ts-group-filter-container');
                     if (groupFilterContainer) groupFilterContainer.style.display = 'flex';
-                    
+
                     // 填充小组筛选器（如果数据包含小组信息）
                     if (data.groups && data.groups.length > 0) {
                         populateGroupFilter(data.groups);
                     }
-                    
+
                     renderTsStudentsPage(page);
-                    
+
                     // 重置筛选器
                     const groupFilter = document.getElementById('ts-group-filter');
                     if (groupFilter) groupFilter.value = '';
@@ -9378,13 +10145,13 @@
                     // 普通教师不分页，直接显示所有
                     const paginationNav = document.getElementById('ts-pagination-nav');
                     if (paginationNav) paginationNav.style.display = 'none';
-                    
+
                     // 隐藏小组筛选控件
                     const groupFilterContainer = document.getElementById('ts-group-filter-container');
                     if (groupFilterContainer) groupFilterContainer.style.display = 'none';
-                    
+
                     renderTsStudentsList(tsStudentsData, tsIsSuperAdmin);
-                    
+
                     // 检查用户角色，如果是教师或答辩组长，确保隐藏分页信息
                     const userInfoDiv = document.querySelector('.user-info');
                     const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
@@ -9406,10 +10173,10 @@
         function populateGroupFilter(groups) {
             const groupFilter = document.getElementById('ts-group-filter');
             if (!groupFilter) return;
-            
+
             // 清空现有选项
             groupFilter.innerHTML = '<option value="">全部小组</option>';
-            
+
             // 添加小组选项
             groups.forEach(group => {
                 const option = document.createElement('option');
@@ -9423,32 +10190,32 @@
         function filterTeacherGroupStudents() {
             const selectedGroup = document.getElementById('ts-group-filter').value;
             const tbody = document.getElementById('ts-student-list');
-            
+
             // 检查是否是超级管理员
             const userInfoDiv = document.querySelector('.user-info');
             const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
             const isSuperAdmin = userRole === 'SUPER_ADMIN';
-            
+
             if (!isSuperAdmin) {
                 showAlert('warning', '只有超级管理员可以进行筛选');
                 return;
             }
-            
+
             if (!selectedGroup) {
                 // 如果未选择小组，显示所有学生
                 isFilterMode = false; // 重置筛选模式
                 renderTsStudentsPage(1);
                 return;
             }
-            
+
             try {
                 tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">筛选中...</td></tr>';
-                
+
                 // 使用原始数据进行筛选
-                const filteredStudents = tsStudentsData.filter(student => 
+                const filteredStudents = tsStudentsData.filter(student =>
                     student.groupName && student.groupName === selectedGroup
                 );
-                
+
                 if (filteredStudents.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">未找到匹配的学生</td></tr>';
                     // 更新分页信息
@@ -9460,18 +10227,18 @@
                     isFilterMode = false;
                     return;
                 }
-                
+
                 // 临时更新全局数据为筛选结果
                 const originalData = tsStudentsData;
                 tsStudentsData = filteredStudents;
                 isFilterMode = true;
-                
+
                 // 渲染筛选结果
                 renderTsStudentsPage(1); // 从第一页开始显示
-                
+
                 // 恢复原始数据
                 tsStudentsData = originalData;
-                
+
                 // 检查用户角色，如果是教师或答辩组长，确保隐藏分页信息
                 const userInfoDiv = document.querySelector('.user-info');
                 const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
@@ -9481,7 +10248,7 @@
                         tsPaginationInfo.style.display = 'none';
                     }
                 }
-                
+
             } catch (error) {
                 console.error('筛选小组学生失败:', error);
                 tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">筛选失败: ${error.message}</td></tr>`;
@@ -9570,18 +10337,18 @@
             // 更新信息
             const start = (currentPage - 1) * tsPageSize + 1;
             const end = Math.min(currentPage * tsPageSize, total);
-            
+
             // 检查用户角色
             const userInfoDiv = document.querySelector('.user-info');
             const userRole = userInfoDiv && userInfoDiv.dataset.userRole;
-            
+
             // 根据是否为筛选模式显示不同的分页信息
             if (isFilterMode) {
                 paginationInfo.textContent = `显示 ${start}-${end} 条，共 ${total} 条 (筛选结果)`;
             } else {
                 paginationInfo.textContent = `显示 ${start}-${end} 条，共 ${total} 条`;
             }
-            
+
             // 如果是教师或答辩组长，隐藏分页信息
             if (userRole === 'TEACHER' || userRole === 'DEFENSE_LEADER') {
                 paginationInfo.style.display = 'none';
