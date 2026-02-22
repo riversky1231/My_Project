@@ -29,11 +29,6 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import java.io.InputStream;
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +37,9 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 @Controller
 @RequestMapping("/department/student")
@@ -357,6 +355,10 @@ public class StudentController {
 
             int studentNoCol = -1;
             int nameCol = -1;
+            int classInfoCol = -1;
+            int phoneCol = -1;
+            int emailCol = -1;
+            int defenseDateCol = -1;
             int typeCol = -1;
             int titleCol = -1;
             int departmentCol = -1;
@@ -375,6 +377,21 @@ public class StudentController {
                     } else if (cellValue.contains("姓名") || cellValue.equalsIgnoreCase("name")
                             || cellValue.equalsIgnoreCase("姓名")) {
                         nameCol = i;
+                        hasHeader = true;
+                    } else if (cellValue.contains("班级") || cellValue.equalsIgnoreCase("class")
+                            || cellValue.equalsIgnoreCase("classInfo") || cellValue.equalsIgnoreCase("class_info")) {
+                        classInfoCol = i;
+                        hasHeader = true;
+                    } else if (cellValue.contains("联系电话") || cellValue.contains("电话")
+                            || cellValue.equalsIgnoreCase("phone") || cellValue.equalsIgnoreCase("mobile")) {
+                        phoneCol = i;
+                        hasHeader = true;
+                    } else if (cellValue.contains("邮箱") || cellValue.equalsIgnoreCase("email")) {
+                        emailCol = i;
+                        hasHeader = true;
+                    } else if (cellValue.contains("答辩日期") || cellValue.contains("日期")
+                            || cellValue.equalsIgnoreCase("defenseDate") || cellValue.equalsIgnoreCase("defense_date")) {
+                        defenseDateCol = i;
                         hasHeader = true;
                     } else if (cellValue.contains("类型") || cellValue.equalsIgnoreCase("type")
                             || cellValue.equalsIgnoreCase("defenseType")) {
@@ -406,7 +423,8 @@ public class StudentController {
             }
 
             // 验证至少有一列存在（学号、姓名、类型、题目、所属院系至少有一个）
-            if (studentNoCol == -1 && nameCol == -1 && typeCol == -1 && titleCol == -1 && departmentCol == -1) {
+            if (studentNoCol == -1 && nameCol == -1 && typeCol == -1 && titleCol == -1 && departmentCol == -1
+                    && classInfoCol == -1 && phoneCol == -1 && emailCol == -1 && defenseDateCol == -1) {
                 workbook.close();
                 return "error:Excel文件必须包含以下列之一：学号、姓名、类型、题目、所属院系（或使用表头标识，或按顺序：第1列学号，第2列姓名，第3列类型，第4列题目，第5列所属院系）";
             }
@@ -425,6 +443,10 @@ public class StudentController {
                     // 读取各列数据（学号、姓名、类型、题目、所属院系都是可选的）
                     String studentNo = null;
                     String name = null;
+                    String classInfo = null;
+                    String phone = null;
+                    String email = null;
+                    java.sql.Date defenseDate = null;
                     String defenseType = null;
                     String title = null;
                     String departmentStr = null;
@@ -449,6 +471,41 @@ public class StudentController {
                                 name = null;
                             }
                         }
+                    }
+
+                    if (classInfoCol != -1) {
+                        Cell cell = row.getCell(classInfoCol);
+                        if (cell != null) {
+                            classInfo = getCellValueAsString(cell).trim();
+                            if (classInfo != null && classInfo.isEmpty()) {
+                                classInfo = null;
+                            }
+                        }
+                    }
+
+                    if (phoneCol != -1) {
+                        Cell cell = row.getCell(phoneCol);
+                        if (cell != null) {
+                            phone = getCellValueAsString(cell).trim();
+                            if (phone != null && phone.isEmpty()) {
+                                phone = null;
+                            }
+                        }
+                    }
+
+                    if (emailCol != -1) {
+                        Cell cell = row.getCell(emailCol);
+                        if (cell != null) {
+                            email = getCellValueAsString(cell).trim();
+                            if (email != null && email.isEmpty()) {
+                                email = null;
+                            }
+                        }
+                    }
+
+                    if (defenseDateCol != -1) {
+                        Cell cell = row.getCell(defenseDateCol);
+                        defenseDate = parseSqlDateFromCell(cell);
                     }
 
                     // 读取类型
@@ -569,6 +626,10 @@ public class StudentController {
                     student.setTitle(title); // 可能为null
                     student.setDefenseYear(currentYear);
                     student.setDepartmentId(finalDepartmentId);
+                    student.setClassInfo(classInfo);
+                    student.setPhone(phone);
+                    student.setEmail(email);
+                    student.setDefenseDate(defenseDate);
                     // 其他字段保持为null
 
                     // 保存学生
@@ -633,7 +694,7 @@ public class StudentController {
 
             // 创建表头行
             Row headerRow = sheet.createRow(0);
-            String[] headers = {"学号", "姓名", "类型", "题目", "所属院系"};
+            String[] headers = {"学号", "姓名", "班级", "联系电话", "邮箱", "答辩日期", "类型", "题目", "所属院系"};
             for (int i = 0; i < headers.length; i++) {
                 Cell cell = headerRow.createCell(i);
                 cell.setCellValue(headers[i]);
@@ -644,16 +705,24 @@ public class StudentController {
             Row exampleRow1 = sheet.createRow(1);
             exampleRow1.createCell(0).setCellValue("20210001");
             exampleRow1.createCell(1).setCellValue("张三");
-            exampleRow1.createCell(2).setCellValue("论文");
-            exampleRow1.createCell(3).setCellValue("基于深度学习的图像识别研究");
-            exampleRow1.createCell(4).setCellValue("计算机科学与技术学院");
+            exampleRow1.createCell(2).setCellValue("计科2101");
+            exampleRow1.createCell(3).setCellValue("13800000001");
+            exampleRow1.createCell(4).setCellValue("student01@example.com");
+            exampleRow1.createCell(5).setCellValue("2024-06-18");
+            exampleRow1.createCell(6).setCellValue("论文");
+            exampleRow1.createCell(7).setCellValue("基于深度学习的图像识别研究");
+            exampleRow1.createCell(8).setCellValue("计算机科学与技术学院");
 
             Row exampleRow2 = sheet.createRow(2);
             exampleRow2.createCell(0).setCellValue("20210002");
             exampleRow2.createCell(1).setCellValue("李四");
-            exampleRow2.createCell(2).setCellValue("设计");
-            exampleRow2.createCell(3).setCellValue("智能家居控制系统设计");
-            exampleRow2.createCell(4).setCellValue("CS");
+            exampleRow2.createCell(2).setCellValue("软工2102");
+            exampleRow2.createCell(3).setCellValue("13800000002");
+            exampleRow2.createCell(4).setCellValue("student02@example.com");
+            exampleRow2.createCell(5).setCellValue("2024-06-19");
+            exampleRow2.createCell(6).setCellValue("设计");
+            exampleRow2.createCell(7).setCellValue("智能家居控制系统设计");
+            exampleRow2.createCell(8).setCellValue("CS");
 
             // 自动调整列宽
             for (int i = 0; i < headers.length; i++) {
@@ -676,89 +745,6 @@ public class StudentController {
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
             responseHeaders.setContentDispositionFormData("attachment", "学生导入模板.xlsx");
-            responseHeaders.setContentLength(bytes.length);
-
-            return ResponseEntity.ok()
-                    .headers(responseHeaders)
-                    .body(bytes);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    /**
-     * 上传学生Excel导入模板
-     * POST /department/student/template/upload
-     */
-    @PostMapping("/template/upload")
-    @ResponseBody
-    public String uploadStudentTemplate(@RequestParam("file") MultipartFile file, HttpSession session) {
-        String permissionError = checkDeptAdmin(session);
-        if (permissionError != null) {
-            return permissionError;
-        }
-
-        if (file == null || file.isEmpty()) {
-            return "error:请选择Excel文件";
-        }
-
-        String fileName = file.getOriginalFilename();
-        if (fileName == null || (!fileName.endsWith(".xlsx") && !fileName.endsWith(".xls"))) {
-            return "error:文件格式不正确，请上传.xlsx或.xls格式的Excel文件";
-        }
-
-        try {
-            // 创建模板存储目录
-            String uploadDir = System.getProperty("user.dir") + File.separator + "templates" + File.separator + "student";
-            File dir = new File(uploadDir);
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-
-            // 保存模板文件
-            String templateFileName = "student_import_template.xlsx";
-            Path templatePath = Paths.get(uploadDir, templateFileName);
-            Files.copy(file.getInputStream(), templatePath, StandardCopyOption.REPLACE_EXISTING);
-
-            return "success:模板上传成功";
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "error:模板上传失败：" + e.getMessage();
-        }
-    }
-
-    /**
-     * 获取已上传的学生Excel导入模板
-     * GET /department/student/template/get
-     */
-    @GetMapping("/template/get")
-    public ResponseEntity<byte[]> getStudentTemplate(HttpSession session) {
-        String permissionError = checkDeptAdmin(session);
-        if (permissionError != null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        try {
-            String uploadDir = System.getProperty("user.dir") + File.separator + "templates" + File.separator + "student";
-            String templateFileName = "student_import_template.xlsx";
-            Path templatePath = Paths.get(uploadDir, templateFileName);
-
-            File templateFile = templatePath.toFile();
-            if (!templateFile.exists()) {
-                // 如果模板不存在，返回默认模板
-                return downloadStudentTemplate(session);
-            }
-
-            // 读取模板文件
-            byte[] bytes = Files.readAllBytes(templatePath);
-
-            // 设置响应头
-            HttpHeaders responseHeaders = new HttpHeaders();
-            responseHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-            responseHeaders.setContentDispositionFormData("attachment", templateFileName);
             responseHeaders.setContentLength(bytes.length);
 
             return ResponseEntity.ok()
@@ -801,6 +787,34 @@ public class StudentController {
             default:
                 return "";
         }
+    }
+
+    private java.sql.Date parseSqlDateFromCell(Cell cell) {
+        if (cell == null) {
+            return null;
+        }
+        if (cell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)) {
+            java.util.Date date = cell.getDateCellValue();
+            return date != null ? new java.sql.Date(date.getTime()) : null;
+        }
+        String text = getCellValueAsString(cell).trim();
+        if (text.isEmpty()) {
+            return null;
+        }
+        DateTimeFormatter[] formatters = new DateTimeFormatter[] {
+                DateTimeFormatter.ofPattern("yyyy-MM-dd"),
+                DateTimeFormatter.ofPattern("yyyy/MM/dd"),
+                DateTimeFormatter.ofPattern("yyyy.MM.dd")
+        };
+        for (DateTimeFormatter formatter : formatters) {
+            try {
+                LocalDate localDate = LocalDate.parse(text, formatter);
+                return java.sql.Date.valueOf(localDate);
+            } catch (DateTimeParseException ignored) {
+                // try next formatter
+            }
+        }
+        return null;
     }
 
     /**
@@ -1958,3 +1972,4 @@ public class StudentController {
         }
     }
 }
+

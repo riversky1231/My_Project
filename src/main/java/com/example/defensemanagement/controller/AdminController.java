@@ -28,10 +28,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import java.io.InputStream;
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -1011,91 +1007,6 @@ public class AdminController {
     }
 
     /**
-     * 上传院系Excel导入模板
-     * POST /admin/departments/template/upload
-     */
-    @PostMapping("/departments/template/upload")
-    @ResponseBody
-    public String uploadDepartmentTemplate(@RequestParam("file") MultipartFile file, HttpSession session) {
-        // 权限检查：只有超级管理员和院系管理员可以上传模板
-        User currentUser = (User) session.getAttribute("currentUser");
-        if (currentUser == null || !authService.hasPermission(currentUser, "CREATE_DEPARTMENT")) {
-            return "error:权限不足";
-        }
-
-        if (file == null || file.isEmpty()) {
-            return "error:请选择Excel文件";
-        }
-
-        String fileName = file.getOriginalFilename();
-        if (fileName == null || (!fileName.endsWith(".xlsx") && !fileName.endsWith(".xls"))) {
-            return "error:文件格式不正确，请上传.xlsx或.xls格式的Excel文件";
-        }
-
-        try {
-            // 创建模板存储目录
-            String uploadDir = System.getProperty("user.dir") + File.separator + "templates" + File.separator + "department";
-            File dir = new File(uploadDir);
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-
-            // 保存模板文件
-            String templateFileName = "department_import_template.xlsx";
-            Path templatePath = Paths.get(uploadDir, templateFileName);
-            Files.copy(file.getInputStream(), templatePath, StandardCopyOption.REPLACE_EXISTING);
-
-            return "success:模板上传成功";
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "error:模板上传失败：" + e.getMessage();
-        }
-    }
-
-    /**
-     * 获取已上传的院系Excel导入模板
-     * GET /admin/departments/template/get
-     */
-    @GetMapping("/departments/template/get")
-    public ResponseEntity<byte[]> getDepartmentTemplate(HttpSession session) {
-        // 权限检查：只有超级管理员和院系管理员可以获取模板
-        User currentUser = (User) session.getAttribute("currentUser");
-        if (currentUser == null || !authService.hasPermission(currentUser, "CREATE_DEPARTMENT")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        try {
-            String uploadDir = System.getProperty("user.dir") + File.separator + "templates" + File.separator + "department";
-            String templateFileName = "department_import_template.xlsx";
-            Path templatePath = Paths.get(uploadDir, templateFileName);
-
-            File templateFile = templatePath.toFile();
-            if (!templateFile.exists()) {
-                // 如果模板不存在，返回默认模板
-                return downloadDepartmentTemplate(session);
-            }
-
-            // 读取模板文件
-            byte[] bytes = Files.readAllBytes(templatePath);
-
-            // 设置响应头
-            HttpHeaders responseHeaders = new HttpHeaders();
-            responseHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-            responseHeaders.setContentDispositionFormData("attachment", templateFileName);
-            responseHeaders.setContentLength(bytes.length);
-
-            return ResponseEntity.ok()
-                    .headers(responseHeaders)
-                    .body(bytes);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    /**
      * 下载用户Excel导入模板
      * GET /admin/users/template/download
      */
@@ -1181,91 +1092,6 @@ public class AdminController {
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
             responseHeaders.setContentDispositionFormData("attachment", "用户导入模板.xlsx");
-            responseHeaders.setContentLength(bytes.length);
-
-            return ResponseEntity.ok()
-                    .headers(responseHeaders)
-                    .body(bytes);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    /**
-     * 上传用户Excel导入模板
-     * POST /admin/users/template/upload
-     */
-    @PostMapping("/users/template/upload")
-    @ResponseBody
-    public String uploadUserTemplate(@RequestParam("file") MultipartFile file, HttpSession session) {
-        // 权限检查：只有超级管理员可以上传模板
-        User currentUser = (User) session.getAttribute("currentUser");
-        if (currentUser == null || !authService.hasPermission(currentUser, "CREATE_USER")) {
-            return "error:权限不足";
-        }
-
-        if (file == null || file.isEmpty()) {
-            return "error:请选择Excel文件";
-        }
-
-        String fileName = file.getOriginalFilename();
-        if (fileName == null || (!fileName.endsWith(".xlsx") && !fileName.endsWith(".xls"))) {
-            return "error:文件格式不正确，请上传.xlsx或.xls格式的Excel文件";
-        }
-
-        try {
-            // 创建模板存储目录
-            String uploadDir = System.getProperty("user.dir") + File.separator + "templates" + File.separator + "user";
-            File dir = new File(uploadDir);
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-
-            // 保存模板文件
-            String templateFileName = "user_import_template.xlsx";
-            Path templatePath = Paths.get(uploadDir, templateFileName);
-            Files.copy(file.getInputStream(), templatePath, StandardCopyOption.REPLACE_EXISTING);
-
-            return "success:模板上传成功";
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "error:模板上传失败：" + e.getMessage();
-        }
-    }
-
-    /**
-     * 获取已上传的用户Excel导入模板
-     * GET /admin/users/template/get
-     */
-    @GetMapping("/users/template/get")
-    public ResponseEntity<byte[]> getUserTemplate(HttpSession session) {
-        // 权限检查：只有超级管理员可以获取模板
-        User currentUser = (User) session.getAttribute("currentUser");
-        if (currentUser == null || !authService.hasPermission(currentUser, "CREATE_USER")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        try {
-            String uploadDir = System.getProperty("user.dir") + File.separator + "templates" + File.separator + "user";
-            String templateFileName = "user_import_template.xlsx";
-            Path templatePath = Paths.get(uploadDir, templateFileName);
-
-            File templateFile = templatePath.toFile();
-            if (!templateFile.exists()) {
-                // 如果模板不存在，返回默认模板
-                return downloadUserTemplate(session);
-            }
-
-            // 读取模板文件
-            byte[] bytes = Files.readAllBytes(templatePath);
-
-            // 设置响应头
-            HttpHeaders responseHeaders = new HttpHeaders();
-            responseHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-            responseHeaders.setContentDispositionFormData("attachment", templateFileName);
             responseHeaders.setContentLength(bytes.length);
 
             return ResponseEntity.ok()

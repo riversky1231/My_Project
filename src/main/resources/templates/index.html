@@ -1283,14 +1283,8 @@
                     <button class="btn btn-info ms-2" onclick="downloadStudentTemplate()">
                         <i class="bi bi-download"></i> 下载模板
                     </button>
-                    <button class="btn btn-warning ms-2"
-                        onclick="document.getElementById('template-upload-input').click()">
-                        <i class="bi bi-upload"></i> 上传模板
-                    </button>
                     <input type="file" id="excel-import-input" accept=".xlsx,.xls" style="display: none;"
                         onchange="handleExcelImport(event)">
-                    <input type="file" id="template-upload-input" accept=".xlsx,.xls" style="display: none;"
-                        onchange="handleTemplateUpload(event)">
                 </div>
             </header>
             <!-- 教师签名上传提示（仅教师可见） -->
@@ -1456,14 +1450,8 @@
                     <button class="btn btn-info ms-2" onclick="downloadUserTemplate()">
                         <i class="bi bi-download"></i> 下载模板
                     </button>
-                    <button class="btn btn-warning ms-2"
-                        onclick="document.getElementById('user-template-upload-input').click()">
-                        <i class="bi bi-upload"></i> 上传模板
-                    </button>
                     <input type="file" id="user-excel-import-input" accept=".xlsx,.xls" style="display: none;"
                         onchange="handleUserExcelImport(event)">
-                    <input type="file" id="user-template-upload-input" accept=".xlsx,.xls" style="display: none;"
-                        onchange="handleUserTemplateUpload(event)">
                 </div>
             </header>
             <div class="module">
@@ -1526,14 +1514,8 @@
                     <button class="btn btn-info ms-2" onclick="downloadDepartmentTemplate()">
                         <i class="bi bi-download"></i> 下载模板
                     </button>
-                    <button class="btn btn-warning ms-2"
-                        onclick="document.getElementById('department-template-upload-input').click()">
-                        <i class="bi bi-upload"></i> 上传模板
-                    </button>
                     <input type="file" id="department-excel-import-input" accept=".xlsx,.xls" style="display: none;"
                         onchange="handleDepartmentExcelImport(event)">
-                    <input type="file" id="department-template-upload-input" accept=".xlsx,.xls" style="display: none;"
-                        onchange="handleDepartmentTemplateUpload(event)">
                 </div>
             </header>
             <div class="module">
@@ -4700,54 +4682,6 @@
             window.location.href = '/admin/users/template/download';
         }
 
-        // 上传用户Excel导入模板
-        async function handleUserTemplateUpload(event) {
-            const file = event.target.files[0];
-            if (!file) {
-                return;
-            }
-
-            // 验证文件类型
-            const fileName = file.name.toLowerCase();
-            if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
-                showAlert('error', '请选择Excel文件（.xlsx或.xls格式）');
-                event.target.value = '';
-                return;
-            }
-
-            // 确认上传
-            if (!confirm('确定要上传Excel模板吗？上传后将替换现有模板。')) {
-                event.target.value = '';
-                return;
-            }
-
-            toggleLoading(true);
-            const formData = new FormData();
-            formData.append('file', file);
-
-            try {
-                const response = await fetch('/admin/users/template/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const result = await response.text();
-
-                if (result.startsWith('success')) {
-                    showAlert('success', '模板上传成功！');
-                } else {
-                    const errorMsg = result.startsWith('error:') ? result.substring(6) : result;
-                    showAlert('error', '模板上传失败：' + errorMsg);
-                }
-            } catch (error) {
-                console.error('Upload template error:', error);
-                showAlert('error', '模板上传失败，请检查网络连接');
-            } finally {
-                toggleLoading(false);
-                event.target.value = '';
-            }
-        }
-
         // 用户Excel导入处理函数
         async function handleUserExcelImport(event) {
             const file = event.target.files[0];
@@ -4982,9 +4916,6 @@
             // 隐藏下载模板按钮
             const downloadBtn = document.querySelector('#student-management-view header .btn-info');
             if (downloadBtn) downloadBtn.style.display = 'none';
-            // 隐藏上传模板按钮
-            const uploadBtn = document.querySelector('#student-management-view header .btn-warning');
-            if (uploadBtn) uploadBtn.style.display = 'none';
         }
 
         // 显示管理员专用按钮
@@ -4996,9 +4927,6 @@
             // 显示下载模板按钮
             const downloadBtn = document.querySelector('#student-management-view header .btn-info');
             if (downloadBtn) downloadBtn.style.display = '';
-            // 显示上传模板按钮
-            const uploadBtn = document.querySelector('#student-management-view header .btn-warning');
-            if (uploadBtn) uploadBtn.style.display = '';
         }
 
         // 管理员加载学生列表（支持分页）
@@ -5515,54 +5443,6 @@
         // 下载学生Excel导入模板
         function downloadStudentTemplate() {
             window.location.href = '/department/student/template/download';
-        }
-
-        // 上传学生Excel导入模板
-        async function handleTemplateUpload(event) {
-            const file = event.target.files[0];
-            if (!file) {
-                return;
-            }
-
-            // 验证文件类型
-            const fileName = file.name.toLowerCase();
-            if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
-                showAlert('error', '请选择Excel文件（.xlsx或.xls格式）');
-                event.target.value = '';
-                return;
-            }
-
-            // 确认上传
-            if (!confirm('确定要上传Excel模板吗？上传后将替换现有模板。')) {
-                event.target.value = '';
-                return;
-            }
-
-            toggleLoading(true);
-            const formData = new FormData();
-            formData.append('file', file);
-
-            try {
-                const response = await fetch('/department/student/template/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const result = await response.text();
-
-                if (result.startsWith('success')) {
-                    showAlert('success', '模板上传成功！');
-                } else {
-                    const errorMsg = result.startsWith('error:') ? result.substring(6) : result;
-                    showAlert('error', '模板上传失败：' + errorMsg);
-                }
-            } catch (error) {
-                console.error('Upload template error:', error);
-                showAlert('error', '模板上传失败，请检查网络连接');
-            } finally {
-                toggleLoading(false);
-                event.target.value = '';
-            }
         }
 
         // Excel导入处理函数
@@ -7831,54 +7711,6 @@
         // 下载院系Excel导入模板
         function downloadDepartmentTemplate() {
             window.location.href = '/admin/departments/template/download';
-        }
-
-        // 上传院系Excel导入模板
-        async function handleDepartmentTemplateUpload(event) {
-            const file = event.target.files[0];
-            if (!file) {
-                return;
-            }
-
-            // 验证文件类型
-            const fileName = file.name.toLowerCase();
-            if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
-                showAlert('error', '请选择Excel文件（.xlsx或.xls格式）');
-                event.target.value = '';
-                return;
-            }
-
-            // 确认上传
-            if (!confirm('确定要上传Excel模板吗？上传后将替换现有模板。')) {
-                event.target.value = '';
-                return;
-            }
-
-            toggleLoading(true);
-            const formData = new FormData();
-            formData.append('file', file);
-
-            try {
-                const response = await fetch('/admin/departments/template/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const result = await response.text();
-
-                if (result.startsWith('success')) {
-                    showAlert('success', '模板上传成功！');
-                } else {
-                    const errorMsg = result.startsWith('error:') ? result.substring(6) : result;
-                    showAlert('error', '模板上传失败：' + errorMsg);
-                }
-            } catch (error) {
-                console.error('Upload template error:', error);
-                showAlert('error', '模板上传失败，请检查网络连接');
-            } finally {
-                toggleLoading(false);
-                event.target.value = '';
-            }
         }
 
         // 院系Excel导入处理函数
