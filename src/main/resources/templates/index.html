@@ -2430,6 +2430,248 @@
             </div>
         </div>
 
+    <!-- 学生信息视图 -->
+    <div id="student-profile-view" class="view-container" style="display: none;">
+        <div class="module">
+            <div class="module-header">
+                <h4><i class="bi bi-person-lines-fill"></i> 学生信息</h4>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6"><strong>学号：</strong><span id="sp-no">--</span></div>
+                <div class="col-md-6"><strong>姓名：</strong><span id="sp-name">--</span></div>
+                <div class="col-md-6"><strong>班级：</strong><span id="sp-class">--</span></div>
+                <div class="col-md-6"><strong>院系：</strong><span id="sp-dept">--</span></div>
+                <div class="col-md-6"><strong>答辩类型：</strong><span id="sp-type">--</span></div>
+                <div class="col-md-6"><strong>答辩日期：</strong><span id="sp-date">--</span></div>
+                <div class="col-md-12"><strong>题目：</strong><span id="sp-title">--</span></div>
+                <div class="col-md-12"><strong>摘要：</strong><span id="sp-summary">--</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 教师信息视图 -->
+    <div id="student-teacher-info-view" class="view-container" style="display: none;">
+        <div class="module">
+            <div class="module-header">
+                <h4><i class="bi bi-journal-text"></i> 教师信息</h4>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>教师编号</th>
+                            <th>姓名</th>
+                            <th>职称</th>
+                            <th>研究方向</th>
+                            <th>招生要求</th>
+                        </tr>
+                    </thead>
+                    <tbody id="student-teacher-list">
+                        <tr><td colspan="5" class="text-center text-muted">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 志愿填报视图 -->
+    <div id="student-preference-view" class="view-container" style="display: none;">
+        <div class="module">
+            <div class="module-header">
+                <h4><i class="bi bi-ui-checks-grid"></i> 志愿填报</h4>
+            </div>
+            <form id="student-preference-form" class="row g-3" enctype="multipart/form-data">
+                <input type="hidden" id="pref-choice-target" value="">
+                <div class="col-12">
+                    <div class="alert alert-light">
+                        请依次选择第一、第二、第三志愿导师，并上传符合导师要求的 PDF 材料。
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-primary">第一志愿</span>
+                        <input type="text" class="form-control" id="pref-choice1-name" placeholder="请选择导师" readonly>
+                        <input type="hidden" id="pref-choice1-id" name="choice1">
+                        <button type="button" class="btn btn-outline-primary" onclick="openTeacherSelectModal(1)">选择</button>
+                    </div>
+                    <div class="mt-2">
+                        <input type="file" class="form-control" id="pref-file1" name="file1" accept="application/pdf">
+                        <small class="text-muted" id="pref-file1-name"></small>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-secondary">第二志愿</span>
+                        <input type="text" class="form-control" id="pref-choice2-name" placeholder="请选择导师" readonly>
+                        <input type="hidden" id="pref-choice2-id" name="choice2">
+                        <button type="button" class="btn btn-outline-primary" onclick="openTeacherSelectModal(2)">选择</button>
+                    </div>
+                    <div class="mt-2">
+                        <input type="file" class="form-control" id="pref-file2" name="file2" accept="application/pdf">
+                        <small class="text-muted" id="pref-file2-name"></small>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-dark">第三志愿</span>
+                        <input type="text" class="form-control" id="pref-choice3-name" placeholder="请选择导师" readonly>
+                        <input type="hidden" id="pref-choice3-id" name="choice3">
+                        <button type="button" class="btn btn-outline-primary" onclick="openTeacherSelectModal(3)">选择</button>
+                    </div>
+                    <div class="mt-2">
+                        <input type="file" class="form-control" id="pref-file3" name="file3" accept="application/pdf">
+                        <small class="text-muted" id="pref-file3-name"></small>
+                    </div>
+                </div>
+                <div class="col-12 d-flex gap-2">
+                    <button type="button" class="btn btn-primary" onclick="submitStudentPreference()">提交志愿</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="loadStudentPreference()">刷新</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 结果查询视图 -->
+    <div id="student-result-view" class="view-container" style="display: none;">
+        <div class="module">
+            <div class="module-header">
+                <h4><i class="bi bi-clipboard-check"></i> 结果查询</h4>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6"><strong>录取导师：</strong><span id="sr-advisor">--</span></div>
+                <div class="col-md-6"><strong>答辩成绩：</strong><span id="sr-score">--</span></div>
+                <div class="col-md-6"><strong>总评成绩：</strong><span id="sr-total">--</span></div>
+                <div class="col-md-6"><strong>调节系数：</strong><span id="sr-factor">--</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 教师研究方向与招生要求填写 -->
+    <div id="teacher-profile-view" class="view-container" style="display: none;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1><i class="bi bi-journal-text"></i> 研究方向与招生要求</h1>
+            <button class="btn btn-outline-secondary btn-sm" onclick="loadTeacherProfile()">
+                <i class="bi bi-arrow-clockwise"></i> 刷新
+            </button>
+        </div>
+        <div class="module">
+            <div class="module-header">
+                <h4><i class="bi bi-person-lines-fill"></i> 我的信息</h4>
+            </div>
+            <div class="row g-3 p-3">
+                <div class="col-md-4"><strong>教师编号：</strong><span id="tp-teacher-no">--</span></div>
+                <div class="col-md-4"><strong>姓名：</strong><span id="tp-teacher-name">--</span></div>
+            </div>
+        </div>
+        <div class="module">
+            <div class="module-header">
+                <h4><i class="bi bi-pencil-square"></i> 填写内容</h4>
+            </div>
+            <div class="p-3">
+                <div class="mb-3">
+                    <label class="form-label">研究方向</label>
+                    <textarea class="form-control" id="tp-research-direction" rows="4"
+                        placeholder="请填写研究方向..."></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">招生要求</label>
+                    <textarea class="form-control" id="tp-enrollment-requirements" rows="5"
+                        placeholder="请填写招生要求标准..."></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="saveTeacherProfile()">
+                    <i class="bi bi-save"></i> 保存
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 教师志愿录取视图 -->
+    <div id="teacher-volunteer-view" class="view-container" style="display: none;">
+        <header class="header">
+            <h1><i class="bi bi-person-check"></i> 志愿录取</h1>
+            <div class="d-flex align-items-center gap-2">
+                <select class="form-select" id="teacher-volunteer-round" style="width: 160px;"
+                    onchange="loadTeacherVolunteerList()">
+                    <option value="1">第一志愿</option>
+                    <option value="2">第二志愿</option>
+                    <option value="3">第三志愿</option>
+                </select>
+                <button class="btn btn-outline-primary" onclick="loadTeacherVolunteerList()">
+                    <i class="bi bi-arrow-clockwise"></i> 刷新
+                </button>
+            </div>
+        </header>
+        <div class="module">
+            <div class="alert alert-info" id="teacher-volunteer-status">
+                当前录取人数：<span id="teacher-volunteer-count">0</span> /
+                <span id="teacher-volunteer-max">0</span>，
+                当前轮次：<span id="teacher-volunteer-current-round">未设置</span>，
+                截止时间：<span id="teacher-volunteer-deadline">未设置</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>学号</th>
+                            <th>姓名</th>
+                            <th>班级</th>
+                            <th>类型</th>
+                            <th>题目</th>
+                            <th>材料</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teacher-volunteer-list">
+                        <tr><td colspan="8" class="text-center text-muted">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 院系管理员志愿分配视图 -->
+    <div id="dept-volunteer-assign-view" class="view-container" style="display: none;">
+        <header class="header">
+            <h1><i class="bi bi-diagram-3"></i> 志愿分配</h1>
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-outline-primary" onclick="loadDeptVolunteerStudents()">
+                    <i class="bi bi-arrow-clockwise"></i> 刷新
+                </button>
+                <button class="btn btn-primary" onclick="runDeptVolunteerAllocate()">
+                    <i class="bi bi-check2-circle"></i> 执行分配
+                </button>
+            </div>
+        </header>
+        <div class="module">
+            <div class="alert alert-info" id="dept-volunteer-status">
+                当前答辩年份：<span id="dept-volunteer-year">--</span>，
+                导师上限：<span id="dept-volunteer-max">--</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>学号</th>
+                            <th>姓名</th>
+                            <th>班级</th>
+                            <th>第一志愿</th>
+                            <th>第二志愿</th>
+                            <th>第三志愿</th>
+                            <th>当前导师</th>
+                            <th>分配方式</th>
+                            <th>指定导师</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dept-volunteer-list">
+                        <tr><td colspan="10" class="text-center text-muted">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
         <!-- Archive View was here -->
     </div>
 
@@ -2723,282 +2965,6 @@
                             </div>
                         </div>
                     </div>
-        <!-- 学生信息视图 -->
-        <div id="student-profile-view" class="view-container" style="display: none;">
-            <div class="module">
-                <div class="module-header">
-                    <h4><i class="bi bi-person-lines-fill"></i> 学生信息</h4>
-                </div>
-                <div class="row g-3">
-                    <div class="col-md-6"><strong>学号：</strong><span id="sp-no">--</span></div>
-                    <div class="col-md-6"><strong>姓名：</strong><span id="sp-name">--</span></div>
-                    <div class="col-md-6"><strong>班级：</strong><span id="sp-class">--</span></div>
-                    <div class="col-md-6"><strong>院系：</strong><span id="sp-dept">--</span></div>
-                    <div class="col-md-6"><strong>答辩类型：</strong><span id="sp-type">--</span></div>
-                    <div class="col-md-6"><strong>答辩日期：</strong><span id="sp-date">--</span></div>
-                    <div class="col-md-12"><strong>题目：</strong><span id="sp-title">--</span></div>
-                    <div class="col-md-12"><strong>摘要：</strong><span id="sp-summary">--</span></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 教师信息视图 -->
-        <div id="student-teacher-info-view" class="view-container" style="display: none;">
-            <div class="module">
-                <div class="module-header">
-                    <h4><i class="bi bi-journal-text"></i> 教师信息</h4>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>教师编号</th>
-                                <th>姓名</th>
-                                <th>职称</th>
-                                <th>研究方向</th>
-                                <th>招生要求</th>
-                            </tr>
-                        </thead>
-                        <tbody id="student-teacher-list">
-                            <tr><td colspan="5" class="text-center text-muted">加载中...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- 志愿填报视图 -->
-        <div id="student-preference-view" class="view-container" style="display: none;">
-            <div class="module">
-                <div class="module-header">
-                    <h4><i class="bi bi-ui-checks-grid"></i> 志愿填报</h4>
-                </div>
-                <form id="student-preference-form" class="row g-3" enctype="multipart/form-data">
-                    <input type="hidden" id="pref-choice-target" value="">
-                    <div class="col-12">
-                        <div class="alert alert-light">
-                            请依次选择第一、第二、第三志愿导师，并上传符合导师要求的 PDF 材料。
-                        </div>
-                    </div>
-                    <div class="col-12">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-primary">第一志愿</span>
-                            <input type="text" class="form-control" id="pref-choice1-name" placeholder="请选择导师" readonly>
-                            <input type="hidden" id="pref-choice1-id" name="choice1">
-                            <button type="button" class="btn btn-outline-primary" onclick="openTeacherSelectModal(1)">选择</button>
-                        </div>
-                        <div class="mt-2">
-                            <input type="file" class="form-control" id="pref-file1" name="file1" accept="application/pdf">
-                            <small class="text-muted" id="pref-file1-name"></small>
-                        </div>
-                    </div>
-                    <div class="col-12">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-secondary">第二志愿</span>
-                            <input type="text" class="form-control" id="pref-choice2-name" placeholder="请选择导师" readonly>
-                            <input type="hidden" id="pref-choice2-id" name="choice2">
-                            <button type="button" class="btn btn-outline-primary" onclick="openTeacherSelectModal(2)">选择</button>
-                        </div>
-                        <div class="mt-2">
-                            <input type="file" class="form-control" id="pref-file2" name="file2" accept="application/pdf">
-                            <small class="text-muted" id="pref-file2-name"></small>
-                        </div>
-                    </div>
-                    <div class="col-12">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-dark">第三志愿</span>
-                            <input type="text" class="form-control" id="pref-choice3-name" placeholder="请选择导师" readonly>
-                            <input type="hidden" id="pref-choice3-id" name="choice3">
-                            <button type="button" class="btn btn-outline-primary" onclick="openTeacherSelectModal(3)">选择</button>
-                        </div>
-                        <div class="mt-2">
-                            <input type="file" class="form-control" id="pref-file3" name="file3" accept="application/pdf">
-                            <small class="text-muted" id="pref-file3-name"></small>
-                        </div>
-                    </div>
-                    <div class="col-12 d-flex gap-2">
-                        <button type="button" class="btn btn-primary" onclick="submitStudentPreference()">提交志愿</button>
-                        <button type="button" class="btn btn-outline-secondary" onclick="loadStudentPreference()">刷新</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- 结果查询视图 -->
-        <div id="student-result-view" class="view-container" style="display: none;">
-            <div class="module">
-                <div class="module-header">
-                    <h4><i class="bi bi-clipboard-check"></i> 结果查询</h4>
-                </div>
-                <div class="row g-3">
-                    <div class="col-md-6"><strong>录取导师：</strong><span id="sr-advisor">--</span></div>
-                    <div class="col-md-6"><strong>答辩成绩：</strong><span id="sr-score">--</span></div>
-                    <div class="col-md-6"><strong>总评成绩：</strong><span id="sr-total">--</span></div>
-                    <div class="col-md-6"><strong>调节系数：</strong><span id="sr-factor">--</span></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 教师研究方向与招生要求填写 -->
-        <div id="teacher-profile-view" class="view-container" style="display: none;">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h1><i class="bi bi-journal-text"></i> 研究方向与招生要求</h1>
-                <button class="btn btn-outline-secondary btn-sm" onclick="loadTeacherProfile()">
-                    <i class="bi bi-arrow-clockwise"></i> 刷新
-                </button>
-            </div>
-            <div class="module">
-                <div class="module-header">
-                    <h4><i class="bi bi-person-lines-fill"></i> 我的信息</h4>
-                </div>
-                <div class="row g-3 p-3">
-                    <div class="col-md-4"><strong>教师编号：</strong><span id="tp-teacher-no">--</span></div>
-                    <div class="col-md-4"><strong>姓名：</strong><span id="tp-teacher-name">--</span></div>
-                </div>
-            </div>
-            <div class="module">
-                <div class="module-header">
-                    <h4><i class="bi bi-pencil-square"></i> 填写内容</h4>
-                </div>
-                <div class="p-3">
-                    <div class="mb-3">
-                        <label class="form-label">研究方向</label>
-                        <textarea class="form-control" id="tp-research-direction" rows="4"
-                            placeholder="请填写研究方向..."></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">招生要求</label>
-                        <textarea class="form-control" id="tp-enrollment-requirements" rows="5"
-                            placeholder="请填写招生要求标准..."></textarea>
-                    </div>
-                    <button class="btn btn-primary" onclick="saveTeacherProfile()">
-                        <i class="bi bi-save"></i> 保存
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- 教师志愿录取视图 -->
-        <div id="teacher-volunteer-view" class="view-container" style="display: none;">
-            <header class="header">
-                <h1><i class="bi bi-person-check"></i> 志愿录取</h1>
-                <div class="d-flex align-items-center gap-2">
-                    <select class="form-select" id="teacher-volunteer-round" style="width: 160px;"
-                        onchange="loadTeacherVolunteerList()">
-                        <option value="1">第一志愿</option>
-                        <option value="2">第二志愿</option>
-                        <option value="3">第三志愿</option>
-                    </select>
-                    <button class="btn btn-outline-primary" onclick="loadTeacherVolunteerList()">
-                        <i class="bi bi-arrow-clockwise"></i> 刷新
-                    </button>
-                </div>
-            </header>
-            <div class="module">
-                <div class="alert alert-info" id="teacher-volunteer-status">
-                    当前录取人数：<span id="teacher-volunteer-count">0</span> /
-                    <span id="teacher-volunteer-max">0</span>，
-                    当前轮次：<span id="teacher-volunteer-current-round">未设置</span>，
-                    截止时间：<span id="teacher-volunteer-deadline">未设置</span>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>学号</th>
-                                <th>姓名</th>
-                                <th>班级</th>
-                                <th>类型</th>
-                                <th>题目</th>
-                                <th>材料</th>
-                                <th>状态</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="teacher-volunteer-list">
-                            <tr><td colspan="8" class="text-center text-muted">加载中...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- 院系管理员志愿分配视图 -->
-        <div id="dept-volunteer-assign-view" class="view-container" style="display: none;">
-            <header class="header">
-                <h1><i class="bi bi-diagram-3"></i> 志愿分配</h1>
-                <div class="d-flex align-items-center gap-2">
-                    <button class="btn btn-outline-primary" onclick="loadDeptVolunteerStudents()">
-                        <i class="bi bi-arrow-clockwise"></i> 刷新
-                    </button>
-                    <button class="btn btn-primary" onclick="runDeptVolunteerAllocate()">
-                        <i class="bi bi-check2-circle"></i> 执行分配
-                    </button>
-                </div>
-            </header>
-            <div class="module">
-                <div class="alert alert-info" id="dept-volunteer-status">
-                    当前答辩年份：<span id="dept-volunteer-year">--</span>，
-                    导师上限：<span id="dept-volunteer-max">--</span>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>学号</th>
-                                <th>姓名</th>
-                                <th>班级</th>
-                                <th>第一志愿</th>
-                                <th>第二志愿</th>
-                                <th>第三志愿</th>
-                                <th>当前导师</th>
-                                <th>分配方式</th>
-                                <th>指定导师</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="dept-volunteer-list">
-                            <tr><td colspan="10" class="text-center text-muted">加载中...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- 学生志愿选择导师弹窗 -->
-        <div class="modal fade" id="studentTeacherSelectModal" tabindex="-1" aria-labelledby="studentTeacherSelectModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="studentTeacherSelectModalLabel">选择导师</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th style="width: 60px;">选择</th>
-                                        <th>教师编号</th>
-                                        <th>姓名</th>
-                                        <th>职称</th>
-                                        <th>研究方向</th>
-                                        <th>招生要求</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="student-teacher-select-list">
-                                    <tr><td colspan="6" class="text-center text-muted">加载中...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                        <button type="button" class="btn btn-primary" onclick="confirmTeacherSelect()">确定</button>
-                    </div>
-                </div>
-            </div>
-        </div>
                     <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                         <table class="table table-hover align-middle">
                             <thead class="table-light sticky-top">
@@ -3031,6 +2997,41 @@
                     <button type="button" class="btn btn-danger" onclick="submitRemoveStudentsFromGroup()">
                         <i class="bi bi-trash"></i> 移除
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 学生志愿选择导师弹窗 -->
+    <div class="modal fade" id="studentTeacherSelectModal" tabindex="-1" aria-labelledby="studentTeacherSelectModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="studentTeacherSelectModalLabel">选择导师</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 60px;">选择</th>
+                                    <th>教师编号</th>
+                                    <th>姓名</th>
+                                    <th>职称</th>
+                                    <th>研究方向</th>
+                                    <th>招生要求</th>
+                                </tr>
+                            </thead>
+                            <tbody id="student-teacher-select-list">
+                                <tr><td colspan="6" class="text-center text-muted">加载中...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmTeacherSelect()">确定</button>
                 </div>
             </div>
         </div>
