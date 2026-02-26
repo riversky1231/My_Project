@@ -414,6 +414,28 @@ public class ScoreController {
         if (teacher == null) {
             return "error:请先登录教师账号";
         }
+
+        // 检查是否已归档
+        String archived = configService.getConfigValue("LARGE_GROUP_ARCHIVED");
+        if ("1".equals(archived)) {
+            return "error:大组成绩已归档，无法再打分";
+        }
+
+        // 检查截止时间
+        String deadlineStr = configService.getConfigValue("LARGE_GROUP_DEADLINE");
+        if (deadlineStr != null && !deadlineStr.trim().isEmpty()) {
+            try {
+                java.time.LocalDateTime deadline = java.time.LocalDateTime.parse(
+                        deadlineStr.trim(),
+                        java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+                if (java.time.LocalDateTime.now().isAfter(deadline)) {
+                    return "error:大组打分已截止，无法再打分";
+                }
+            } catch (Exception e) {
+                // 解析失败则忽略截止时间检查
+                System.err.println("大组打分截止时间格式错误: " + deadlineStr);
+            }
+        }
         
         // 院系隔离校验：检查学生所属小组的院系是否与教师院系一致
         Long teacherDeptId = teacher.getDepartmentId();

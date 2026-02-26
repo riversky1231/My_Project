@@ -215,6 +215,90 @@ public class ConfigController {
         }
     }
 
+    // ======================= 大组打分配置 =======================
+
+    /**
+     * 获取大组打分配置（截止时间、归档状态）
+     * GET /admin/config/largegroup/get
+     */
+    @GetMapping("/largegroup/get")
+    @ResponseBody
+    public Map<String, Object> getLargeGroupConfig(HttpSession session) {
+        String permissionError = checkAdmin(session);
+        if (permissionError != null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "权限不足");
+        }
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("deadline", configService.getConfigValue("LARGE_GROUP_DEADLINE"));
+        result.put("archived", configService.getConfigValue("LARGE_GROUP_ARCHIVED"));
+        return result;
+    }
+
+    /**
+     * 保存大组打分截止时间（设置/延期）
+     * POST /admin/config/largegroup/save
+     * request body: { "deadline": "2025-07-15 18:00" }
+     */
+    @PostMapping("/largegroup/save")
+    @ResponseBody
+    public String saveLargeGroupConfig(@RequestBody Map<String, Object> request, HttpSession session) {
+        String permissionError = checkAdmin(session);
+        if (permissionError != null) {
+            return permissionError;
+        }
+        try {
+            Object deadline = request.get("deadline");
+            if (deadline != null && !String.valueOf(deadline).trim().isEmpty()) {
+                configService.saveConfig("LARGE_GROUP_DEADLINE",
+                        String.valueOf(deadline).trim(),
+                        "大组打分截止时间");
+            }
+            return "success";
+        } catch (Exception e) {
+            return "error:保存大组打分配置失败, " + e.getMessage();
+        }
+    }
+
+    /**
+     * 归档大组成绩
+     * POST /admin/config/largegroup/archive
+     */
+    @PostMapping("/largegroup/archive")
+    @ResponseBody
+    public String archiveLargeGroup(HttpSession session) {
+        String permissionError = checkAdmin(session);
+        if (permissionError != null) {
+            return permissionError;
+        }
+        try {
+            configService.saveConfig("LARGE_GROUP_ARCHIVED", "1", "大组成绩是否已归档(0未归档/1已归档)");
+            return "success";
+        } catch (Exception e) {
+            return "error:归档失败, " + e.getMessage();
+        }
+    }
+
+    /**
+     * 取消归档大组成绩（用于重新打分）
+     * POST /admin/config/largegroup/unarchive
+     */
+    @PostMapping("/largegroup/unarchive")
+    @ResponseBody
+    public String unarchiveLargeGroup(HttpSession session) {
+        String permissionError = checkAdmin(session);
+        if (permissionError != null) {
+            return permissionError;
+        }
+        try {
+            configService.saveConfig("LARGE_GROUP_ARCHIVED", "0", "大组成绩是否已归档(0未归档/1已归档)");
+            return "success";
+        } catch (Exception e) {
+            return "error:取消归档失败, " + e.getMessage();
+        }
+    }
+
+    // ======================= AI 配置 =======================
+
     /**
      * 保存QWEN API Key
      * POST /admin/config/ai/key/save?apiKey=your_key
@@ -238,8 +322,7 @@ public class ConfigController {
     /**
      * 保存评语提示词模板
      * POST /admin/config/ai/template/save
-     * request body: { "templateKey": "PAPER_PROMPT", "templateContent": "基于摘要，请..."
-     * }
+     * request body: { "templateKey": "PAPER_PROMPT", "templateContent": "基于摘要，请..." }
      */
     @PostMapping("/ai/template/save")
     @ResponseBody

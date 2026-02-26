@@ -480,6 +480,9 @@ INSERT INTO `system_config` VALUES ('QWEN_API_KEY', 'sk-115af915697b44df899340c9
 INSERT INTO `system_config` VALUES ('TEACHER_MAX_STUDENTS', '5', '教师最多可带学生数量', '2025-12-18 12:38:58');
 INSERT INTO `system_config` VALUES ('VOLUNTEER_CURRENT_ROUND', '1', '志愿互选当前轮次', '2025-12-18 12:38:58');
 INSERT INTO `system_config` VALUES ('VOLUNTEER_DEADLINE', '2025-06-30 18:00', '志愿互选截止时间', '2025-12-18 12:38:58');
+INSERT INTO `system_config` VALUES ('LARGE_GROUP_DEADLINE', '2025-07-15 18:00', '大组打分截止时间', '2025-12-18 12:38:58');
+INSERT INTO `system_config` VALUES ('LARGE_GROUP_ARCHIVED', '0', '大组成绩是否已归档(0未归档/1已归档)', '2025-12-18 12:38:58');
+INSERT INTO `system_config` VALUES ('GROUP_MAX_STUDENTS', '10', '每答辩小组最大学生人数', '2025-12-18 12:38:58');
 
 -- ----------------------------
 -- Table structure for t_student
@@ -877,5 +880,125 @@ INSERT INTO `user` VALUES (146, '2021NSC007', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbT
 INSERT INTO `user` VALUES (147, '2021NSC008', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '秦丽', 'qinli@stu.edu.cn', '13800005008', 1, 5, 5, '2026-02-22 14:10:49', '2026-02-22 14:10:49');
 INSERT INTO `user` VALUES (148, '2021NSC009', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '夏刚', 'xiagang@stu.edu.cn', '13800005009', 1, 5, 5, '2026-02-22 14:10:49', '2026-02-22 14:10:49');
 INSERT INTO `user` VALUES (149, '2021NSC010', '$2a$10$g2wkN7ssThzXj6iru5WFYuQTbTOKP3ygt1Q96tPqAd6PBISt2Uzba', '田雪', 'tianxue@stu.edu.cn', '13800005010', 1, 5, 5, '2026-02-22 14:10:49', '2026-02-22 14:10:49');
+
+-- =========================================================
+-- 补充数据：修正答辩组长角色、增加演示数据
+-- =========================================================
+
+-- 1. 修正答辩组长用户的角色为 DEFENSE_LEADER (role_id=3)
+--    group_id=1 leader=teacher_id=1 -> user_id=10 -> user.id=10
+--    group_id=2 leader=teacher_id=2 -> user_id=11
+--    group_id=3 leader=teacher_id=4 -> user_id=13
+--    group_id=4 leader=teacher_id=5 -> user_id=14
+--    group_id=5 leader=teacher_id=7 -> user_id=16
+--    group_id=6 leader=teacher_id=8 -> user_id=17
+--    group_id=7 leader=teacher_id=10 -> user_id=19
+--    group_id=8 leader=teacher_id=11 -> user_id=20
+--    group_id=9 leader=teacher_id=13 -> user_id=22
+--    group_id=10 leader=teacher_id=14 -> user_id=23
+UPDATE `user` SET `role_id` = 3 WHERE `id` IN (10, 11, 13, 14, 16, 17, 19, 20, 22, 23);
+
+-- 修正志愿分配页数据：将CS院学生 (1-5) 的指导教师和答辩分组清空，使其出现在「待分配」列表
+-- 这模拟了学生提交了志愿但尚未被分配指导教师的场景
+UPDATE `t_student` SET `advisor_teacher_id` = NULL, `defense_group_id` = NULL WHERE `id` IN (1,2,3,4,5);
+
+-- 2. 更新截止时间为未来时间（演示用：志愿互选截止在2027年，大组截止在2027年）
+UPDATE `system_config` SET `config_value` = '2027-06-30 18:00' WHERE `config_key` = 'VOLUNTEER_DEADLINE';
+UPDATE `system_config` SET `config_value` = '2027-07-15 18:00' WHERE `config_key` = 'LARGE_GROUP_DEADLINE';
+UPDATE `system_config` SET `config_value` = '0' WHERE `config_key` = 'LARGE_GROUP_ARCHIVED';
+
+-- 3. 为每个小组增加第3位教师的打分记录（小组1-10各加1位老师，共50条记录）
+-- 小组1(group_id=1)第3位为teacher_id=3，学生1-5
+INSERT INTO `teacher_score_record` VALUES (101, 1, 1, 3, 2024, 45, 22, 22, NULL, NULL, NULL, 89, '2024-06-15 10:32:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (102, 2, 1, 3, 2024, 13, 14, 14, 21, 12, 12, 86, '2024-06-15 10:42:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (103, 3, 1, 3, 2024, 44, 21, 22, NULL, NULL, NULL, 87, '2024-06-15 11:02:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (104, 4, 1, 3, 2024, 14, 13, 14, 21, 11, 11, 84, '2024-06-15 11:17:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (105, 5, 1, 3, 2024, 45, 23, 22, NULL, NULL, NULL, 90, '2024-06-15 11:32:00', '2025-12-18 12:38:58');
+-- 小组2(group_id=2)第3位为teacher_id=1，学生6-10
+INSERT INTO `teacher_score_record` VALUES (106, 6, 2, 1, 2024, 14, 13, 14, 22, 12, 11, 86, '2024-06-15 14:02:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (107, 7, 2, 1, 2024, 45, 22, 23, NULL, NULL, NULL, 90, '2024-06-15 14:22:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (108, 8, 2, 1, 2024, 13, 14, 13, 22, 12, 12, 86, '2024-06-15 14:42:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (109, 9, 2, 1, 2024, 44, 22, 21, NULL, NULL, NULL, 87, '2024-06-15 15:02:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (110, 10, 2, 1, 2024, 14, 14, 14, 22, 12, 11, 87, '2024-06-15 15:22:00', '2025-12-18 12:38:58');
+-- 小组3(group_id=3)第3位为teacher_id=6，学生11-15
+INSERT INTO `teacher_score_record` VALUES (111, 11, 3, 6, 2024, 44, 22, 22, NULL, NULL, NULL, 88, '2024-06-16 10:02:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (112, 12, 3, 6, 2024, 13, 14, 14, 22, 12, 12, 87, '2024-06-16 10:22:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (113, 13, 3, 6, 2024, 45, 22, 21, NULL, NULL, NULL, 88, '2024-06-16 10:42:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (114, 14, 3, 6, 2024, 14, 13, 13, 21, 12, 12, 85, '2024-06-16 11:02:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (115, 15, 3, 6, 2024, 44, 22, 22, NULL, NULL, NULL, 88, '2024-06-16 11:22:00', '2025-12-18 12:38:58');
+-- 小组4(group_id=4)第3位为teacher_id=4，学生16-20
+INSERT INTO `teacher_score_record` VALUES (116, 16, 4, 4, 2024, 13, 14, 14, 22, 12, 11, 86, '2024-06-16 14:02:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (117, 17, 4, 4, 2024, 44, 22, 21, NULL, NULL, NULL, 87, '2024-06-16 14:22:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (118, 18, 4, 4, 2024, 14, 14, 13, 22, 12, 11, 86, '2024-06-16 14:42:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (119, 19, 4, 4, 2024, 46, 23, 22, NULL, NULL, NULL, 91, '2024-06-16 15:02:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (120, 20, 4, 4, 2024, 14, 13, 14, 21, 11, 11, 84, '2024-06-16 15:22:00', '2025-12-18 12:38:58');
+-- 小组5(group_id=5)第3位为teacher_id=9，学生21-25
+INSERT INTO `teacher_score_record` VALUES (121, 21, 5, 9, 2024, 44, 22, 21, NULL, NULL, NULL, 87, '2024-06-17 10:02:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (122, 22, 5, 9, 2024, 14, 13, 13, 21, 12, 12, 85, '2024-06-17 10:22:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (123, 23, 5, 9, 2024, 45, 22, 22, NULL, NULL, NULL, 89, '2024-06-17 10:42:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (124, 24, 5, 9, 2024, 13, 14, 14, 21, 12, 12, 86, '2024-06-17 11:02:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (125, 25, 5, 9, 2024, 44, 21, 22, NULL, NULL, NULL, 87, '2024-06-17 11:22:00', '2025-12-18 12:38:58');
+-- 小组6(group_id=6)第3位为teacher_id=7，学生26-30
+INSERT INTO `teacher_score_record` VALUES (126, 26, 6, 7, 2024, 14, 14, 13, 21, 12, 12, 86, '2024-06-17 14:02:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (127, 27, 6, 7, 2024, 45, 22, 22, NULL, NULL, NULL, 89, '2024-06-17 14:22:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (128, 28, 6, 7, 2024, 13, 14, 13, 22, 12, 12, 86, '2024-06-17 14:42:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (129, 29, 6, 7, 2024, 44, 22, 21, NULL, NULL, NULL, 87, '2024-06-17 15:02:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (130, 30, 6, 7, 2024, 14, 13, 14, 22, 12, 12, 87, '2024-06-17 15:22:00', '2025-12-18 12:38:58');
+-- 小组7(group_id=7)第3位为teacher_id=12，学生31-35
+INSERT INTO `teacher_score_record` VALUES (131, 31, 7, 12, 2024, 46, 23, 22, NULL, NULL, NULL, 91, '2024-06-18 10:02:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (132, 32, 7, 12, 2024, 14, 14, 13, 22, 12, 12, 87, '2024-06-18 10:22:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (133, 33, 7, 12, 2024, 45, 22, 22, NULL, NULL, NULL, 89, '2024-06-18 10:42:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (134, 34, 7, 12, 2024, 13, 14, 14, 22, 12, 12, 87, '2024-06-18 11:02:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (135, 35, 7, 12, 2024, 45, 22, 22, NULL, NULL, NULL, 89, '2024-06-18 11:22:00', '2025-12-18 12:38:58');
+-- 小组8(group_id=8)第3位为teacher_id=10，学生36-40
+INSERT INTO `teacher_score_record` VALUES (136, 36, 8, 10, 2024, 13, 14, 14, 22, 12, 11, 86, '2024-06-18 14:02:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (137, 37, 8, 10, 2024, 45, 22, 22, NULL, NULL, NULL, 89, '2024-06-18 14:22:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (138, 38, 8, 10, 2024, 14, 13, 14, 22, 12, 12, 87, '2024-06-18 14:42:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (139, 39, 8, 10, 2024, 45, 22, 22, NULL, NULL, NULL, 89, '2024-06-18 15:02:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (140, 40, 8, 10, 2024, 14, 15, 15, 23, 13, 13, 93, '2024-06-18 15:22:00', '2025-12-18 12:38:58');
+-- 小组9(group_id=9)第3位为teacher_id=15，学生41-45
+INSERT INTO `teacher_score_record` VALUES (141, 41, 9, 15, 2024, 45, 22, 22, NULL, NULL, NULL, 89, '2024-06-19 10:02:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (142, 42, 9, 15, 2024, 14, 13, 14, 22, 12, 11, 86, '2024-06-19 10:22:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (143, 43, 9, 15, 2024, 45, 22, 21, NULL, NULL, NULL, 88, '2024-06-19 10:42:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (144, 44, 9, 15, 2024, 13, 14, 13, 21, 12, 12, 85, '2024-06-19 11:02:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (145, 45, 9, 15, 2024, 45, 23, 22, NULL, NULL, NULL, 90, '2024-06-19 11:22:00', '2025-12-18 12:38:58');
+-- 小组10(group_id=10)第3位为teacher_id=13，学生46-50
+INSERT INTO `teacher_score_record` VALUES (146, 46, 10, 13, 2024, 14, 13, 13, 22, 12, 12, 86, '2024-06-19 14:02:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (147, 47, 10, 13, 2024, 45, 22, 23, NULL, NULL, NULL, 90, '2024-06-19 14:22:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (148, 48, 10, 13, 2024, 13, 14, 14, 22, 12, 11, 86, '2024-06-19 14:42:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (149, 49, 10, 13, 2024, 44, 22, 22, NULL, NULL, NULL, 88, '2024-06-19 15:02:00', '2025-12-18 12:38:58');
+INSERT INTO `teacher_score_record` VALUES (150, 50, 10, 13, 2024, 14, 14, 14, 22, 13, 12, 89, '2024-06-19 15:22:00', '2025-12-18 12:38:58');
+
+-- 4. 补充各院系学生的志愿提交数据（演示：计算机院学生提交志愿）
+INSERT INTO `student_preference` VALUES (11, 1, 2024, 1, 2, 3, NULL, NULL, NULL, 0, 0, NULL, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `student_preference` VALUES (12, 2, 2024, 2, 1, 3, NULL, NULL, NULL, 0, 0, NULL, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `student_preference` VALUES (13, 3, 2024, 1, 3, 2, NULL, NULL, NULL, 0, 0, NULL, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `student_preference` VALUES (14, 4, 2024, 3, 1, 2, NULL, NULL, NULL, 0, 0, NULL, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `student_preference` VALUES (15, 5, 2024, 2, 3, 1, NULL, NULL, NULL, 0, 0, NULL, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+-- 软件院学生
+INSERT INTO `student_preference` VALUES (16, 11, 2024, 4, 5, 6, NULL, NULL, NULL, 0, 0, NULL, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `student_preference` VALUES (17, 12, 2024, 5, 4, 6, NULL, NULL, NULL, 0, 0, NULL, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `student_preference` VALUES (18, 13, 2024, 4, 6, 5, NULL, NULL, NULL, 0, 0, NULL, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `student_preference` VALUES (19, 14, 2024, 6, 4, 5, NULL, NULL, NULL, 0, 0, NULL, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `student_preference` VALUES (20, 15, 2024, 5, 6, 4, NULL, NULL, NULL, 0, 0, NULL, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+-- AI学院学生
+INSERT INTO `student_preference` VALUES (21, 31, 2024, 10, 11, 12, NULL, NULL, NULL, 0, 0, NULL, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `student_preference` VALUES (22, 32, 2024, 11, 10, 12, NULL, NULL, NULL, 0, 0, NULL, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `student_preference` VALUES (23, 33, 2024, 10, 12, 11, NULL, NULL, NULL, 0, 0, NULL, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `student_preference` VALUES (24, 34, 2024, 12, 10, 11, NULL, NULL, NULL, 0, 0, NULL, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `student_preference` VALUES (25, 35, 2024, 11, 12, 10, NULL, NULL, NULL, 0, 0, NULL, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+
+-- 5. 为大组答辩增加第三位教师的评分（3 teachers per大组答辩student）
+INSERT INTO `large_group_score` VALUES (23, 1, 3, 2024, 91, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `large_group_score` VALUES (24, 5, 2, 2024, 90, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `large_group_score` VALUES (25, 7, 1, 2024, 92, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `large_group_score` VALUES (26, 11, 6, 2024, 89, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `large_group_score` VALUES (27, 19, 5, 2024, 90, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `large_group_score` VALUES (28, 21, 9, 2024, 88, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `large_group_score` VALUES (29, 27, 8, 2024, 90, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `large_group_score` VALUES (30, 31, 12, 2024, 91, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `large_group_score` VALUES (31, 40, 11, 2024, 92, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `large_group_score` VALUES (32, 41, 15, 2024, 88, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
+INSERT INTO `large_group_score` VALUES (33, 47, 14, 2024, 90, '2025-12-18 12:38:58', '2025-12-18 12:38:58');
 
 SET FOREIGN_KEY_CHECKS = 1;

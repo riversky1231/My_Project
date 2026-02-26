@@ -68,6 +68,7 @@
         FROM defense_group_teacher dgt
         LEFT JOIN teacher t ON dgt.teacher_id = t.id
         WHERE dgt.teacher_id = #{teacherId}
+        ORDER BY dgt.is_leader DESC
         LIMIT 1
     </select>
 
