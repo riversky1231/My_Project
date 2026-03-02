@@ -11,11 +11,15 @@ import com.example.defensemanagement.service.ConfigService;
 import com.example.defensemanagement.service.StudentService;
 import com.example.defensemanagement.service.impl.ConfigServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpSession;
 import java.nio.file.Files;
@@ -24,7 +28,10 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/teacher/volunteer")
@@ -79,7 +86,9 @@ public class TeacherVolunteerController {
 
     private Integer getCurrentRound() {
         String v = configService.getConfigValue(ConfigServiceImpl.KEY_VOLUNTEER_CURRENT_ROUND);
-        if (v == null || v.trim().isEmpty()) return null;
+        if (v == null || v.trim().isEmpty()) {
+            return null;
+        }
         try {
             int round = Integer.parseInt(v.trim());
             return (round >= 1 && round <= 3) ? round : null;
@@ -131,9 +140,10 @@ public class TeacherVolunteerController {
             return result;
         }
         if (round == null || round < 1 || round > 3) {
-            result.put("error", "round参数无效");
+            result.put("error", "round閸欏倹鏆熼弮鐘虫櫏");
             return result;
         }
+
         Integer year = getCurrentYear();
         List<Map<String, Object>> rows = studentPreferenceMapper.findByTeacherAndYearAndRound(teacher.getId(), year, round);
         int maxStudents = getMaxStudents();
@@ -153,6 +163,7 @@ public class TeacherVolunteerController {
             item.put("summary", r.get("summary"));
             item.put("advisorTeacherId", r.get("advisor_teacher_id"));
             item.put("advisorName", r.get("advisor_name"));
+
             String filePath = null;
             if (round == 1) filePath = (String) r.get("file1_path");
             if (round == 2) filePath = (String) r.get("file2_path");
@@ -163,12 +174,17 @@ public class TeacherVolunteerController {
             boolean assignedToMe = assignedToSomeone && String.valueOf(r.get("advisor_teacher_id"))
                     .equals(String.valueOf(teacher.getId()));
             boolean canAccept = !deadlinePassed
-                    && (currentRound == null || currentRound == round)
+                    && (currentRound == null || currentRound.equals(round))
                     && !assignedToSomeone
                     && assigned < maxStudents;
+            boolean canCancel = !deadlinePassed
+                    && (currentRound == null || currentRound.equals(round))
+                    && assignedToMe;
+
             item.put("assignedToMe", assignedToMe);
             item.put("assignedToSomeone", assignedToSomeone);
             item.put("canAccept", canAccept);
+            item.put("canCancel", canCancel);
             list.add(item);
         }
 
@@ -192,7 +208,7 @@ public class TeacherVolunteerController {
             return "error:未登录或非教师身份";
         }
         if (round == null || round < 1 || round > 3) {
-            return "error:round参数无效";
+            return "error:round閸欏倹鏆熼弮鐘虫櫏";
         }
         if (isDeadlinePassed()) {
             return "error:志愿录取已截止";
@@ -201,6 +217,7 @@ public class TeacherVolunteerController {
         if (currentRound != null && !currentRound.equals(round)) {
             return "error:当前不允许处理该轮志愿";
         }
+
         Integer year = getCurrentYear();
         Student student = studentMapper.findById(studentId);
         if (student == null || !year.equals(student.getDefenseYear())) {
@@ -236,6 +253,55 @@ public class TeacherVolunteerController {
         }
     }
 
+    @PostMapping("/cancel")
+    @ResponseBody
+    public String cancelVolunteer(@RequestParam Long studentId,
+                                  @RequestParam Integer round,
+                                  HttpSession session) {
+        Teacher teacher = getCurrentTeacher(session);
+        if (teacher == null) {
+            return "error:未登录或非教师身份";
+        }
+        if (round == null || round < 1 || round > 3) {
+            return "error:round閸欏倹鏆熼弮鐘虫櫏";
+        }
+        if (isDeadlinePassed()) {
+            return "error:志愿录取已截止";
+        }
+        Integer currentRound = getCurrentRound();
+        if (currentRound != null && !currentRound.equals(round)) {
+            return "error:当前不允许处理该轮志愿";
+        }
+
+        Integer year = getCurrentYear();
+        Student student = studentMapper.findById(studentId);
+        if (student == null || !year.equals(student.getDefenseYear())) {
+            return "error:学生不存在或年份不匹配";
+        }
+        if (student.getAdvisorTeacherId() == null || !student.getAdvisorTeacherId().equals(teacher.getId())) {
+            return "error:该学生并非由您录取";
+        }
+
+        StudentPreference pref = studentPreferenceMapper.findByStudentIdAndYear(studentId, year);
+        if (pref == null) {
+            return "error:学生未提交志愿";
+        }
+        Long expectedTeacherId = null;
+        if (round == 1) expectedTeacherId = pref.getChoice1TeacherId();
+        if (round == 2) expectedTeacherId = pref.getChoice2TeacherId();
+        if (round == 3) expectedTeacherId = pref.getChoice3TeacherId();
+        if (expectedTeacherId == null || !expectedTeacherId.equals(teacher.getId())) {
+            return "error:该学生未选择您作为本轮志愿导师";
+        }
+
+        try {
+            studentService.unassignAdvisor(studentId);
+            return "success";
+        } catch (Exception e) {
+            return "error:" + e.getMessage();
+        }
+    }
+
     @GetMapping("/file")
     public ResponseEntity<byte[]> downloadVolunteerFile(@RequestParam Long studentId,
                                                         @RequestParam Integer round,
@@ -252,8 +318,9 @@ public class TeacherVolunteerController {
         if (pref == null) {
             return ResponseEntity.notFound().build();
         }
-        Long expectedTeacherId = null;
-        String filePath = null;
+
+        Long expectedTeacherId;
+        String filePath;
         if (round == 1) {
             expectedTeacherId = pref.getChoice1TeacherId();
             filePath = pref.getFile1Path();
@@ -264,6 +331,7 @@ public class TeacherVolunteerController {
             expectedTeacherId = pref.getChoice3TeacherId();
             filePath = pref.getFile3Path();
         }
+
         if (expectedTeacherId == null || !expectedTeacherId.equals(teacher.getId())) {
             return ResponseEntity.status(403).build();
         }
@@ -273,6 +341,7 @@ public class TeacherVolunteerController {
         if (!filePath.replace("\\", "/").startsWith("uploads/volunteer/")) {
             return ResponseEntity.status(403).build();
         }
+
         try {
             Path path = Paths.get(filePath);
             if (!Files.exists(path)) {

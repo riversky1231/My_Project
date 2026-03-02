@@ -22,6 +22,11 @@ public interface StudentMapper {
      */
     int updateDefenseGroupId(@Param("id") Long id, @Param("groupId") Long groupId);
 
+    /**
+     * 仅更新 advisor_teacher_id，允许置空
+     */
+    int updateAdvisorTeacherId(@Param("id") Long id, @Param("advisorTeacherId") Long advisorTeacherId);
+
     // 查询学生列表
     List<Student> findAll(); // 【补充】Controller中调用，需要获取所有学生列表
 

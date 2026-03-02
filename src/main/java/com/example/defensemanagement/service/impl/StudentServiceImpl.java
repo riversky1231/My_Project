@@ -117,6 +117,27 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     @Transactional
+    public boolean unassignAdvisor(Long studentId) {
+        Student student = findById(studentId);
+        if (student == null) {
+            throw new IllegalArgumentException("瀛︾敓涓嶅瓨鍦細" + studentId);
+        }
+
+        Long oldAdvisorId = student.getAdvisorTeacherId();
+        if (oldAdvisorId == null) {
+            return true;
+        }
+
+        if (student.getDefenseYear() != null) {
+            teacherScoreRecordMapper.deleteByStudentIdAndTeacherId(studentId, oldAdvisorId, student.getDefenseYear());
+            studentFinalScoreMapper.clearAdvisorScore(studentId, student.getDefenseYear());
+        }
+
+        return studentMapper.updateAdvisorTeacherId(studentId, null) > 0;
+    }
+
+    @Override
+    @Transactional
     public boolean assignReviewer(Long studentId, Long teacherId) {
         Student student = findById(studentId);
         if (student == null) {

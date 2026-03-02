@@ -26,6 +26,11 @@ public interface StudentService {
     boolean assignAdvisor(Long studentId, Long teacherId); //
 
     /**
+     * 取消/清空指导教师
+     */
+    boolean unassignAdvisor(Long studentId);
+
+    /**
      * 分配/更新评阅人
      */
     boolean assignReviewer(Long studentId, Long teacherId); //

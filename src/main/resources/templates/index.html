@@ -3869,7 +3869,7 @@
             <span id="teacher-volunteer-max">0</span>， 当前轮次：<span
               id="teacher-volunteer-current-round"
               >未设置</span
-            >， 截止时间：<span id="teacher-volunteer-deadline">未设置</span>
+            >， 截止时间：<span id="teacher-volunteer-deadline">未设置</span>。可在“材料”列下载学生提交的PDF附件。
           </div>
           <div class="table-responsive">
             <table class="table table-hover align-middle">
@@ -12725,11 +12725,14 @@
                 ? `已被 ${item.advisorName || "其他导师"} 录取`
                 : "待录取";
             const fileBtn = item.filePath
-              ? `<a class="btn btn-sm btn-outline-secondary" href="/teacher/volunteer/file?studentId=${item.studentId}&round=${round}" target="_blank">下载</a>`
+              ? `<a class="btn btn-sm btn-outline-secondary" href="/teacher/volunteer/file?studentId=${item.studentId}&round=${round}" target="_blank">下载材料</a>`
               : '<span class="text-muted">无</span>';
-            const actionBtn = item.canAccept
-              ? `<button class="btn btn-sm btn-primary" onclick="acceptVolunteer(${item.studentId})">录取</button>`
-              : '<span class="text-muted">-</span>';
+            let actionBtn = '<span class="text-muted">-</span>';
+            if (item.canAccept) {
+              actionBtn = `<button class="btn btn-sm btn-primary" onclick="acceptVolunteer(${item.studentId})">录取</button>`;
+            } else if (item.canCancel) {
+              actionBtn = `<button class="btn btn-sm btn-outline-danger" onclick="cancelVolunteer(${item.studentId})">取消录取</button>`;
+            }
             html += `<tr>
                         <td>${item.studentNo || "--"}</td>
                         <td>${item.studentName || "--"}</td>
@@ -12770,6 +12773,30 @@
         } catch (e) {
           console.error("录取失败:", e);
           showAlert("error", "录取失败，请重试");
+        }
+      }
+
+      async function cancelVolunteer(studentId) {
+        const roundSelect = document.getElementById("teacher-volunteer-round");
+        const round = roundSelect ? Number(roundSelect.value || 1) : 1;
+        if (!confirm("确定要取消该学生的录取吗？")) return;
+        try {
+          const resp = await fetch("/teacher/volunteer/cancel", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `studentId=${studentId}&round=${round}`,
+          });
+          const text = await resp.text();
+          if (resp.ok && text === "success") {
+            showAlert("success", "已取消录取");
+            await loadTeacherVolunteerList();
+          } else {
+            const msg = text.startsWith("error:") ? text.substring(6) : text;
+            showAlert("error", "取消录取失败：" + msg);
+          }
+        } catch (e) {
+          console.error("取消录取失败:", e);
+          showAlert("error", "取消录取失败，请重试");
         }
       }
 

@@ -201,6 +201,12 @@
         WHERE id = #{id}
     </update>
 
+    <update id="updateAdvisorTeacherId">
+        UPDATE t_student
+        SET advisor_teacher_id = #{advisorTeacherId}
+        WHERE id = #{id}
+    </update>
+
     <delete id="deleteById">
         DELETE FROM t_student WHERE id = #{id}
     </delete>
