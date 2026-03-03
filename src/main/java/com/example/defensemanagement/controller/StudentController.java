@@ -18,10 +18,13 @@ import com.example.defensemanagement.mapper.StudentMapper;
 import com.example.defensemanagement.mapper.DepartmentMapper;
 import com.example.defensemanagement.entity.Department;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpSession;
 import org.springframework.web.multipart.MultipartFile;
@@ -44,6 +47,10 @@ import java.time.format.DateTimeParseException;
 @Controller
 @RequestMapping("/department/student")
 public class StudentController {
+
+    private static final Logger log = LoggerFactory.getLogger(StudentController.class);
+    private static final int MAX_TITLE_LENGTH = 200;
+    private static final int MAX_SUMMARY_LENGTH = 2000;
 
     @Autowired
     private StudentService studentService;
@@ -1213,6 +1220,58 @@ public class StudentController {
             return "success";
         } catch (Exception e) {
             return "error:" + e.getMessage();
+        }
+    }
+
+    /**
+     * 教师填写所指导学生的毕业答辩题目和摘要
+     * POST /department/student/teacher/updateStudentInfo
+     */
+    @PostMapping("/teacher/updateStudentInfo")
+    @ResponseBody
+    public String updateStudentInfoByTeacher(@RequestParam Long studentId,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String summary,
+            HttpSession session) {
+        Teacher teacher = getTeacherFromSession(session);
+        if (teacher == null) {
+            return "error:请先登录教师账号";
+        }
+
+        // P3: 输入长度校验，防止超长字符串写入数据库
+        if (title != null && title.length() > MAX_TITLE_LENGTH) {
+            return "error:题目不能超过" + MAX_TITLE_LENGTH + "个字符";
+        }
+        if (summary != null && summary.length() > MAX_SUMMARY_LENGTH) {
+            return "error:摘要不能超过" + MAX_SUMMARY_LENGTH + "个字符";
+        }
+
+        // P3: 此处存在轻微 TOCTOU 风险（检查指导关系后再更新），
+        // 并发概率极低，不引入分布式锁，通过 Service 层重新读取后更新来降低风险
+        try {
+            // P3: 在 try 块内重新读取，缩小 TOCTOU 窗口
+            Student student = studentService.findById(studentId);
+            if (student == null) {
+                return "error:学生不存在";
+            }
+            if (student.getAdvisorTeacherId() == null || !student.getAdvisorTeacherId().equals(teacher.getId())) {
+                return "error:您不是该学生的指导教师";
+            }
+
+            // P3: 走 Service 层而非直接调用 Mapper，保持分层一致性
+            Student update = new Student();
+            update.setId(studentId);
+            update.setTitle(title);
+            update.setSummary(summary);
+            studentService.saveStudent(update);
+            return "success";
+        } catch (DataAccessException e) {
+            // P1/P4: 数据库异常不向客户端暴露内部信息，只记录日志
+            log.error("更新学生题目摘要时发生数据库错误，studentId={}", studentId, e);
+            return "error:数据库操作失败，请稍后重试";
+        } catch (Exception e) {
+            log.error("更新学生题目摘要时发生未知错误，studentId={}", studentId, e);
+            return "error:系统错误，请稍后重试";
         }
     }
 

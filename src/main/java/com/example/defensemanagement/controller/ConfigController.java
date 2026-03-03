@@ -137,7 +137,7 @@ public class ConfigController {
     @PostMapping("/date/set")
     @ResponseBody
     public String setDefenseDate(@RequestBody Map<String, Object> request, HttpSession session) {
-        String permissionError = checkSuperAdmin(session);
+        String permissionError = checkAdmin(session);
         if (permissionError != null) {
             return permissionError;
         }
@@ -306,7 +306,7 @@ public class ConfigController {
     @PostMapping("/ai/key/save")
     @ResponseBody
     public String setQwenApiKey(@RequestParam String apiKey, HttpSession session) {
-        String permissionError = checkSuperAdmin(session);
+        String permissionError = checkAdmin(session);
         if (permissionError != null) {
             return permissionError;
         }
@@ -327,7 +327,7 @@ public class ConfigController {
     @PostMapping("/ai/template/save")
     @ResponseBody
     public String setPromptTemplate(@RequestBody Map<String, String> request, HttpSession session) {
-        String permissionError = checkSuperAdmin(session);
+        String permissionError = checkAdmin(session);
         if (permissionError != null) {
             return permissionError;
         }
@@ -354,7 +354,7 @@ public class ConfigController {
     @GetMapping("/ai/template/get")
     @ResponseBody
     public String getPromptTemplate(@RequestParam String templateKey, HttpSession session) {
-        String permissionError = checkSuperAdmin(session);
+        String permissionError = checkAdmin(session);
         if (permissionError != null) {
             return permissionError;
         }
@@ -374,7 +374,7 @@ public class ConfigController {
     @GetMapping("/date/get")
     @ResponseBody
     public String getDefenseDatePart(@RequestParam String key, HttpSession session) {
-        String permissionError = checkSuperAdmin(session);
+        String permissionError = checkAdmin(session);
         if (permissionError != null) {
             return permissionError;
         }
@@ -394,14 +394,22 @@ public class ConfigController {
     @GetMapping("/ai/key/get")
     @ResponseBody
     public String getQwenApiKey(HttpSession session) {
-        String permissionError = checkSuperAdmin(session);
+        String permissionError = checkAdmin(session);
         if (permissionError != null) {
             return permissionError;
         }
 
         try {
             String apiKey = configService.getConfigValue("QWEN_API_KEY");
-            return apiKey != null ? apiKey : "";
+            if (apiKey == null || apiKey.isEmpty()) {
+                return "";
+            }
+            // P6: API Key 脱敏返回，只展示末尾4位，防止密钥通过接口泄露
+            int len = apiKey.length();
+            String masked = len > 4
+                    ? "****" + apiKey.substring(len - 4)
+                    : "****";
+            return masked;
         } catch (Exception e) {
             return "error:获取API Key失败, " + e.getMessage();
         }

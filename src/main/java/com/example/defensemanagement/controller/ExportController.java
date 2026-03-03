@@ -362,7 +362,8 @@ public class ExportController {
         // 渲染文档
         System.out.println("[统分表] 开始渲染文档，占位符数量: " + ph.size() + ", 图片数量: " + img.size());
         String filename = encode("毕业论文(设计)答辩小组统分表-" + groupName + ".docx");
-        byte[] doc = docTemplateService.renderDoc(resolveTemplate("group-summary", GROUP_SUMMARY_TEMPLATE), ph, img);
+        Long deptId = students.get(0).getDepartmentId();
+        byte[] doc = docTemplateService.renderDoc(resolveTemplate("group-summary", GROUP_SUMMARY_TEMPLATE, deptId), ph, img);
         System.out.println("[统分表] 文档渲染完成，文档大小: " + doc.length + " 字节");
         return attachment(doc, filename);
     }
@@ -427,8 +428,8 @@ public class ExportController {
                 System.err.println("警告：加载签名失败: " + e.getMessage());
             }
 
-            String templatePath = resolveTemplate(isPaper ? "paper-score" : "design-score", 
-                    isPaper ? PAPER_SCORE_TEMPLATE : DESIGN_SCORE_TEMPLATE);
+            String templatePath = resolveTemplate(isPaper ? "paper-score" : "design-score",
+                    isPaper ? PAPER_SCORE_TEMPLATE : DESIGN_SCORE_TEMPLATE, stu.getDepartmentId());
             
             if (isPaper) {
                 fillPaperScores(ph, records, factor, fs, stu);
@@ -497,8 +498,8 @@ public class ExportController {
         }
         
         String filename = encode((isPaper ? "本科毕业论文成绩评定表-" : "本科毕业设计成绩评定表-") + stu.getName() + ".docx");
-        String template = isPaper ? resolveTemplate("paper-grade", PAPER_GRADE_TEMPLATE)
-                : resolveTemplate("design-grade", DESIGN_GRADE_TEMPLATE);
+        String template = isPaper ? resolveTemplate("paper-grade", PAPER_GRADE_TEMPLATE, stu.getDepartmentId())
+                : resolveTemplate("design-grade", DESIGN_GRADE_TEMPLATE, stu.getDepartmentId());
         byte[] doc = docTemplateService.renderDoc(template, ph, img);
         return attachment(doc, filename);
     }
@@ -1049,8 +1050,8 @@ public class ExportController {
             fillDesignScores(ph, records, factor, fs, stu);
         }
         String filename = encode((isPaper ? "毕业论文答辩成绩无评语过程表-" : "毕业设计答辩成绩无评语过程表-") + stu.getName() + ".docx");
-        String template = isPaper ? resolveTemplate("paper-process", PAPER_PROCESS_TEMPLATE)
-                : resolveTemplate("design-process", DESIGN_PROCESS_TEMPLATE);
+        String template = isPaper ? resolveTemplate("paper-process", PAPER_PROCESS_TEMPLATE, stu.getDepartmentId())
+                : resolveTemplate("design-process", DESIGN_PROCESS_TEMPLATE, stu.getDepartmentId());
         byte[] doc = docTemplateService.renderDoc(template, ph, img);
         return attachment(doc, filename);
     }
@@ -1460,14 +1461,31 @@ public class ExportController {
     }
 
     private String resolveTemplate(String key, String defaultClasspath) {
-        // 优先使用上传的模板（使用绝对路径）
+        return resolveTemplate(key, defaultClasspath, null);
+    }
+
+    /**
+     * 模板解析优先级：
+     * 1. 院系专属模板 uploads/templates/dept_{deptId}/{key}.docx（院系管理员上传）
+     * 2. 全局模板     uploads/templates/{key}.docx（超级管理员上传）
+     * 3. Classpath 默认模板（兜底）
+     */
+    private String resolveTemplate(String key, String defaultClasspath, Long departmentId) {
         java.nio.file.Path basePath = getUploadBasePath();
-        java.nio.file.Path p = basePath.resolve("templates").resolve(key + ".docx");
-        if (Files.exists(p)) {
-            return p.toAbsolutePath().toString();
+        // 1. 优先查找院系专属模板
+        if (departmentId != null) {
+            java.nio.file.Path deptPath = basePath.resolve("templates")
+                    .resolve("dept_" + departmentId).resolve(key + ".docx");
+            if (Files.exists(deptPath)) {
+                return deptPath.toAbsolutePath().toString();
+            }
         }
-        // 如果上传的模板不存在，尝试使用classpath中的默认模板
-        // 注意：如果默认模板也不存在，会在DocTemplateService中抛出异常
+        // 2. 查找全局模板
+        java.nio.file.Path globalPath = basePath.resolve("templates").resolve(key + ".docx");
+        if (Files.exists(globalPath)) {
+            return globalPath.toAbsolutePath().toString();
+        }
+        // 3. 兜底 classpath 默认模板
         return defaultClasspath;
     }
 

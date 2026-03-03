@@ -140,7 +140,7 @@ public class TeacherVolunteerController {
             return result;
         }
         if (round == null || round < 1 || round > 3) {
-            result.put("error", "round閸欏倹鏆熼弮鐘虫櫏");
+            result.put("error", "round参数必须为1-3");
             return result;
         }
 
@@ -208,7 +208,7 @@ public class TeacherVolunteerController {
             return "error:未登录或非教师身份";
         }
         if (round == null || round < 1 || round > 3) {
-            return "error:round閸欏倹鏆熼弮鐘虫櫏";
+            return "error:round参数必须为1-3";
         }
         if (isDeadlinePassed()) {
             return "error:志愿录取已截止";
@@ -263,7 +263,7 @@ public class TeacherVolunteerController {
             return "error:未登录或非教师身份";
         }
         if (round == null || round < 1 || round > 3) {
-            return "error:round閸欏倹鏆熼弮鐘虫櫏";
+            return "error:round参数必须为1-3";
         }
         if (isDeadlinePassed()) {
             return "error:志愿录取已截止";

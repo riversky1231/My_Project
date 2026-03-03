@@ -120,7 +120,7 @@ public class StudentServiceImpl implements StudentService {
     public boolean unassignAdvisor(Long studentId) {
         Student student = findById(studentId);
         if (student == null) {
-            throw new IllegalArgumentException("瀛︾敓涓嶅瓨鍦細" + studentId);
+            throw new IllegalArgumentException("学生不存在：" + studentId);
         }
 
         Long oldAdvisorId = student.getAdvisorTeacherId();
@@ -193,9 +193,9 @@ public class StudentServiceImpl implements StudentService {
     @Transactional
     public boolean saveStudent(Student student) {
         if (student.getId() == null) {
-            // 妫€鏌ュ鍙锋槸鍚﹂噸澶?
+            // 检查学号是否重复
             if (student.getStudentNo() != null && studentMapper.findByStudentNoAndYear(student.getStudentNo(), student.getDefenseYear()) != null) {
-                throw new RuntimeException("瀛﹀彿鍦ㄥ綋鍓嶅勾浠藉凡瀛樺湪");
+                throw new RuntimeException("学号在当前年份已存在");
             }
             boolean inserted = studentMapper.insert(student) > 0;
             if (inserted) {
@@ -203,7 +203,7 @@ public class StudentServiceImpl implements StudentService {
             }
             return inserted;
         } else {
-            // 鏇存柊閫昏緫
+            // 更新逻辑
             Student existing = studentMapper.findById(student.getId());
             String oldStudentNo = existing != null ? existing.getStudentNo() : null;
             boolean updated = studentMapper.update(student) > 0;
