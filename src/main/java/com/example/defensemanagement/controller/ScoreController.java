@@ -141,6 +141,35 @@ public class ScoreController {
     }
 
     /**
+     * 通用分项自动生成：输入总分返回分项（不落库）。
+     * POST /defense/score/teacher/auto-split?defenseType=PAPER|DESIGN&totalScore=88
+     */
+    @PostMapping("/teacher/auto-split")
+    @ResponseBody
+    public Map<String, Object> autoSplitItems(@RequestParam String defenseType,
+                                              @RequestParam Integer totalScore,
+                                              HttpSession session) {
+        Map<String, Object> result = new HashMap<>();
+        Teacher teacher = getTeacherFromSession(session);
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (teacher == null && currentUser == null) {
+            result.put("success", false);
+            result.put("error", "未登录");
+            return result;
+        }
+        try {
+            Map<String, Integer> items = scoreService.autoSplitScoreItems(defenseType, totalScore);
+            result.put("success", true);
+            result.put("items", items);
+            return result;
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("error", e.getMessage());
+            return result;
+        }
+    }
+
+    /**
      * 设置指导教师成绩
      */
     @PostMapping("/advisor/set")

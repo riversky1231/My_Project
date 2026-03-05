@@ -3286,14 +3286,24 @@
                   </div>
                 </div>
 
-                <div class="col-md-4">
-                  <label class="form-label">总分 (自动计算)</label>
-                  <input
-                    type="number"
-                    class="form-control"
-                    id="ts-total-score"
-                    readonly
-                  />
+                <div class="col-md-8">
+                  <label class="form-label">总分（可输入后自动生成分项）</label>
+                  <div class="input-group">
+                    <input
+                      type="number"
+                      class="form-control"
+                      id="ts-total-score"
+                      min="0"
+                      max="100"
+                    />
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary"
+                      onclick="autoSplitTeacherScoreItems()"
+                    >
+                      按总分生成分项
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>
@@ -8574,8 +8584,11 @@
 
           modalHtml += `
                         <div class="mb-3">
-                            <label class="form-label"><strong>总分</strong></label>
-                            <input type="number" class="form-control" id="as-total-score" readonly value="${record ? record.totalScore || 0 : 0}">
+                            <label class="form-label"><strong>总分（可输入后自动生成分项）</strong></label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="as-total-score" min="0" max="100" value="${record ? record.totalScore || 0 : 0}">
+                                <button type="button" class="btn btn-outline-secondary" onclick="autoSplitAdvisorScoreItems()">按总分生成分项</button>
+                            </div>
                         </div>
                                     </form>
                                 </div>
@@ -8694,6 +8707,32 @@
         }
 
         document.getElementById("as-total-score").value = total;
+      }
+
+      async function autoSplitAdvisorScoreItems() {
+        const defenseType =
+          document.getElementById("as-modal-defense-type").value;
+        const totalScore =
+          parseInt(document.getElementById("as-total-score").value, 10) || 0;
+        try {
+          const items = await requestAutoSplitItems(defenseType, totalScore);
+          document.getElementById("as-item1").value = items.item1 ?? 0;
+          document.getElementById("as-item2").value = items.item2 ?? 0;
+          document.getElementById("as-item3").value = items.item3 ?? 0;
+          if (defenseType !== "PAPER") {
+            document.getElementById("as-item4").value = items.item4 ?? 0;
+            document.getElementById("as-item5").value = items.item5 ?? 0;
+            document.getElementById("as-item6").value = items.item6 ?? 0;
+          }
+          if (typeof updateAdvisorScoreTotalForTeacher === "function") {
+            updateAdvisorScoreTotalForTeacher();
+          }
+          if (typeof updateAdvisorScoreTotal === "function") {
+            updateAdvisorScoreTotal();
+          }
+        } catch (error) {
+          showAlert("error", error.message || "自动生成分项失败");
+        }
       }
 
       // 提交指导教师打分（普通教师，使用分项打分）
@@ -9066,8 +9105,11 @@
 
           modalHtml += `
                         <div class="mb-3">
-                            <label class="form-label"><strong>总分</strong></label>
-                            <input type="number" class="form-control" id="rs-total-score" readonly value="${record.totalScore || 0}">
+                            <label class="form-label"><strong>总分（可输入后自动生成分项）</strong></label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="rs-total-score" min="0" max="100" value="${record.totalScore || 0}">
+                                <button type="button" class="btn btn-outline-secondary" onclick="autoSplitReviewerScoreItems()">按总分生成分项</button>
+                            </div>
                         </div>
                                     </form>
                                 </div>
@@ -9162,6 +9204,27 @@
         }
 
         document.getElementById("rs-total-score").value = total;
+      }
+
+      async function autoSplitReviewerScoreItems() {
+        const defenseType =
+          document.getElementById("rs-modal-defense-type").value;
+        const totalScore =
+          parseInt(document.getElementById("rs-total-score").value, 10) || 0;
+        try {
+          const items = await requestAutoSplitItems(defenseType, totalScore);
+          document.getElementById("rs-item1").value = items.item1 ?? 0;
+          document.getElementById("rs-item2").value = items.item2 ?? 0;
+          document.getElementById("rs-item3").value = items.item3 ?? 0;
+          if (defenseType !== "PAPER") {
+            document.getElementById("rs-item4").value = items.item4 ?? 0;
+            document.getElementById("rs-item5").value = items.item5 ?? 0;
+            document.getElementById("rs-item6").value = items.item6 ?? 0;
+          }
+          updateReviewerScoreTotal();
+        } catch (error) {
+          showAlert("error", error.message || "自动生成分项失败");
+        }
       }
 
       // 提交评阅人打分（超级管理员）
@@ -9370,8 +9433,11 @@
 
           modalHtml += `
                         <div class="mb-3">
-                            <label class="form-label"><strong>总分</strong></label>
-                            <input type="number" class="form-control" id="as-total-score" readonly value="${record.totalScore || 0}">
+                            <label class="form-label"><strong>总分（可输入后自动生成分项）</strong></label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="as-total-score" min="0" max="100" value="${record.totalScore || 0}">
+                                <button type="button" class="btn btn-outline-secondary" onclick="autoSplitAdvisorScoreItems()">按总分生成分项</button>
+                            </div>
                         </div>
                                     </form>
                                 </div>
@@ -14013,6 +14079,50 @@
         }
 
         document.getElementById("ts-total-score").value = total;
+      }
+
+      async function requestAutoSplitItems(defenseType, totalScore) {
+        const params = new URLSearchParams();
+        params.append("defenseType", defenseType);
+        params.append("totalScore", totalScore);
+        const response = await fetch("/defense/score/teacher/auto-split", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: params.toString(),
+        });
+        if (!response.ok) {
+          throw new Error("分项生成请求失败: " + response.status);
+        }
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.error || "分项生成失败");
+        }
+        return data.items || {};
+      }
+
+      async function autoSplitTeacherScoreItems() {
+        const defenseType =
+          document.getElementById("ts-modal-defense-type").value;
+        const totalScore =
+          parseInt(document.getElementById("ts-total-score").value, 10) || 0;
+        try {
+          const items = await requestAutoSplitItems(defenseType, totalScore);
+          if (defenseType === "PAPER") {
+            document.getElementById("ts-item1").value = items.item1 ?? 0;
+            document.getElementById("ts-item2").value = items.item2 ?? 0;
+            document.getElementById("ts-item3").value = items.item3 ?? 0;
+          } else {
+            document.getElementById("ts-d-item1").value = items.item1 ?? 0;
+            document.getElementById("ts-d-item2").value = items.item2 ?? 0;
+            document.getElementById("ts-d-item3").value = items.item3 ?? 0;
+            document.getElementById("ts-d-item4").value = items.item4 ?? 0;
+            document.getElementById("ts-d-item5").value = items.item5 ?? 0;
+            document.getElementById("ts-d-item6").value = items.item6 ?? 0;
+          }
+          updateTeacherScoreTotal();
+        } catch (error) {
+          showAlert("error", error.message || "自动生成分项失败");
+        }
       }
 
       // 提交教师打分

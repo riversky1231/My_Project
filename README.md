@@ -1,108 +1,87 @@
-# 毕业设计答辩管理系统 (Graduation Defense Management System)
+# 毕业答辩管理系统 | Graduation Defense Management System
 
-## 📖 项目简介
-本项目是一个基于 Spring Boot 和 MyBatis 的全流程毕业设计答辩管理系统。系统旨在数字化管理高校毕业答辩的各个环节，包括学生分组、导师分配、现场答辩评分、成绩汇总以及文档归档。
+## 项目简介 | Overview
+本项目是基于 Spring Boot + MyBatis + Thymeleaf 的毕业答辩管理系统，覆盖院系配置、师生互选、分组打分、成绩汇总、文档导出与归档全流程。  
+This project is a graduation defense management system built with Spring Boot + MyBatis + Thymeleaf, covering department configuration, teacher-student matching, group scoring, score aggregation, document export, and archiving.
 
-本项目的一个核心特色是将**经典设计模式**（如单例、观察者、工厂、代理模式等）应用于实际的业务场景中，以提高系统的可扩展性和代码质量。
+系统支持按年份隔离数据，并通过角色权限控制不同用户可见范围与可操作能力。  
+The system supports year-based data isolation and role-based permissions for visibility and operations.
 
----
+## 角色与权限 | Roles & Permissions
+| 中文角色 | Role | 权限摘要 (CN) | Permission Summary (EN) |
+|---|---|---|---|
+| 超级管理员 | `SUPER_ADMIN` | 全局管理院系、用户、配置与跨年份数据 | Manages departments, users, configs, and cross-year data globally |
+| 院系管理员 | `DEPT_ADMIN` | 管理本院系学生/教师/分组/互选/配置 | Manages students, teachers, groups, matching, and configs in own department |
+| 答辩组长 | `DEFENSE_LEADER` | 查看本组打分、生成评语、导出本组文档 | Views group scores, generates comments, exports group docs |
+| 教师 | `TEACHER` | 指导/评阅打分、小组打分、大组打分、导出相关文档 | Advisor/reviewer scoring, group scoring, large-group scoring, export docs |
+| 学生 | `STUDENT` | 查看个人信息、填报志愿、查看结果 | Views own profile, submits preferences, checks results |
 
-## 👥 系统角色与权限
+## 核心功能 | Core Features
+### 1) 用户与认证 | User & Authentication
+- 多角色登录、会话鉴权、权限拦截。  
+  Multi-role login, session auth, and permission interception.
+- 支持用户与教师改密。  
+  Supports password change for users and teachers.
 
-| 角色 | 英文名 | 核心权限 |
-|------|--------|----------|
-| 超级管理员 | `SUPER_ADMIN` | 管理所有院系、用户、院系管理员、查看所有年份数据 |
-| 院系管理员 | `DEPT_ADMIN` | 管理本院系：学生、教师、小组、志愿分配、大组答辩、系统配置 |
-| 答辩组长 | `DEFENSE_LEADER` | 管理本组：打分、评语、导出本组报告 |
-| 教师 | `TEACHER` | 为所在组学生打分、导出相关报告 |
-| 学生 | `STUDENT` | 查看自己的信息（待扩展） |
+### 2) 答辩流程管理 | Defense Workflow
+- 院系管理员维护答辩年份、答辩日期、成绩日期。  
+  Department admins maintain defense year, defense date, and grade date.
+- 小组管理支持手动分配和随机分配（学生/教师/组长）。  
+  Group management supports both manual and random assignment (students/teachers/leaders).
+- 志愿互选支持截止时间、轮次控制、延迟与随机补分配。  
+  Teacher-student preference matching supports deadlines, rounds, extensions, and random fallback allocation.
 
-> **注意**：院系管理员**不能**访问"导出/打包"页面，该功能仅限答辩组长和教师使用。
+### 3) 评分与成绩计算 | Scoring & Calculation
+- 支持指导成绩、评阅成绩、小组答辩成绩、大组答辩成绩。  
+  Supports advisor score, reviewer score, group defense score, and large-group defense score.
+- 支持调节系数与最终答辩成绩、总评成绩自动计算。  
+  Supports adjustment factor and automatic calculation of final defense score and total grade.
+- 新增：在线评分支持“输入总分自动生成分项（论文/设计）”。  
+  New: online scoring supports "enter total score to auto-split item scores" for both paper/design types.
 
----
+### 4) AI评语 | AI Comment Generation
+- 支持配置 QWEN API Key 与论文/设计提示词模板。  
+  Supports configurable QWEN API key and prompt templates for paper/design.
+- 支持流式与非流式评语生成。  
+  Supports both streaming and non-streaming comment generation.
 
-## 🚀 系统核心功能
+### 5) 文档模板与导出 | Template & Export
+- 支持 7 类 Word 模板上传（全局模板 + 院系模板覆盖）。  
+  Supports 7 Word templates upload (global + department-specific override).
+- 支持成绩表、评定表、过程表、统分表导出及批量打包。  
+  Supports export of score sheets, evaluation sheets, process sheets, summary sheets, and ZIP bundles.
+- 支持教师/组长/系主任签名图片合成到文档。  
+  Supports signature image insertion (teacher/leader/department head) into generated documents.
 
-### 1. 用户与权限管理 (User & Auth)
-* **多角色支持**：系统支持超级管理员、院系管理员、答辩组长、教师、学生等多种角色。
-* **安全认证**：基于拦截器（`AuthInterceptor`）实现的用户登录与权限控制。
-* **电子签名**：支持教师/组长上传电子签名，用于生成带签名的文档。
+## 技术栈 | Tech Stack
+- Backend: Spring Boot
+- Persistence: MyBatis + XML Mapper
+- Database: MySQL
+- Template Engine: Thymeleaf
+- Document Processing: Apache POI
+- Build Tool: Maven
 
-### 2. 答辩流程管理 (Defense Process)
-* **答辩分组**：院系管理员在"小组管理"页面创建答辩小组，并提供：
-  * **手动操作**：逐一添加学生、分配教师、设定组长
-  * **智能批量操作**（新增）：
-    * 设定每组最大人数上限
-    * 一键随机将未分组学生分配到未满小组
-    * 一键随机将未分配教师分配到各组
-    * 一键随机从各组教师中选出答辩组长
-* **志愿互选**：支持志愿截止时间管理、延期和随机分配未匹配学生。
-* **大组答辩**：支持大组答辩截止时间、归档管理，教师登录弹窗提醒。
-
-### 3. 评分与成绩体系 (Scoring System)
-* **多角色评分**：
-  * 指导教师评分、评阅教师评分、现场答辩评分（分项或总分）
-  * 大组答辩成绩（调节系数计算）
-* **成绩汇总**：自动计算小组评分、调节系数，合成学生最终成绩。
-* **截止时间管控**：管理员可设置打分截止时间，逾期后锁定提交。
-
-### 4. 智能辅助与反馈 (AI Integration)
-* **AI 评语生成**：集成 AI 服务，根据学生答辩表现辅助生成答辩评语。
-* 支持自定义提示词模板（`PAPER_PROMPT_TEMPLATE` / `DESIGN_PROMPT_TEMPLATE`）。
-
-### 5. 文档导出（答辩组长 / 教师专属）
-* **个人报告导出**：按学生导出答辩成绩表（论文/设计）、成绩评定表
-* **打包导出**：本组所有学生报告打包为 ZIP
-* **统分表导出**：答辩小组统分表（含各评委成绩）
-* **Word 模板**：支持 7 类官方 Word 模板，系统自动填充数据
-
-> 院系管理员不提供文档导出功能，如需按院系汇出数据请联系超级管理员。
-
-### 6. 数据管理
-* **Excel 导入**：批量导入学生、用户、院系信息（见《Excel导入格式说明》）
-* **学生管理**：增删改查、分页、搜索
-
----
-
-## 🛠️ 设计模式应用 (Design Patterns)
-
-本项目在 `com.example.defensemanagement.pattern` 包下展示了多种设计模式的实战应用：
-
-| 模式名称 | 应用场景 | 实现类/位置 |
-| :--- | :--- | :--- |
-| **工厂模式 (Factory)** | 创建不同格式的导出服务（Excel/Word） | `ExportServiceFactory`, `ExcelExportService`, `WordExportService` |
-| **观察者模式 (Observer)** | 成绩发布时自动触发日志记录和通知 | `ScoreSubject`, `ScoreObserver`, `EmailNotificationObserver`, `LogObserver` |
-| **单例模式 (Singleton)** | 全局系统日志记录器唯一实例 | `SystemLogger` |
-| **代理模式 (Proxy)** | 为核心服务添加权限检查、性能监控 | `ProxyFactory`, `ServiceProxy` |
-
----
-
-## 🏗️ 技术栈 (Tech Stack)
-
-* **后端框架**: Spring Boot
-* **持久层**: MyBatis (配合 XML Mapper)
-* **数据库**: MySQL
-* **模板引擎**: Thymeleaf
-* **文档处理**: Apache POI (Excel/Word)
-* **构建工具**: Maven
-
-## 📂 目录结构摘要
-
+## 目录结构 | Project Structure
 ```text
 src/main/java/com/example/defensemanagement/
-├── controller/          # 控制器层 (API接口)
-├── service/             # 业务逻辑层
-├── entity/              # 数据库实体类
-├── mapper/              # MyBatis Mapper接口
-├── pattern/             # 设计模式实现包
-│   ├── factory/         # 工厂模式
-│   ├── observer/        # 观察者模式
-│   ├── proxy/           # 代理模式
-│   └── singleton/       # 单例模式
-└── config/              # 系统配置
+├── controller/    # 控制器层 | controllers
+├── service/       # 业务层 | services
+├── mapper/        # 数据访问层 | mappers
+├── entity/        # 实体定义 | entities
+├── interceptor/   # 拦截器 | interceptors
+└── config/        # 系统配置 | configuration
 ```
 
-## 📄 相关文档
+## 快速开始 | Quick Start
+1. 创建 MySQL 数据库并导入 `src/main/resources/data.sql`。  
+   Create MySQL database and import `src/main/resources/data.sql`.
+2. 修改 `src/main/resources/application.yml` 中数据库连接。  
+   Configure DB connection in `src/main/resources/application.yml`.
+3. 启动项目：`mvn spring-boot:run`。  
+   Start project with `mvn spring-boot:run`.
+4. 默认超级管理员：`admin / 123456`。  
+   Default super admin: `admin / 123456`.
 
-- [数据库表结构说明.md](数据库表结构说明.md) — 所有数据表字段说明与关系
-- [Excel导入格式说明.md](Excel导入格式说明.md) — 批量导入格式规范
+## 相关文档 | Related Docs
+- [数据库表结构说明.md](数据库表结构说明.md) - 数据表与字段说明 | DB schema and field notes
+- [Excel导入格式说明.md](Excel导入格式说明.md) - Excel导入规范 | Excel import format

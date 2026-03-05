@@ -26,6 +26,11 @@ public interface ScoreService {
     void autoSplitDesignScore(Long studentId, Long teacherId, Integer year, Integer totalScore, Long defenseGroupId);
 
     /**
+     * 按答辩类型从总分自动拆分分项（论文3项，设计6项），仅返回拆分结果，不落库。
+     */
+    Map<String, Integer> autoSplitScoreItems(String defenseType, Integer totalScore);
+
+    /**
      * 计算并落地某答辩小组的平均分、调节系数、最终答辩成绩和总评成绩。
      * @param defenseGroupId 小组ID
      * @param year 答辩年份

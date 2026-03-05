@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.ArrayList;
 
 @Service
 public class ScoreServiceImpl implements ScoreService {
@@ -96,75 +97,144 @@ public class ScoreServiceImpl implements ScoreService {
         if (studentId == null || teacherId == null || year == null || totalScore == null) {
             throw new IllegalArgumentException("studentId/teacherId/year/totalScore 不能为空");
         }
-        // 权值与最大分值从配置读取，若缺失则回退默认并归一化
-        List<EvaluationItem> itemsCfg = configService.getEvaluationItems("DESIGN");
-        if (itemsCfg == null) {
-            itemsCfg = java.util.Collections.emptyList();
-        } else {
-            itemsCfg.sort(Comparator.comparingInt(EvaluationItem::getDisplayOrder));
-        }
-        double[] weights = new double[6];
-        int[] maxScores = new int[6];
-        if (itemsCfg.size() >= 6) {
-            double sum = 0;
-            for (int i = 0; i < 6; i++) {
-                EvaluationItem it = itemsCfg.get(i);
-                double w = it.getWeight() == null ? 0 : it.getWeight();
-                weights[i] = w;
-                maxScores[i] = it.getMaxScore() == null ? 0 : it.getMaxScore();
-                sum += w;
-            }
-            if (sum == 0) {
-                // 防止除零，回退默认
-                weights = new double[]{0.15, 0.15, 0.15, 0.25, 0.15, 0.15};
-                maxScores = new int[]{15, 15, 15, 25, 15, 15};
-            } else {
-                // 归一化，确保权重之和为 1
-                for (int i = 0; i < weights.length; i++) {
-                    weights[i] = weights[i] / sum;
-                }
-            }
-        } else {
-            weights = new double[]{0.15, 0.15, 0.15, 0.25, 0.15, 0.15};
-            maxScores = new int[]{15, 15, 15, 25, 15, 15};
-        }
-        int[] items = new int[6];
-
-        // 初步分配
-        for (int i = 0; i < weights.length; i++) {
-            items[i] = (int) Math.floor(totalScore * weights[i]);
-            if (items[i] > maxScores[i]) items[i] = maxScores[i];
-        }
-        // 调整差值，使总和等于 totalScore，优先从余量大的项加/减
-        int sum = java.util.Arrays.stream(items).sum();
-        int diff = totalScore - sum;
-        int idx = 0;
-        while (diff != 0 && idx < items.length * 3) { // 简单循环，最多三轮
-            int i = idx % items.length;
-            if (diff > 0 && items[i] < maxScores[i]) {
-                items[i] += 1;
-                diff -= 1;
-            } else if (diff < 0 && items[i] > 0) {
-                items[i] -= 1;
-                diff += 1;
-            }
-            idx++;
-        }
+        Map<String, Integer> split = autoSplitScoreItems("DESIGN", totalScore);
 
         TeacherScoreRecord record = new TeacherScoreRecord();
         record.setStudentId(studentId);
         record.setTeacherId(teacherId);
         record.setYear(year);
         record.setDefenseGroupId(defenseGroupId);
-        record.setItem1Score(items[0]);
-        record.setItem2Score(items[1]);
-        record.setItem3Score(items[2]);
-        record.setItem4Score(items[3]);
-        record.setItem5Score(items[4]);
-        record.setItem6Score(items[5]);
+        record.setItem1Score(split.getOrDefault("item1", 0));
+        record.setItem2Score(split.getOrDefault("item2", 0));
+        record.setItem3Score(split.getOrDefault("item3", 0));
+        record.setItem4Score(split.getOrDefault("item4", 0));
+        record.setItem5Score(split.getOrDefault("item5", 0));
+        record.setItem6Score(split.getOrDefault("item6", 0));
         record.setTotalScore(totalScore);
 
         saveTeacherScore(record);
+    }
+
+    @Override
+    public Map<String, Integer> autoSplitScoreItems(String defenseType, Integer totalScore) {
+        if (defenseType == null || defenseType.trim().isEmpty() || totalScore == null) {
+            throw new IllegalArgumentException("defenseType/totalScore 不能为空");
+        }
+        if (totalScore < 0 || totalScore > 100) {
+            throw new IllegalArgumentException("总分必须在0-100之间");
+        }
+
+        final String type = defenseType.trim().toUpperCase();
+        final int itemCount;
+        final double[] defaultWeights;
+        final int[] defaultMaxScores;
+
+        if ("PAPER".equals(type)) {
+            itemCount = 3;
+            defaultWeights = new double[] { 0.5, 0.25, 0.25 };
+            defaultMaxScores = new int[] { 50, 25, 25 };
+        } else if ("DESIGN".equals(type)) {
+            itemCount = 6;
+            defaultWeights = new double[] { 0.15, 0.15, 0.15, 0.25, 0.15, 0.15 };
+            defaultMaxScores = new int[] { 15, 15, 15, 25, 15, 15 };
+        } else {
+            throw new IllegalArgumentException("不支持的答辩类型: " + defenseType);
+        }
+
+        List<EvaluationItem> cfg = configService.getEvaluationItems(type);
+        if (cfg == null) {
+            cfg = java.util.Collections.emptyList();
+        } else {
+            cfg = new ArrayList<>(cfg);
+            cfg.sort(Comparator.comparingInt(EvaluationItem::getDisplayOrder));
+        }
+
+        double[] weights = new double[itemCount];
+        int[] maxScores = new int[itemCount];
+        if (cfg.size() >= itemCount) {
+            double sum = 0;
+            for (int i = 0; i < itemCount; i++) {
+                EvaluationItem it = cfg.get(i);
+                double w = it.getWeight() == null ? 0 : it.getWeight();
+                int max = it.getMaxScore() == null ? (int) Math.round(w * 100) : it.getMaxScore();
+                weights[i] = w;
+                maxScores[i] = Math.max(0, max);
+                sum += w;
+            }
+            if (sum <= 0) {
+                System.arraycopy(defaultWeights, 0, weights, 0, itemCount);
+                System.arraycopy(defaultMaxScores, 0, maxScores, 0, itemCount);
+            } else {
+                for (int i = 0; i < itemCount; i++) {
+                    weights[i] = weights[i] / sum;
+                    if (maxScores[i] <= 0) {
+                        maxScores[i] = (int) Math.round(weights[i] * 100);
+                    }
+                }
+            }
+        } else {
+            System.arraycopy(defaultWeights, 0, weights, 0, itemCount);
+            System.arraycopy(defaultMaxScores, 0, maxScores, 0, itemCount);
+        }
+
+        int maxTotal = 0;
+        for (int m : maxScores) {
+            maxTotal += m;
+        }
+        if (totalScore > maxTotal) {
+            throw new IllegalArgumentException("总分超过分项上限之和: " + maxTotal);
+        }
+
+        int[] items = new int[itemCount];
+        for (int i = 0; i < itemCount; i++) {
+            int v = (int) Math.floor(totalScore * weights[i]);
+            items[i] = Math.min(v, maxScores[i]);
+        }
+
+        int sum = 0;
+        for (int v : items) {
+            sum += v;
+        }
+        int diff = totalScore - sum;
+
+        while (diff > 0) {
+            int best = -1;
+            int remain = -1;
+            for (int i = 0; i < itemCount; i++) {
+                int r = maxScores[i] - items[i];
+                if (r > remain) {
+                    remain = r;
+                    best = i;
+                }
+            }
+            if (best < 0 || remain <= 0) {
+                break;
+            }
+            items[best]++;
+            diff--;
+        }
+
+        while (diff < 0) {
+            int best = -1;
+            int current = -1;
+            for (int i = 0; i < itemCount; i++) {
+                if (items[i] > current) {
+                    current = items[i];
+                    best = i;
+                }
+            }
+            if (best < 0 || current <= 0) {
+                break;
+            }
+            items[best]--;
+            diff++;
+        }
+
+        Map<String, Integer> result = new HashMap<>();
+        for (int i = 0; i < itemCount; i++) {
+            result.put("item" + (i + 1), items[i]);
+        }
+        return result;
     }
 
     @Override
